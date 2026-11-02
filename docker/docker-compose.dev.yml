@@ -1,0 +1,93 @@
+# =============================================================================
+# Dev overlay — edit the source on the host, see it live
+# =============================================================================
+# Selected by scripts/bootstrap --dev (COMPOSE_FILE in docker/.env).
+#   * bind-mounts both apps into backend, workers, scheduler and the watcher
+#   * gunicorn --reload and dev/autoreload.py restart on Python changes
+#   * dev-watcher runs `bench migrate` when DocTypes/fixtures/patches/hooks change and
+#     clears the website cache when templates, www pages or assets change
+#   * spa-watch rebuilds the SPA into project_manager/public/spa
+# Never use this file in production.
+# =============================================================================
+
+x-app-mounts: &app-mounts
+  - sites:/home/frappe/frappe-bench/sites
+  - logs:/home/frappe/frappe-bench/logs
+  - ../apps/project_manager:/home/frappe/frappe-bench/apps/project_manager
+  - ../apps/pm_construction:/home/frappe/frappe-bench/apps/pm_construction
+  - ./dev:/dev-tools:ro
+
+services:
+  backend:
+    volumes: *app-mounts
+    command:
+      - /home/frappe/frappe-bench/env/bin/gunicorn
+      - --chdir=/home/frappe/frappe-bench/sites
+      - --bind=0.0.0.0:8000
+      - --threads=${GUNICORN_THREADS:-4}
+      - --workers=${GUNICORN_WORKERS:-2}
+      - --worker-class=gthread
+      - --worker-tmp-dir=/dev/shm
+      - --timeout=${GUNICORN_TIMEOUT:-120}
+      - --reload
+      - --reload-engine=poll
+      - frappe.app:application
+
+  # nginx serves /assets from its own filesystem, so it needs the source mounted too,
+  # otherwise browsers keep getting the files baked into the image.
+  frontend:
+    volumes: *app-mounts
+    ports:
+      - "127.0.0.1:${HTTP_PUBLISH_PORT:-8890}:8080"
+
+  queue-pm:
+    volumes: *app-mounts
+    command: ["/home/frappe/frappe-bench/env/bin/python", "/dev-tools/autoreload.py", "bench", "worker", "--queue", "pm,short"]
+
+  queue-short:
+    volumes: *app-mounts
+    command: ["/home/frappe/frappe-bench/env/bin/python", "/dev-tools/autoreload.py", "bench", "worker", "--queue", "short,default"]
+
+  queue-long:
+    volumes: *app-mounts
+    command: ["/home/frappe/frappe-bench/env/bin/python", "/dev-tools/autoreload.py", "bench", "worker", "--queue", "long,default,short"]
+
+  scheduler:
+    volumes: *app-mounts
+    command: ["/home/frappe/frappe-bench/env/bin/python", "/dev-tools/autoreload.py", "bench", "schedule"]
+
+  setup-site:
+    volumes: *app-mounts
+
+  meilisearch:
+    ports:
+      - "127.0.0.1:${MEILISEARCH_PUBLISH_PORT:-7701}:7700"   # debugging only
+
+  dev-watcher:
+    image: pm-custom:${ERPNEXT_VERSION:?}
+    networks:
+      - frappe_network
+    restart: unless-stopped
+    depends_on:
+      - backend
+    command: ["/home/frappe/frappe-bench/env/bin/python", "/dev-tools/watcher.py"]
+    environment:
+      FRAPPE_SITE_NAME: ${FRAPPE_SITE_NAME:?}
+    volumes: *app-mounts
+
+  # Rebuilds the SPA whenever a file in apps/project_manager/frontend changes. The bundle lands in
+  # project_manager/public/spa, which every container above already mounts.
+  spa-watch:
+    image: node:24.22.2-slim
+    working_dir: /app/frontend
+    restart: unless-stopped
+    environment:
+      PM_WATCH_POLL: "1"   # bind mounts from Windows deliver no file events
+    command: sh -c "npm ci && npm run watch"
+    volumes:
+      - ../apps/project_manager:/app
+      - spa-node-modules:/app/frontend/node_modules   # Linux modules, kept out of the host folder
+
+volumes:
+  spa-node-modules:
+    name: ${DATA_VOLUME_PREFIX:-pm}_spa_node_modules

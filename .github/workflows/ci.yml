@@ -1,0 +1,164 @@
+name: CI
+
+# Every push / PR: static checks, SPA tests, the core alone, and a clean clone bootstrapped from scratch.
+# Push to main (or a v* tag): additionally build and publish the image to GHCR.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Python compiles
+        run: python -m compileall -q apps docker/dev scripts
+      - name: Lint (real errors only)
+        run: |
+          pip install -q ruff
+          ruff check apps docker/dev scripts --select E9,F63,F7,F82 --no-cache
+      - name: JSON files are valid
+        run: |
+          python - <<'EOF'
+          import json, pathlib, sys
+          bad = []
+          for path in pathlib.Path("apps").rglob("*.json"):
+              if "node_modules" in path.parts:
+                  continue
+              try:
+                  json.loads(path.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  bad.append(f"{path}: {exc}")
+          print("\n".join(bad) or "all JSON valid")
+          sys.exit(1 if bad else 0)
+          EOF
+      - name: Repository rules (core/layer boundary, no outside paths, .env.example complete)
+        run: python scripts/ci/check_repo.py
+      - name: Shell scripts
+        run: bash -n scripts/bootstrap.sh
+      - name: Compose files are valid
+        working-directory: docker
+        run: |
+          sed -e 's/^ADMIN_PASSWORD=$/ADMIN_PASSWORD=ci/' -e 's/^MARIADB_ROOT_PASSWORD=$/MARIADB_ROOT_PASSWORD=ci/' \
+              -e 's/^MEILISEARCH_MASTER_KEY=$/MEILISEARCH_MASTER_KEY=ci/' .env.example > .env
+          docker compose config -q
+          COMPOSE_FILE=docker-compose.yml,docker-compose.dev.yml docker compose config -q
+
+  frontend:
+    name: SPA (unit tests + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/project_manager/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.22.2"
+          cache: npm
+          cache-dependency-path: apps/project_manager/frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  core-alone:
+    name: Core without the construction layer
+    needs: [static, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Site with ERPNext + project_manager only
+        run: |
+          cp docker/.env.example docker/.env
+          echo "PM_INSTALL_APPS=erpnext project_manager" >> docker/.env
+          scripts/bootstrap.sh
+      - name: Core tests
+        working-directory: docker
+        run: |
+          SITE=$(grep '^FRAPPE_SITE_NAME=' .env | cut -d= -f2)
+          docker compose exec -T backend bash -c "
+            bench --site $SITE set-config allow_tests true &&
+            bench --site $SITE run-tests --app project_manager"
+      - name: Logs on failure
+        if: failure()
+        working-directory: docker
+        run: docker compose logs --no-color --tail=200
+
+  clean-clone:
+    name: Clean clone → bootstrap → tests → smoke
+    needs: [static, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bootstrap from a fresh checkout (no docker/.env yet)
+        run: scripts/bootstrap.sh
+      - name: Bootstrap again (must be idempotent)
+        run: scripts/bootstrap.sh
+      - name: Tests of both apps
+        working-directory: docker
+        run: |
+          SITE=$(grep '^FRAPPE_SITE_NAME=' .env | cut -d= -f2)
+          docker compose exec -T backend bash -c "
+            bench --site $SITE set-config allow_tests true &&
+            bench --site $SITE run-tests --app project_manager &&
+            bench --site $SITE run-tests --app pm_construction"
+      - name: HTTP smoke test
+        run: python3 scripts/e2e/smoke_http.py
+      - name: Logs on failure
+        if: failure()
+        working-directory: docker
+        run: docker compose logs --no-color --tail=200
+
+  publish:
+    name: Build and publish image
+    needs: [core-alone, clean-clone]
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image name and ERPNext version
+        run: |
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/pm-custom" >> "$GITHUB_ENV"
+          echo "ERPNEXT_VERSION=$(grep '^ERPNEXT_VERSION=' docker/.env.example | cut -d= -f2)" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ env.ERPNEXT_VERSION }},enable={{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=ref,event=tag
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          build-args: ERPNEXT_VERSION=${{ env.ERPNEXT_VERSION }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

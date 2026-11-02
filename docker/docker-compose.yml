@@ -1,0 +1,269 @@
+# =============================================================================
+# Project Manager — Docker Compose (base)
+# =============================================================================
+# Frappe/ERPNext + project_manager + pm_construction, MariaDB, Redis, Meilisearch.
+# Run through scripts/bootstrap.ps1 or scripts/bootstrap.sh: they create docker/.env
+# (secrets included) and pick the overlays through COMPOSE_FILE:
+#   docker-compose.local.yml  publishes the site on 127.0.0.1:${HTTP_PUBLISH_PORT}
+#   docker-compose.dev.yml    also mounts the source and reloads it (developers)
+# =============================================================================
+
+x-app-image: &app-image
+  image: pm-custom:${ERPNEXT_VERSION:?}
+  networks:
+    - frappe_network
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+
+x-redis-env: &redis-env
+  FRAPPE_REDIS_CACHE: redis://${REDIS_CACHE:-redis-cache:6379}
+  FRAPPE_REDIS_QUEUE: redis://${REDIS_QUEUE:-redis-queue:6379}
+
+services:
+  # ---------------------------------------------------------------------------
+  # Frappe backend (gunicorn) — holds the build section of the shared image
+  # ---------------------------------------------------------------------------
+  backend:
+    <<: *app-image
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        ERPNEXT_VERSION: ${ERPNEXT_VERSION:?}
+    restart: on-failure
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: "${DB_PORT:-3306}"
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
+
+  # ---------------------------------------------------------------------------
+  # One-shot: writes common_site_config.json
+  # ---------------------------------------------------------------------------
+  configurator:
+    <<: *app-image
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        set -e;
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port 9000;
+        bench set-config -gp workers '{"pm": {"timeout": 600}}';
+        bench set-config -g meilisearch_host "http://meilisearch:7700";
+        bench set-config -g meilisearch_master_key "$$MEILISEARCH_MASTER_KEY";
+        if [ -n "$$PUBLIC_URL" ]; then bench set-config -g host_name "$$PUBLIC_URL"; fi;
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: "${DB_PORT:-3306}"
+      REDIS_CACHE: ${REDIS_CACHE:-redis-cache:6379}
+      REDIS_QUEUE: ${REDIS_QUEUE:-redis-queue:6379}
+      MEILISEARCH_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:?}
+      PUBLIC_URL: ${PUBLIC_URL:-}
+
+  # ---------------------------------------------------------------------------
+  # One-shot: creates the site with ERPNext and the apps (skipped when it exists)
+  # ---------------------------------------------------------------------------
+  create-site:
+    <<: *app-image
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        set -e;
+        wait-for-it -t 120 db:3306;
+        wait-for-it -t 120 redis-cache:6379;
+        wait-for-it -t 120 redis-queue:6379;
+        export start=`date +%s`;
+        until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] &&
+          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]];
+        do
+          echo "Waiting for sites/common_site_config.json";
+          sleep 5;
+          if (( `date +%s`-start > 120 )); then echo "common_site_config.json is incomplete"; exit 1; fi
+        done;
+        if [ -f "sites/$$FRAPPE_SITE_NAME/site_config.json" ]; then
+          bench --site "$$FRAPPE_SITE_NAME" list-apps >/dev/null;
+          echo "Site $$FRAPPE_SITE_NAME already exists; skipping creation";
+        else
+          apps=();
+          for app in $$PM_INSTALL_APPS; do apps+=(--install-app "$$app"); done;
+          bench new-site "$$FRAPPE_SITE_NAME" --mariadb-user-host-login-scope='%' --admin-password="$$ADMIN_PASSWORD" --db-root-username=root --db-root-password="$$MARIADB_ROOT_PASSWORD" "$${apps[@]}" --set-default;
+        fi;
+    environment:
+      FRAPPE_SITE_NAME: ${FRAPPE_SITE_NAME:?}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Run scripts/bootstrap to generate the secrets}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?}
+      # CI installs the core alone to prove it never needs pm_construction.
+      PM_INSTALL_APPS: ${PM_INSTALL_APPS:-erpnext project_manager pm_construction}
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+
+  # ---------------------------------------------------------------------------
+  # One-shot: ERPNext setup wizard from .env (company, fiscal year, holidays), then migrate.
+  # Both steps are idempotent, so bootstrap runs this on every start.
+  # ---------------------------------------------------------------------------
+  setup-site:
+    <<: *app-image
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        set -e;
+        bench --site "$$FRAPPE_SITE_NAME" execute project_manager.project_manager.setup.wizard.ensure_setup;
+        bench --site "$$FRAPPE_SITE_NAME" migrate;
+    environment:
+      <<: *redis-env
+      FRAPPE_SITE_NAME: ${FRAPPE_SITE_NAME:?}
+      COMPANY_NAME: ${COMPANY_NAME:?}
+      COMPANY_ABBR: ${COMPANY_ABBR:?}
+      COUNTRY: ${COUNTRY:-Vietnam}
+      CURRENCY: ${CURRENCY:-VND}
+      TIMEZONE: ${TIMEZONE:-Asia/Ho_Chi_Minh}
+      LANGUAGE: ${LANGUAGE:-vi}
+      FY_START: ${FY_START:-01-01}
+      WEEKLY_OFF: ${WEEKLY_OFF:-Sunday}
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  # ---------------------------------------------------------------------------
+  # MariaDB
+  # ---------------------------------------------------------------------------
+  db:
+    image: mariadb:11.8.6
+    networks:
+      - frappe_network
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?}
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./mariadb/my_custom.cnf:/etc/mysql/conf.d/my_custom.cnf:ro
+
+  # ---------------------------------------------------------------------------
+  # nginx (reverse proxy + static files). The local/dev overlays publish it.
+  # ---------------------------------------------------------------------------
+  frontend:
+    <<: *app-image
+    restart: on-failure
+    depends_on:
+      - backend
+      - websocket
+    command: ["nginx-entrypoint.sh"]
+    environment:
+      BACKEND: backend:8000
+      FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME:?}
+      SOCKETIO: websocket:9000
+      UPSTREAM_REAL_IP_ADDRESS: ${UPSTREAM_REAL_IP_ADDRESS:-127.0.0.1}
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: ${PROXY_READ_TIMEOUT:-120}
+      CLIENT_MAX_BODY_SIZE: ${CLIENT_MAX_BODY_SIZE:-200m}
+
+  # ---------------------------------------------------------------------------
+  # Socket.IO (realtime)
+  # ---------------------------------------------------------------------------
+  websocket:
+    <<: *app-image
+    restart: on-failure
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+    environment: *redis-env
+
+  redis-cache:
+    image: redis:7.4.9-alpine
+    networks:
+      - frappe_network
+    restart: on-failure
+
+  redis-queue:
+    image: redis:7.4.9-alpine
+    networks:
+      - frappe_network
+    restart: on-failure
+    volumes:
+      - redis-queue-data:/data
+
+  # ---------------------------------------------------------------------------
+  # Workers. "pm" runs the project jobs (progress rollup, scheduling, notification
+  # fan-out) so they never wait behind ERPNext's own jobs.
+  # ---------------------------------------------------------------------------
+  queue-pm:
+    <<: *app-image
+    restart: on-failure
+    command: ["bench", "worker", "--queue", "pm,short"]
+    environment: *redis-env
+
+  queue-short:
+    <<: *app-image
+    restart: on-failure
+    command: ["bench", "worker", "--queue", "short,default"]
+    environment: *redis-env
+
+  queue-long:
+    <<: *app-image
+    restart: on-failure
+    command: ["bench", "worker", "--queue", "long,default,short"]
+    environment: *redis-env
+
+  scheduler:
+    <<: *app-image
+    restart: on-failure
+    command: ["bench", "schedule"]
+
+  # ---------------------------------------------------------------------------
+  # Meilisearch — full-text search. Internal only (frappe_network).
+  # ---------------------------------------------------------------------------
+  meilisearch:
+    image: getmeili/meilisearch:v1.12.8
+    networks:
+      - frappe_network
+    expose:
+      - "7700"
+    restart: on-failure
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:?}
+      MEILI_ENV: production
+      MEILI_MAX_INDEXING_MEMORY: 512MiB
+    volumes:
+      - meilisearch-data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+# =============================================================================
+# Volumes — one per component, so each can be backed up on its own
+# =============================================================================
+volumes:
+  db-data:
+    name: ${DATA_VOLUME_PREFIX:-pm}_db_data
+  redis-queue-data:
+    name: ${DATA_VOLUME_PREFIX:-pm}_redis_queue
+  sites:
+    name: ${DATA_VOLUME_PREFIX:-pm}_sites
+  logs:
+    name: ${DATA_VOLUME_PREFIX:-pm}_logs
+  meilisearch-data:
+    name: ${DATA_VOLUME_PREFIX:-pm}_meilisearch
+
+networks:
+  frappe_network:
+    name: ${DATA_VOLUME_PREFIX:-pm}_network
+    driver: bridge

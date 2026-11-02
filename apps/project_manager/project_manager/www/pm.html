@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>{{ title | e }}</title>
+    {% for href in pm_css %}<link rel="stylesheet" href="{{ href | e }}">
+    {% endfor %}
+</head>
+<body>
+    <div id="app">
+        {% if not pm_js %}
+        <p style="font-family: system-ui, sans-serif; margin: 48px auto; max-width: 560px; line-height: 1.5;">
+            Giao diện chưa được build. Chạy <code>npm ci &amp;&amp; npm run build</code> trong thư mục
+            <code>apps/project_manager/frontend</code> (hoặc build lại image Docker), rồi tải lại trang.
+        </p>
+        {% endif %}
+    </div>
+    <script>window.__PM_BOOT__ = {{ boot_json | safe }};</script>
+    {% for src in pm_js %}<script type="module" src="{{ src | e }}"></script>
+    {% endfor %}
+</body>
+</html>

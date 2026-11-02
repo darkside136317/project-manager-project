@@ -1,0 +1,11 @@
+# =============================================================================
+# Local overlay — run the built image on this machine (the bootstrap default)
+# =============================================================================
+# Publishes the site on 127.0.0.1 only. Developers who edit the source switch
+# COMPOSE_FILE in docker/.env to the dev overlay (scripts/bootstrap --dev).
+# =============================================================================
+
+services:
+  frontend:
+    ports:
+      - "127.0.0.1:${HTTP_PUBLISH_PORT:-8890}:8080"
