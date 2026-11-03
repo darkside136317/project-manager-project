@@ -1,1 +1,2 @@
 # Python packages beyond what the frappe/erpnext image already ships.
+meilisearch==0.43.0

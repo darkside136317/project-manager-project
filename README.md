@@ -8,7 +8,7 @@ Frappe/ERPNext v16 bằng Docker. Kế hoạch đầy đủ: [docs/KE_HOACH.md](
 | `project_manager` | Lõi dùng chung mọi ngành: dự án, công việc, tiến độ, giao việc, cảnh báo, biểu mẫu, phân quyền, SPA `/pm` |
 | `pm_construction` | Lớp nghiệp vụ thi công: hạng mục, khối lượng, nhật ký thi công, vật tư, máy, nghiệm thu. Phụ thuộc lõi; lõi không bao giờ import lớp này |
 
-Trạng thái: **M0** — khung repo tự đủ (Docker, hai app rỗng, bootstrap, CI). Tiến độ: [docs/build-log/00-tong-quan-tien-do.md](docs/build-log/00-tong-quan-tien-do.md).
+Trạng thái: **M1** — nền tảng chung: phân quyền theo dự án, mixin Task của ERPNext, API khung, khung SPA với các trang quản trị . Tiến độ: [docs/build-log/00-tong-quan-tien-do.md](docs/build-log/00-tong-quan-tien-do.md).
 
 ## Chạy thử trên máy
 

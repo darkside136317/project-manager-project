@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "autoname": "field:role_name",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "role_name",
+  "task_visibility",
+  "description",
+  "is_builtin",
+  "capabilities",
+  "required_roles"
+ ],
+ "fields": [
+  {
+   "fieldname": "role_name",
+   "fieldtype": "Data",
+   "label": "Tên vai trò",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "task_visibility",
+   "fieldtype": "Select",
+   "label": "Công việc được thấy",
+   "options": "Tất cả công việc\nChỉ việc được giao",
+   "default": "Tất cả công việc",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Mô tả"
+  },
+  {
+   "fieldname": "is_builtin",
+   "fieldtype": "Check",
+   "label": "Vai trò có sẵn",
+   "read_only": 1
+  },
+  {
+   "fieldname": "capabilities",
+   "fieldtype": "Table",
+   "label": "Chức năng trong dự án",
+   "options": "PM Role Capability"
+  },
+  {
+   "fieldname": "required_roles",
+   "fieldtype": "Table",
+   "label": "Vai trò Frappe cấp kèm",
+   "options": "PM Group Role",
+   "description": "Cấp cho người dùng khi được thêm vào dự án với vai trò này (ví dụ Stock User cho thủ kho)."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Project Role",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "role_name",
+ "track_changes": 1
+}

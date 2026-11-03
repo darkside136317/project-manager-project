@@ -30,7 +30,7 @@ M0 chưa có DocType nghiệp vụ. Các thành phần:
   - Không truyền email, nên wizard không tạo thêm System Manager thứ hai.
   - `ensure_holiday_list()` tạo lịch nghỉ cho năm tài chính: ngày nghỉ hằng tuần cộng **ngày lễ Việt Nam** (thư viện `holidays` có sẵn trong ERPNext, tên tiếng Việt), đặt làm lịch nghỉ mặc định của công ty.
 - `apps/project_manager/project_manager/www/pm.py`: khách → `/login?redirect-to=…` (302, không cache); Website User → `/me`; System User → trang SPA có `window.__PM_BOOT__`.
-- `services/web.py`: `inline_json` escape `<`, `>`, `&`, U+2028, U+2029 thành `\uXXXX`. **Sửa lỗi của bản gốc trong `document_manager`**: bản đó dùng `"<"`, mà trong chuỗi Python thường giá trị này chính là `"<"`, nên không escape được gì.
+- `services/web.py`: `inline_json` escape `<`, `>`, `&`, U+2028, U+2029 thành `\uXXXX`. **Sửa lỗi của bản gốc trong `document_manager`**: bản đó viết `"\u003c"`, mà trong chuỗi Python thường giá trị này chính là `"<"`, nên không escape được gì.
 
 ## 4. Quyết định kỹ thuật
 
@@ -68,9 +68,9 @@ M0 chưa có DocType nghiệp vụ. Các thành phần:
 
 Lệnh kiểm thử: xem README, mục "Kiểm thử".
 
-**Chưa kiểm được:**
-- CI trên GitHub, vì repo chưa được push.
-- Bootstrap trên Linux/macOS thật. Đã chạy `bootstrap.sh` bằng Git Bash, và CI `clean-clone` sẽ chạy trên Ubuntu.
+| CI GitHub Actions trên commit `fa114a0` (static, SPA, lõi một mình, clean clone trên Ubuntu, publish GHCR) | Xanh (người dùng xác nhận) |
+
+**Chưa kiểm được:** bootstrap trên macOS thật (Linux đã được job `clean-clone` của CI chạy trên Ubuntu).
 
 ## 6. Điểm cần chú ý khi duyệt
 

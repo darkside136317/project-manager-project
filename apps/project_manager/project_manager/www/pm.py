@@ -11,7 +11,8 @@ import os
 
 import frappe
 
-from project_manager import __version__
+from project_manager.project_manager.api.boot import build_boot
+from project_manager.project_manager.policy import is_staff
 from project_manager.project_manager.services.web import current_route, inline_json, login_redirect, redirect
 
 SPA_BUILD = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public", "spa")
@@ -31,26 +32,17 @@ def entry_assets() -> tuple[list[str], list[str]]:
     return [ASSET_BASE + entry["file"]], [ASSET_BASE + css for css in entry.get("css", [])]
 
 
-def build_boot() -> dict:
-    user = frappe.session.user
-    return {
-        "user": user,
-        "full_name": frappe.utils.get_fullname(user),
-        "company": frappe.defaults.get_user_default("company") or frappe.defaults.get_global_default("company"),
-        "lang": frappe.local.lang,
-        "version": __version__,
-        "csrf_token": frappe.sessions.get_csrf_token(),
-    }
-
-
 def get_context(context):
     context.no_cache = 1
     if frappe.session.user == "Guest":
         login_redirect(current_route())
-    if frappe.get_cached_value("User", frappe.session.user, "user_type") != "System User":
-        redirect("/me")
+    if not is_staff():
+        # A Frappe account outside the app's permission groups: ERPNext's own desk (or the portal) is theirs.
+        redirect("/desk" if frappe.get_cached_value("User", frappe.session.user, "user_type") == "System User" else "/me")
 
     boot = build_boot()
+    boot["csrf_token"] = frappe.sessions.get_csrf_token()
+    boot["lang"] = frappe.local.lang
     context.boot_json = inline_json(boot)
     context.pm_js, context.pm_css = entry_assets()
     context.title = f"{boot['company'] or 'Quản lý dự án'} — Quản lý dự án"

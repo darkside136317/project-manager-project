@@ -76,6 +76,6 @@ class TestSpaHost(IntegrationTestCase):
     def test_system_user_gets_boot_data(self):
         context = pm.get_context(frappe._dict())
         boot = json.loads(context.boot_json)
-        self.assertEqual(boot["user"], "Administrator")
+        self.assertEqual(boot["user"]["name"], "Administrator")
         self.assertTrue(boot["csrf_token"])
         self.assertEqual(boot["company"], frappe.defaults.get_global_default("company"))

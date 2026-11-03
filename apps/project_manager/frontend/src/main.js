@@ -1,4 +1,9 @@
 import { createApp } from "vue";
 import App from "./App.vue";
+import { initTheme } from "./lib/theme.js";
+import { createAppRouter } from "./router.js";
+import "./styles/tokens.css";
+import "./styles/app.css";
 
-createApp(App).mount("#app");
+initTheme();
+createApp(App).use(createAppRouter()).mount("#app");

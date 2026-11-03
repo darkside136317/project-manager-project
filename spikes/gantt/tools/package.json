@@ -1,0 +1,12 @@
+{
+  "name": "gantt-spike-measure",
+  "private": true,
+  "type": "module",
+  "description": "Runs measure.mjs: every Gantt candidate in Edge (Playwright), desktop and a CPU-throttled phone.",
+  "scripts": {
+    "measure": "node measure.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

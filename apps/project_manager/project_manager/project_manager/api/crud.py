@@ -1,0 +1,224 @@
+"""Generic list / get / save / delete / link search / tree API of the SPA screens.
+
+Thin on purpose: it only resolves the registered DocType, validates the request shape and hands
+over to Frappe (`get_list`, `get_doc().save()`, `delete_doc`) so permissions, validation, naming,
+nested-set maintenance and link checks are exactly Frappe's. Only DocTypes in `constants.REGISTRY`
+are reachable.
+"""
+
+import frappe
+from frappe import _
+from frappe.utils import cint
+
+from project_manager.project_manager.services.errors import retry_on_deadlock
+from project_manager.project_manager.services.queries import bounded_scan, capped_count, total_of_short_page
+from project_manager.project_manager.services.ui import (
+    MAX_TABLE_ROWS,
+    assert_master,
+    assert_staff,
+    describe,
+    link_targets,
+    title_field_of,
+    valid_columns,
+)
+
+MAX_PAGE_SIZE = 200
+ALLOWED_OPS = {"=", "!=", "like", "not like", ">", "<", ">=", "<=", "in", "not in", "is"}
+RECORD_KEYS = ("name", "modified", "creation", "owner", "modified_by")
+
+
+def _parse(value, default):
+    if value in (None, ""):
+        return default
+    return frappe.parse_json(value) if isinstance(value, str) else value
+
+
+def _filters(meta, raw) -> list:
+    """`{field: value}` or `{field: [op, value]}` -> Frappe filter triples, columns checked."""
+    columns = valid_columns(meta)
+    out = []
+    for field, value in (_parse(raw, {}) or {}).items():
+        if field not in columns:
+            frappe.throw(_("Không lọc được theo trường {0}").format(field))
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            op = str(value[0]).lower()
+            if op not in ALLOWED_OPS:
+                frappe.throw(_("Phép so sánh {0} không hợp lệ").format(op))
+            out.append([meta.name, field, op, value[1]])
+        else:
+            out.append([meta.name, field, "=", value])
+    return out
+
+
+def _order_by(meta, order_by) -> str:
+    if not order_by:
+        return "modified desc"
+    field, _sep, direction = str(order_by).strip().partition(" ")
+    direction = (direction or "asc").lower()
+    if field not in valid_columns(meta) or direction not in ("asc", "desc"):
+        frappe.throw(_("Cách sắp xếp không hợp lệ"))
+    return f"{field} {direction}"
+
+
+def _count(doctype, filters, or_filters=None) -> int:
+    rows = frappe.get_list(doctype, filters=filters, or_filters=or_filters, fields=[{"COUNT": "name", "as": "c"}])
+    return rows[0].c if rows else 0
+
+
+@frappe.whitelist()
+def get_list(doctype, search=None, filters=None, order_by=None, page=1, page_size=20):
+    """One page of records: {data, total, page, page_size}."""
+    info = describe(doctype)  # also checks the registry and read permission
+    meta = frappe.get_meta(doctype)
+    page = max(1, cint(page) or 1)
+    page_size = min(MAX_PAGE_SIZE, max(1, cint(page_size) or 20))
+
+    fields = ["name", "modified", *[f for f in info["list_fields"] if f != "name"]]
+    if info["is_tree"]:
+        fields += [f for f in (info["parent_field"], "is_group") if f and f not in fields and f in valid_columns(meta)]
+    conditions = _filters(meta, filters)
+    or_conditions = None
+    search = (search or "").strip()
+    if search:
+        columns = ["name", *info["search_fields"]]
+        or_conditions = [[doctype, c, "like", f"%{search}%"] for c in dict.fromkeys(columns)]
+
+    if or_conditions:  # a text search scans the table: count to a ceiling, not to the end, and do not run for ever
+        with bounded_scan():
+            data = frappe.get_list(
+                doctype, fields=fields, filters=conditions, or_filters=or_conditions,
+                order_by=_order_by(meta, order_by), start=(page - 1) * page_size, page_length=page_size,
+            )
+            total, capped = total_of_short_page(data, page, page_size), False
+            if total is None:
+                total, capped = capped_count(doctype, conditions, or_conditions)
+        return {"data": data, "total": total, "total_capped": capped, "page": page, "page_size": page_size}
+    data = frappe.get_list(
+        doctype, fields=fields, filters=conditions, order_by=_order_by(meta, order_by),
+        start=(page - 1) * page_size, page_length=page_size,
+    )
+    return {"data": data, "total": _count(doctype, conditions), "page": page, "page_size": page_size}
+
+
+def _record(doc, info) -> dict:
+    doc.apply_fieldlevel_read_permissions()
+    keys = [*RECORD_KEYS, *(f["fieldname"] for f in info["fields"])]
+    record = {k: doc.get(k) for k in dict.fromkeys(keys)}
+    for field in info["fields"]:
+        if field["fieldtype"] == "Table":  # the rows the grid edits: only its columns, as plain dicts
+            columns = [c["fieldname"] for c in field["table"]["columns"]]
+            record[field["fieldname"]] = [{c: row.get(c) for c in columns} for row in doc.get(field["fieldname"]) or []]
+    return record
+
+
+def _table_rows(field, rows) -> list:
+    """Rows sent for a table field, reduced to the editable columns (anything else is ignored)."""
+    if not isinstance(rows, list) or len(rows) > MAX_TABLE_ROWS:
+        frappe.throw(_("Bảng {0} không hợp lệ").format(field["label"]))
+    writable = {c["fieldname"] for c in field["table"]["columns"] if not c["read_only"]}
+    return [{k: v for k, v in (row or {}).items() if k in writable} for row in rows]
+
+
+@frappe.whitelist()
+def get(doctype, name):
+    info = describe(doctype)
+    doc = frappe.get_doc(doctype, name)
+    doc.check_permission("read")
+    return {**_record(doc, info), "_rights": _rights(doc)}
+
+
+def _rights(doc) -> dict:
+    """What the user may do with this very record: Frappe's rights for it (project scope included)."""
+    return {"write": bool(doc.has_permission("write")), "delete": bool(doc.has_permission("delete")), "locked": ""}
+
+
+@frappe.whitelist(methods=["POST"])
+def save(doctype, values, name=None):
+    """Create (no `name`) or update a record; only fields the user may write are applied.
+
+    Send back the `modified` you loaded: a concurrent edit is then reported instead of overwritten.
+    When a background job commits a change to the same row between this request's read and write,
+    MariaDB aborts the write (1020); the whole save is then repeated on fresh data.
+    """
+    return retry_on_deadlock(lambda: _save(doctype, values, name))
+
+
+def _save(doctype, values, name):
+    info = describe(doctype)
+    values = _parse(values, {})
+    writable = {f["fieldname"] for f in info["fields"] if not f["read_only"]}
+    if name:
+        doc = frappe.get_doc(doctype, name)
+        doc.check_permission("write")
+        if values.get("modified"):
+            doc.modified = values["modified"]  # Frappe compares it with the database value on save
+        # the name of a record built from a field never changes by editing that field
+        writable.discard(info["name_field"] or "")
+    else:
+        doc = frappe.new_doc(doctype)
+        doc.check_permission("create")
+    info_by_name = {f["fieldname"]: f for f in info["fields"]}
+    tables = {name: f for name, f in info_by_name.items() if f["fieldtype"] == "Table"}
+    for field in writable:
+        if field in values:
+            # "Today" / "Now" are DocType defaults, not values: the document applies them itself
+            if values[field] in ("Today", "Now") and info_by_name[field]["fieldtype"] in ("Date", "Datetime"):
+                continue
+            doc.set(field, _table_rows(tables[field], values[field]) if field in tables else values[field])
+    doc.save() if name else doc.insert()
+    saved = frappe.get_doc(doctype, doc.name)
+    return {**_record(saved, info), "_rights": _rights(saved)}
+
+
+@frappe.whitelist(methods=["POST"])
+def delete(doctype, name):
+    """Delete one record. Frappe refuses (with the list of links) while other records still use it."""
+    assert_master(doctype)
+    retry_on_deadlock(lambda: frappe.delete_doc(doctype, name))
+    return {"name": name}
+
+
+@frappe.whitelist()
+def link_search(doctype, txt="", filters=None, limit=10):
+    """Options of a Link field: [{value, label, description}]."""
+    assert_staff()
+    if doctype not in link_targets():
+        frappe.throw(_("Không tìm kiếm được trong {0}").format(doctype), frappe.PermissionError)
+    meta = frappe.get_meta(doctype)
+    title = title_field_of(meta)
+    fields = ["name"] + ([title] if title != "name" else [])
+    txt = (txt or "").strip()
+    or_filters = [[doctype, c, "like", f"%{txt}%"] for c in fields] if txt else None
+    rows = frappe.get_list(
+        doctype, fields=fields, filters=_filters(meta, filters), or_filters=or_filters,
+        order_by=f"{title} asc", page_length=min(50, max(1, cint(limit) or 10)),
+    )
+    return [{"value": r.name, "label": r.get(title) or r.name,
+             "description": r.name if (r.get(title) or r.name) != r.name else ""} for r in rows]
+
+
+@frappe.whitelist()
+def tree_children(doctype, parent=None, filters=None):
+    """Children of `parent` (roots when empty) of a tree DocType, with their own child counts."""
+    info = describe(doctype)
+    if not info["is_tree"]:
+        frappe.throw(_("{0} không phải danh mục dạng cây").format(doctype))
+    meta = frappe.get_meta(doctype)
+    parent_field = info["parent_field"]
+    conditions = _filters(meta, filters)
+    conditions.append([doctype, parent_field, "=", parent] if parent else [doctype, parent_field, "is", "not set"])
+
+    fields = ["name", "modified", parent_field, *[f for f in info["list_fields"] if f != "name"]]
+    if "is_group" in valid_columns(meta):
+        fields.append("is_group")
+    rows = frappe.get_list(doctype, fields=list(dict.fromkeys(fields)), filters=conditions,
+                           order_by=f"{title_field_of(meta)} asc", page_length=1000)
+    if rows:
+        counts = frappe.get_list(
+            doctype, fields=[parent_field, {"COUNT": "name", "as": "c"}],
+            filters=[[doctype, parent_field, "in", [r.name for r in rows]]], group_by=parent_field,
+        )
+        by_parent = {c.get(parent_field): c.c for c in counts}
+        for row in rows:
+            row["child_count"] = by_parent.get(row.name, 0)
+    return rows

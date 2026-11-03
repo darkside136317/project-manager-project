@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "activity_type",
+  "reference_doctype",
+  "reference_name",
+  "user",
+  "ip_address",
+  "timestamp",
+  "description",
+  "data_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "activity_type",
+   "fieldtype": "Select",
+   "label": "Loại hoạt động",
+   "options": "Xem\nTạo mới\nCập nhật\nXóa\nTìm kiếm\nTải xuống\nXuất dữ liệu\nNhập dữ liệu\nĐăng nhập\nĐăng xuất\nĐổi cấu hình\nQuản lý người dùng\nDọn dẹp nhật ký",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Data",
+   "label": "Loại bản ghi",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Data",
+   "label": "Bản ghi"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "Người thực hiện",
+   "options": "User",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "ip_address",
+   "fieldtype": "Data",
+   "label": "Địa chỉ IP"
+  },
+  {
+   "fieldname": "timestamp",
+   "fieldtype": "Datetime",
+   "label": "Thời gian",
+   "default": "Now",
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Mô tả hoạt động"
+  },
+  {
+   "fieldname": "data_json",
+   "fieldtype": "Long Text",
+   "label": "Dữ liệu (JSON)"
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Audit Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "timestamp",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

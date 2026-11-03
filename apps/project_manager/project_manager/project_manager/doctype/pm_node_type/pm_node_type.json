@@ -1,0 +1,106 @@
+{
+ "actions": [],
+ "autoname": "field:node_type",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "node_type",
+  "is_group",
+  "counts_in_rollup",
+  "requires_accountable",
+  "default_gate_mode",
+  "sort_order",
+  "is_builtin"
+ ],
+ "fields": [
+  {
+   "fieldname": "node_type",
+   "fieldtype": "Data",
+   "label": "Loại nút",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Là nhóm (có việc con)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "counts_in_rollup",
+   "fieldtype": "Check",
+   "label": "Tính vào tiến độ",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requires_accountable",
+   "fieldtype": "Check",
+   "label": "Bắt buộc người chịu trách nhiệm"
+  },
+  {
+   "fieldname": "default_gate_mode",
+   "fieldtype": "Select",
+   "label": "Chuyển giai đoạn",
+   "options": "Thủ công\nCần duyệt\nTự động",
+   "default": "Thủ công"
+  },
+  {
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "label": "Thứ tự"
+  },
+  {
+   "fieldname": "is_builtin",
+   "fieldtype": "Check",
+   "label": "Có sẵn",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Node Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "sort_order",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "node_type",
+ "track_changes": 1
+}

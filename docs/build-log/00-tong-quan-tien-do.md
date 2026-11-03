@@ -4,8 +4,8 @@ Kế hoạch: [../KE_HOACH.md](../KE_HOACH.md). Mỗi phase dừng lại để n
 
 | # | Phase | Trạng thái | Nhật ký |
 |---|---|---|---|
-| M0 | Khởi tạo repo tự đủ | 🟡 Chờ duyệt | [01-m0-khoi-tao.md](01-m0-khoi-tao.md) |
-| M1 | Nền tảng chung (phân quyền, mixin Task, khung SPA, spike Gantt) | ⚪ Chưa bắt đầu | — |
+| M0 | Khởi tạo repo tự đủ | ✅ Xong (fa114a0, CI xanh) | [01-m0-khoi-tao.md](01-m0-khoi-tao.md) |
+| M1 | Nền tảng chung (phân quyền, mixin Task, khung SPA, spike Gantt) | ✅ Đã duyệt, Gantt: tự vẽ canvas | [02-m1-nen-tang.md](02-m1-nen-tang.md) |
 | M2 | Dự án, WBS, giao việc rõ trách nhiệm, rollup | ⚪ Chưa bắt đầu | — |
 | M3 | Biểu mẫu động | ⚪ Chưa bắt đầu | — |
 | M4 | Lịch trình, Gantt, baseline | ⚪ Chưa bắt đầu | — |

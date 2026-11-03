@@ -1,0 +1,21 @@
+{
+  "name": "gantt-spike",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "M1 spike: which Gantt to use (D11). Not part of the app or the image.",
+  "scripts": {
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4173 --strictPort"
+  },
+  "dependencies": {
+    "@svar-ui/vue-gantt": "2.8.1",
+    "dhtmlx-gantt": "10.0.3",
+    "frappe-gantt": "1.2.2",
+    "vue": "^3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vite": "^6.4.4"
+  }
+}

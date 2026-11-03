@@ -1,0 +1,135 @@
+{
+ "actions": [],
+ "autoname": "field:group_name",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "group_name",
+  "description",
+  "roles",
+  "members",
+  "apply_section",
+  "apply_scope",
+  "scope_section",
+  "read_scope",
+  "read_projects",
+  "scope_column",
+  "write_scope",
+  "write_projects"
+ ],
+ "fields": [
+  {
+   "fieldname": "group_name",
+   "fieldtype": "Data",
+   "label": "Tên nhóm",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Mô tả"
+  },
+  {
+   "fieldname": "roles",
+   "fieldtype": "Table",
+   "label": "Nhóm quyền cấp cho thành viên",
+   "options": "PM Group Role"
+  },
+  {
+   "fieldname": "members",
+   "fieldtype": "Table",
+   "label": "Thành viên",
+   "options": "PM Group Member"
+  },
+  {
+   "fieldname": "apply_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "apply_scope",
+   "fieldtype": "Check",
+   "label": "Nhóm này cấp phạm vi dự án"
+  },
+  {
+   "fieldname": "scope_section",
+   "fieldtype": "Section Break",
+   "label": "Phạm vi dự án",
+   "depends_on": "eval:doc.apply_scope"
+  },
+  {
+   "fieldname": "read_scope",
+   "fieldtype": "Select",
+   "label": "Dự án được xem",
+   "options": "Chỉ dự án tham gia\nTất cả dự án\nDự án tham gia và dự án được chọn",
+   "default": "Chỉ dự án tham gia"
+  },
+  {
+   "fieldname": "read_projects",
+   "fieldtype": "Table",
+   "label": "Các dự án được xem thêm",
+   "options": "PM Access Project",
+   "depends_on": "eval:doc.apply_scope && doc.read_scope=='Dự án tham gia và dự án được chọn'"
+  },
+  {
+   "fieldname": "scope_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "write_scope",
+   "fieldtype": "Select",
+   "label": "Dự án được sửa",
+   "options": "Theo vai trò trong dự án\nNhư phạm vi xem\nTheo vai trò và dự án được chọn",
+   "default": "Theo vai trò trong dự án"
+  },
+  {
+   "fieldname": "write_projects",
+   "fieldtype": "Table",
+   "label": "Các dự án được sửa thêm",
+   "options": "PM Access Project",
+   "depends_on": "eval:doc.apply_scope && doc.write_scope=='Theo vai trò và dự án được chọn'"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-03 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Group",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "group_name",
+ "track_changes": 1
+}

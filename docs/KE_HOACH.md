@@ -58,14 +58,14 @@ Trạng thái: ✅ đã chốt · ❓ cần người dùng xác nhận khi duy�
 | D1 | Số app | 2 app trong 1 repo (`project_manager`, `pm_construction`) | 1 app có module "Thi công" | Ranh giới kiểm được bằng CI: chạy test lõi khi không cài lớp thi công. Ngành khác chỉ cần thêm app lớp mới | ✅ |
 | D2 | Nền ERPNext | Image `frappe/erpnext:v16.26.2`, ghim tag | `apps.json` + `bench get-app` | Giống `document_manager`, đã chạy ổn; build nhanh, mọi máy giống nhau | ✅ |
 | D3 | Giai đoạn / Hạng mục / Công tác | Đều là **node Task**, phân loại bằng `pm_node_type` → `PM Node Type` | DocType riêng cho từng cấp | Một cây duy nhất cho rollup, Gantt, phụ thuộc giữa các cấp; một cột `project` để phân quyền | ⚙️ |
-| D4 | Đánh số cây Task | Mixin thay `update_nsm`: dùng `pm_lft/pm_rgt` **trong phạm vi từng dự án**; `lft/rgt` toàn cục để 0 | Giữ nested set của Frappe | Đã kiểm `nestedset.py:90`: mỗi lần thêm task, Frappe chạy `UPDATE tabTask SET rgt=rgt+2` trên **toàn bảng**. Với 1 triệu task, việc này khóa dữ liệu của mọi dự án | ⚙️ |
+| D4 | Đánh số cây Task | Mixin thay `update_nsm_model`: **đường dẫn cây theo từng dự án** (`pm_path` "00001.00003", `pm_sort`, `pm_level`, `pm_wbs_code`); `lft/rgt` toàn cục để 0. *(M1: đổi từ `pm_lft/pm_rgt` sang đường dẫn — thêm/di chuyển chỉ chạm vào một dự án, không phải đánh số lại)* | Giữ nested set của Frappe | Đã kiểm `nestedset.py:90`: mỗi lần thêm task, Frappe chạy `UPDATE tabTask SET rgt=rgt+2` trên **toàn bảng**. Đo ở M1: cập nhật toàn bảng 1 triệu dòng mất 1,2–1,4 s và khóa mọi dự án; thêm task với đường dẫn: 9 ms | ✅ |
 | D5 | Can thiệp ERPNext | 1 mixin Task (`extend_doctype_class`) + flags + doc_events + dừng 1 job lịch | `override_doctype_class` | Phạm vi can thiệp nhỏ nhất; có contract test khi nâng cấp | ✅ |
 | D6 | Thành viên dự án | DocType riêng `PM Project Member` (user, vai trò dự án, hiệu lực); đồng bộ một chiều sang `Project User` | Mở rộng `Project User` | Truy vấn theo user trên mọi dự án có index; sửa thành viên không phải lưu Project | ⚙️ |
 | D7 | Phân quyền | Capabilities toàn cục + `PM Project Role` theo dự án; một hàm `project_scope(user)` | Chỉ dùng User Permission của Frappe | Bê nguyên mô hình `staff_scope` đã kiểm chứng; ERPNext không lọc Project/Task theo người dùng | ✅ |
 | D8 | Tiến độ cộng dồn | ERPNext để `Manual`; rollup tăng dần của hệ thống. Phương pháp: thời lượng (mặc định), task_weight, bằng nhau, **giá trị dự toán** (lớp thi công) | Dùng `percent_complete_method` của ERPNext | ERPNext đếm cả task nhóm, không cộng dồn từ con lên cha, và lưu Project từ bản cache có thể đã cũ | ✅ |
 | D9 | Phụ thuộc task | Bảng `PM Task Dependency` (FS/SS/FF/SF, lag); `depends_on` của ERPNext để trống | Dùng `Task Depends On` | ERPNext chỉ có FS; kiểm tra vòng lặp dừng sau 15 bước; `populate_depends_on` lưu cả task cha theo dây chuyền | ✅ |
 | D10 | Đường găng | Tính ở server (Python, theo ngày làm việc); client chỉ xem trước khi kéo | Tính trong thư viện Gantt | Không phụ thuộc thư viện; dùng chung cho cảnh báo và dự báo | ✅ |
-| D11 | Thư viện Gantt | Spike M1 với 5.000 task trên điện thoại tầm trung: SVAR Gantt (MIT), frappe-gantt, tự vẽ canvas | Bryntum (thương mại), dhtmlx (GPL, đường găng chỉ có ở bản trả phí) | Người dùng chọn thử nghiệm trước | ✅ |
+| D11 | Thư viện Gantt | **Tự vẽ Gantt trên canvas** (người dùng chọn sau spike M1, 2026-11-03): chỉ vẽ phần đang hiển thị, baseline / đường găng / ngày nghỉ / mã WBS vẽ từ dữ liệu server | SVAR (MIT, giật trên điện thoại; baseline và đường găng chỉ có ở PRO), DHTMLX Standard (MIT, xóa `addTaskLayer`, không có lịch ngày làm việc), frappe-gantt (không ảo hóa: 25 s trên điện thoại), Bryntum (thương mại) | Spike: 108 ms vẽ, 7,8 ms/khung cuộn trên điện thoại CPU x4 với 5.000 task; xem `docs/spikes/GANTT.md` | ✅ |
 | D12 | Offline | Hàng đợi gửi lại cho dữ liệu chỉ ghi thêm (tiến độ, nhật ký, ảnh, chấm công, đề xuất vật tư nháp), khóa `client_uuid` | Chỉ online / offline đầy đủ | Người dùng chọn | ✅ |
 | D13 | Dòng thời gian trao đổi | Bảng riêng `PM Activity` (autoincrement, có cột `project`) | Comment / Version của Frappe | Dự kiến 5 triệu dòng; cần lọc theo dự án bằng SQL; dữ liệu không sửa được; cần idempotency cho offline | ⚙️ |
 | D14 | Baseline | Header + bảng dòng chèn hàng loạt + đường cong tính sẵn | Lưu JSON | So sánh theo từng task, vẽ đường cong S không phải quét | ⚙️ |
@@ -119,7 +119,7 @@ Gốc nguồn: `document-manager-project/apps/document_manager/document_manager/
 | DocType | Cách dùng | Custom field (core `pm_`, thi công `pmc_`) |
 |---|---|---|
 | Project | Dự án / công trình | `pm_code`, `pm_state` (Chuẩn bị/Đang thực hiện/Tạm dừng/Đóng/Hủy), `pm_is_template`, `pm_rollup_method`, `pm_holiday_list`, `pm_health`, `pm_spi`, `pm_forecast_end`, `pm_primary_baseline`, `pm_current_phase`, `pm_manager`. Property Setter: `percent_complete_method` = Manual, chỉ đọc |
-| Task | Mọi node WBS | `pm_node_type`, `pm_lft`, `pm_rgt`, `pm_level`, `pm_wbs_code`, `pm_sort`, `pm_duration`, `pm_rollup_weight`, `pm_accountable`, `pm_accountable_team`, `pm_reviewer`, `pm_is_critical`, `pm_total_float`, `pm_forecast_end`, `pm_spi`, `pm_risk`, `pm_is_overdue`, `pm_delay_days`, `pm_delay_reason`, `pm_delay_source`, `pm_planned_value`, `pm_earned_value`, `pm_last_progress_on`, `pm_gate_mode`. Thi công: `pmc_uom`, `pmc_planned_qty`, `pmc_unit_price`, `pmc_estimate_value`, `pmc_done_qty`, `pmc_accepted_qty`, `pmc_boq_item`, `pmc_norm_code` |
+| Task | Mọi node WBS | `pm_node_type`, `pm_path`, `pm_level`, `pm_wbs_code`, `pm_sort`, `pm_duration`, `pm_rollup_weight`, `pm_accountable`, `pm_accountable_team`, `pm_reviewer`, `pm_is_critical`, `pm_total_float`, `pm_forecast_end`, `pm_spi`, `pm_risk`, `pm_is_overdue`, `pm_delay_days`, `pm_delay_reason`, `pm_delay_source`, `pm_planned_value`, `pm_earned_value`, `pm_last_progress_on`, `pm_gate_mode`. Thi công: `pmc_uom`, `pmc_planned_qty`, `pmc_unit_price`, `pmc_estimate_value`, `pmc_done_qty`, `pmc_accepted_qty`, `pmc_boq_item`, `pmc_norm_code` |
 | Timesheet / Timesheet Detail | Chấm công kỹ sư theo task | Không thêm; ràng buộc mọi dòng cùng `parent_project` |
 | Employee, Department, Holiday List | Nhân sự, lịch nghỉ | Không thêm |
 | Warehouse, Location | Kho và vị trí công trường | `pm_project` |
@@ -131,7 +131,7 @@ Gốc nguồn: `document-manager-project/apps/document_manager/document_manager/
 
 | Hành vi | Cách xử lý |
 |---|---|
-| Nested set toàn cục khi thêm task (`nestedset.py:90`) | Mixin `update_nsm` chỉ duy trì `pm_lft/pm_rgt` trong phạm vi dự án. Nhập, nhân bản, sắp xếp: đánh số trong bộ nhớ rồi ghi theo lô. Test cấm gọi `rebuild_tree("Task")` |
+| Nested set toàn cục khi thêm task (`nestedset.py:90`) | Mixin `update_nsm_model` chỉ duy trì đường dẫn cây trong phạm vi dự án (`services/wbs.py`); di chuyển một nhánh là một câu UPDATE trong dự án. Nhập, nhân bản, sắp xếp: `wbs.rebuild` đánh số trong bộ nhớ rồi ghi theo lô |
 | `populate_depends_on` thêm task con vào `depends_on` của cha rồi `parent.save()` (`task.py:303`) | Mixin bỏ qua. Patch xóa các dòng cha↔con hiện có |
 | `reschedule_dependent_tasks` (thực tế không chạy), `check_recursion` dừng sau 15 bước | Mixin bỏ qua; kiểm tra vòng lặp bằng thuật toán sắp xếp tô-pô (Kahn) không giới hạn bước, trên `PM Task Dependency` |
 | Kiểm ngày con ≤ cha, mọi ngày ≤ ngày kết thúc dự án | Mixin nới lỏng: không kiểm ngày thực tế; ngày của node nhóm do rollup tính; vượt ngày dự án thì tự gia hạn (có ghi lý do) hoặc báo lỗi nếu dự án bật chế độ chặt |
@@ -464,10 +464,10 @@ Quy ước cỡ việc: S ≤ 2 tuần, M 3–5 tuần, L 6–8 tuần (đội n
 - **Test:** test_forms (đổi phiên bản không làm hỏng bản đã nộp, validate theo kiểu trường, quyền duyệt), test_gate_close.
 - **DoD:** tạo mẫu nghiệm thu → nộp trên điện thoại → duyệt → task đóng được.
 
-### M4 — Lịch trình và tiến độ trực quan (L) · prompt 4.2
+### M4 — Lịch trình và tiến độ trực quan (L+, thêm 2–3 tuần cho Gantt tự vẽ) · prompt 4.2
 - **Nội dung:**
   - `PM Task Dependency` (FS/SS/FF/SF, lag, phát hiện vòng lặp); CPM ở server; xem trước dời lịch.
-  - Gantt theo thư viện đã chọn (kéo-thả, đường găng, so với baseline).
+  - Gantt tự vẽ trên canvas (phát triển từ `spikes/gantt/src/CanvasView.vue`): kéo, kéo giãn, nối liên kết, phóng to/thu nhỏ, sửa trong lưới; đường găng, baseline, ngày nghỉ; trên điện thoại chỉ xem.
   - Lịch thi công.
   - Baseline nhiều phiên bản; đường cong S từ snapshot.
   - Dự báo ngày hoàn thành.

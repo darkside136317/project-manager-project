@@ -1,0 +1,37 @@
+// Colour of the badge for status-like values.
+const TONES = {
+  "Đã hoàn thành": "success",
+  "Đã index": "success",
+  "Thành công": "success",
+  "Hoàn thành": "success",
+  "Đang xử lý": "info",
+  "Đang chạy": "info",
+  "Chờ xử lý": "info",
+  "Cần thao tác thủ công": "warning",
+  "Chưa hỗ trợ": "warning",
+  "Đã khôi phục": "success",
+  "Đã bỏ qua": "muted",
+  "Chưa xử lý": "warning",
+  "Cảnh báo": "warning",
+  "Đang kiểm kê": "info",
+  "Hoàn thành có lỗi": "warning",
+  "Thất bại": "danger",
+  "Chờ duyệt": "warning",
+  "Chờ lãnh đạo duyệt": "warning",
+  "Đã duyệt": "success",
+  "Đang sử dụng": "info",
+  "Đã giao": "info",
+  "Đã trả": "success",
+  "Từ chối": "danger",
+  "Mới": "warning",
+  "Đã xem": "info",
+  "Đã phản hồi": "success",
+  "Cảnh báo tiêu hủy": "warning",
+  "Một phần": "warning",
+  Lỗi: "danger",
+  "Đã tiêu hủy": "danger",
+  "Phát hiện lỗi": "danger",
+};
+
+export const toneFor = (value) => TONES[value] || "muted";
+export const badgeClass = (value) => `badge badge-${toneFor(value)}`;

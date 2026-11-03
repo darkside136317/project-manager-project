@@ -1,0 +1,176 @@
+// Thin client for Frappe's /api/method/... : CSRF header, JSON, readable errors.
+import { csrfToken } from "./boot.js";
+
+export class ApiError extends Error {
+  constructor(message, { status = 0, excType = "", messages = [] } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.excType = excType;
+    this.messages = messages;
+  }
+}
+
+/** Server messages are HTML snippets (links to the blocking records, <br>): reduce them to plain text. */
+export function stripHtml(html) {
+  return String(html ?? "")
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|li|div)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export function translateServerMessage(message) {
+  const value = stripHtml(message);
+  if (/is not a valid Email Address/i.test(value)) return "Địa chỉ email không hợp lệ.";
+  if (/must be unique/i.test(value)) return "Giá trị này đã tồn tại. Vui lòng nhập giá trị khác.";
+  if (/Cannot delete or cancel because|is linked with/i.test(value)) return "Không thể xóa vì bản ghi đang được sử dụng ở nơi khác.";
+  if (/top-\d+ common password|password.*too common/i.test(value)) return "Mật khẩu quá phổ biến. Vui lòng chọn mật khẩu khác.";
+  if (/^Incorrect password|^Invalid password/i.test(value)) return "Mật khẩu không đúng.";
+  if (/^Missing mandatory fields|^This field is required/i.test(value)) return "Vui lòng điền đủ các trường bắt buộc.";
+  if (/^Not permitted|^Insufficient Permission/i.test(value)) return "Bạn không có quyền thực hiện thao tác này.";
+  return value;
+}
+
+/** `_server_messages` is a JSON list of JSON strings: [{"message": "...", "indicator": "red"}, ...]. */
+export function serverMessages(payload) {
+  const raw = payload && payload._server_messages;
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw)
+      .map((entry) => {
+        try {
+          return translateServerMessage(JSON.parse(entry).message);
+        } catch {
+          return translateServerMessage(entry);
+        }
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export function errorMessage(payload, status) {
+  const messages = serverMessages(payload);
+  if (messages.length) return messages.join("\n");
+  if (status === 403) return "Bạn không có quyền thực hiện thao tác này.";
+  if (status === 404) return "Không tìm thấy dữ liệu yêu cầu.";
+  if (status === 409 || payload?.exc_type === "TimestampMismatchError") {
+    return "Bản ghi vừa được người khác thay đổi. Hãy tải lại rồi sửa tiếp.";
+  }
+  if (status >= 500) return "Máy chủ gặp lỗi. Vui lòng thử lại sau.";
+  return "Không thực hiện được yêu cầu.";
+}
+
+function toQuery(args) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(args)) {
+    if (value === undefined || value === null || value === "") continue;
+    params.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+  }
+  return params.toString();
+}
+
+export function redirectToLogin() {
+  const here = window.location.pathname + window.location.search;
+  window.location.assign(`/login?redirect-to=${encodeURIComponent(here)}`);
+}
+
+/**
+ * Call a whitelisted method. Reads use GET with the arguments in the query string; pass
+ * `{ post: true }` for anything that changes data (Frappe requires POST + CSRF for those).
+ */
+export async function call(method, args = {}, { post = false, fetcher = fetch, loginOn401 = true } = {}) {
+  const headers = { Accept: "application/json", "X-Frappe-CSRF-Token": csrfToken() };
+  let url = `/api/method/${method}`;
+  const init = { method: post ? "POST" : "GET", headers, credentials: "same-origin" };
+  if (post) {
+    headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(args);
+  } else {
+    const query = toQuery(args);
+    if (query) url += `?${query}`;
+  }
+
+  let response;
+  try {
+    response = await fetcher(url, init);
+  } catch {
+    if (post) throw new ApiError("Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.");
+    // A read can safely be retried once after a brief connection drop.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    try {
+      response = await fetcher(url, init);
+    } catch {
+      throw new ApiError("Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.");
+    }
+  }
+  const payload = await response.json().catch(() => ({}));
+  // An expired session sends the user to the login page; a call that legitimately answers 401
+  // (a wrong current password) opts out and shows its message instead.
+  if (loginOn401 && (response.status === 401 || (response.status === 403 && payload?.exc_type === "AuthenticationError"))) {
+    redirectToLogin();
+  }
+  if (!response.ok) {
+    throw new ApiError(errorMessage(payload, response.status), {
+      status: response.status,
+      excType: payload?.exc_type || "",
+      messages: serverMessages(payload),
+    });
+  }
+  return payload.message;
+}
+
+const BASE = "project_manager.project_manager.api";
+export const api = {
+  boot: () => call(`${BASE}.boot.get_boot`),
+  describe: (doctype) => call(`${BASE}.meta.get_doctype_ui`, { doctype }),
+  list: (doctype, params = {}) => call(`${BASE}.crud.get_list`, { doctype, ...params }),
+  get: (doctype, name) => call(`${BASE}.crud.get`, { doctype, name }),
+  save: (doctype, values, name = null) => call(`${BASE}.crud.save`, { doctype, values, name }, { post: true }),
+  remove: (doctype, name) => call(`${BASE}.crud.delete`, { doctype, name }, { post: true }),
+  linkSearch: (doctype, txt = "", filters = null) => call(`${BASE}.crud.link_search`, { doctype, txt, filters }),
+  treeChildren: (doctype, parent = null, filters = null) =>
+    call(`${BASE}.crud.tree_children`, { doctype, parent, filters }),
+  users: {
+    roles: () => call(`${BASE}.users.roles_info`),
+    list: (params = {}) => call(`${BASE}.users.list_users`, params),
+    get: (name) => call(`${BASE}.users.get_user`, { name }),
+    save: (values, name = null) => call(`${BASE}.users.save_user`, { values, name }, { post: true }),
+    setEnabled: (name, enabled) => call(`${BASE}.users.set_enabled`, { name, enabled: enabled ? 1 : 0 }, { post: true }),
+    link: (name) => call(`${BASE}.users.issue_password_link`, { name }, { post: true }),
+    remove: (name) => call(`${BASE}.users.delete_user`, { name }, { post: true }),
+    matrix: () => call(`${BASE}.users.role_matrix`),
+  },
+  permissions: {
+    list: () => call(`${BASE}.permissions.list_groups`),
+    get: (role) => call(`${BASE}.permissions.get_group`, { role }),
+    save: (role, values) => call(`${BASE}.permissions.save_group`, { role, values }, { post: true }),
+    create: (values) => call(`${BASE}.permissions.create_group`, values, { post: true }),
+    remove: (role) => call(`${BASE}.permissions.delete_group`, { role }, { post: true }),
+    reset: (role) => call(`${BASE}.permissions.reset_group`, { role }, { post: true }),
+  },
+  logs: {
+    options: () => call(`${BASE}.logs.filter_options`),
+    list: (params = {}) => call(`${BASE}.logs.list_logs`, params),
+    get: (name) => call(`${BASE}.logs.get_log`, { name }),
+    previewPurge: (before, types) => call(`${BASE}.logs.preview_purge`, { before, activity_types: types }),
+    purge: (before, confirmCount, types) => call(`${BASE}.logs.purge`, { before, confirm_count: confirmCount, activity_types: types }, { post: true }),
+  },
+  monitor: () => call(`${BASE}.admin.monitor`),
+  notifications: {
+    list: (params = {}) => call(`${BASE}.account.get_notifications`, params),
+    markRead: (names = []) => call(`${BASE}.account.mark_notifications_read`, { names }, { post: true }),
+  },
+  // Own endpoint: a wrong current password must not end the session (Frappe's update_password would).
+  changePassword: (oldPassword, newPassword) =>
+    call(`${BASE}.account.change_password`, { old_password: oldPassword, new_password: newPassword }, { post: true, loginOn401: false }),
+};
