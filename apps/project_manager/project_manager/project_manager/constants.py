@@ -32,6 +32,7 @@ CAPABILITIES = (
     ("portfolio.view_all", "Xem mọi dự án", "Dự án"),
     ("project.create", "Tạo dự án mới", "Dự án"),
     ("master.manage", "Quản lý danh mục dùng chung", "Dự án"),
+    ("forms.manage", "Thiết kế mẫu biểu mẫu", "Biểu mẫu"),
     ("perf.view_all", "Xem hiệu suất của mọi người", "Hiệu suất"),
     ("finance.view_all", "Xem chi phí, ngân sách của mọi dự án", "Tài chính"),
     ("logs.view", "Xem, tìm và tải nhật ký hệ thống", "Quản trị"),
@@ -101,17 +102,23 @@ DOCTYPE_LABELS.update({
     "PM Team": "Đội / tổ", "PM Task Assignment": "Phân công", "PM Delay Reason": "Lý do chậm",
     "PM Delay Source": "Khâu gây chậm", "PM Progress Entry": "Cập nhật tiến độ", "PM Snapshot": "Ảnh chụp tiến độ",
 })
+DOCTYPE_LABELS.update({
+    "PM Form Template": "Mẫu biểu mẫu", "PM Form Submission": "Biểu mẫu đã điền",
+    "PM Gate Requirement": "Điều kiện đóng việc",
+})
 ROLE_MATRIX = (
-    ("Dự án", ("Project", "Task", "PM Project Member", "PM Task Assignment", "PM Progress Entry")),
-    ("Danh mục", ("PM Node Type", "PM Project Role", "PM Team", "PM Delay Reason", "PM Delay Source")),
+    ("Dự án", ("Project", "Task", "PM Project Member", "PM Task Assignment", "PM Progress Entry", "PM Form Submission",
+               "PM Gate Requirement")),
+    ("Danh mục", ("PM Node Type", "PM Project Role", "PM Team", "PM Delay Reason", "PM Delay Source", "PM Form Template")),
     ("Quản trị", ("PM Group", "PM Access", "PM Settings", "PM Audit Log")),
 )
 
 # DocTypes whose rows belong to one project (field `project`): each one must have the project-scope hooks
 # (tests/test_hook_coverage.py). Project itself is scoped on its name. TASK_SCOPED ones follow the task visibility
 # too (a member who sees only their assigned tasks sees only those tasks' rows).
-PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot")
-TASK_SCOPED = ("Task", "PM Task Assignment", "PM Progress Entry")
+PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot",
+                  "PM Form Submission", "PM Gate Requirement")
+TASK_SCOPED = ("Task", "PM Task Assignment", "PM Progress Entry", "PM Form Submission", "PM Gate Requirement")
 
 # --- responsibility (PM Task Assignment) -----------------------------------------------------------------------------
 ACCOUNTABLE, RESPONSIBLE, CONSULTED, INFORMED, REVIEWER = (
@@ -135,6 +142,16 @@ DEFAULT_DELAY_SOURCES = (
     "Đội thực hiện", "Bộ phận khác trong công ty", "Nhà cung cấp", "Khách hàng / chủ đầu tư", "Đơn vị tư vấn",
     "Bên ngoài",
 )
+
+# --- dynamic forms (PM Form Template, PM Form Submission) -------------------------------------------------------------
+FORM_DRAFT, FORM_ACTIVE, FORM_RETIRED = "Nháp", "Đang dùng", "Ngừng dùng"
+SUB_DRAFT, SUB_SUBMITTED, SUB_APPROVED, SUB_RETURNED = "Nháp", "Đã nộp", "Đã duyệt", "Trả lại"
+SUB_EDITABLE = (SUB_DRAFT, SUB_RETURNED)
+F_TEXT, F_LONG, F_NUMBER, F_DATE, F_SELECT, F_CHECK, F_TABLE, F_IMAGE, F_SIGNATURE, F_SECTION = (
+    "Văn bản", "Văn bản dài", "Số", "Ngày", "Chọn", "Hộp kiểm", "Bảng", "Ảnh", "Chữ ký", "Tiêu đề mục")
+FORM_FIELD_TYPES = (F_TEXT, F_LONG, F_NUMBER, F_DATE, F_SELECT, F_CHECK, F_TABLE, F_IMAGE, F_SIGNATURE, F_SECTION)
+TABLE_COLUMN_TYPES = (F_TEXT, F_NUMBER, F_DATE, F_SELECT, F_CHECK)
+GATE_FORM_APPROVED, GATE_BLOCKS_CLOSE = "Biểu mẫu đã duyệt", "Đóng việc"
 
 # --- progress roll-up (Project.pm_rollup_method) ------------------------------------------------------------------
 ROLLUP_DURATION, ROLLUP_WEIGHT, ROLLUP_EQUAL = "Theo thời lượng", "Theo trọng số", "Bằng nhau"

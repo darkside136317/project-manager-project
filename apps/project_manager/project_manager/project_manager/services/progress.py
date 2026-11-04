@@ -14,7 +14,7 @@ from frappe.utils import cint, flt, getdate, now_datetime, nowdate
 
 from project_manager.project_manager import constants as C
 from project_manager.project_manager.policy import has_project_capability, is_assigned
-from project_manager.project_manager.services import activity, assignments
+from project_manager.project_manager.services import activity, assignments, gates
 
 UPDATE_CAPABILITIES = ("task.update", "plan.edit", "task.assign")
 
@@ -64,10 +64,12 @@ def report(task: str, progress, note: str = "", delay_reason=None, delay_source=
     before = flt(doc.progress)
     finishing = progress >= 100
     _apply_delay(doc, finishing, delay_reason, delay_source, delay_note)
+    if finishing:
+        gates.assert_ready(task, allow_submitted=bool(doc.get("pm_reviewer")))
     doc.progress = progress
     doc.status = _status_for(doc, progress)
     doc.pm_last_progress_on = now_datetime()
-    if doc.status == C.WORKING and not doc.act_start_date:
+    if doc.status != C.OPEN and not doc.act_start_date:
         doc.act_start_date = nowdate()
     if doc.status == C.COMPLETED:
         doc.act_end_date = doc.act_end_date or nowdate()

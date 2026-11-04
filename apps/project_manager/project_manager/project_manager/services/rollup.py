@@ -20,6 +20,7 @@ import frappe
 from frappe.utils import cint, flt, getdate, nowdate
 
 from project_manager.project_manager import constants as C
+from project_manager.project_manager.services import gates
 from project_manager.project_manager.services.errors import retry_on_deadlock
 
 QUEUE = "pm"
@@ -79,11 +80,12 @@ def mark_dirty(doc) -> None:
     if before is not None and (before.get("parent_task") or "") != (doc.get("parent_task") or ""):
         parents.add(before.get("parent_task") or "")
     if before is not None and before.get("project") and before.project != project:
-        _schedule(before.project, {before.get("parent_task") or ""})
-    _schedule(project, parents)
+        schedule(before.project, {before.get("parent_task") or ""})
+    schedule(project, parents)
 
 
-def _schedule(project: str, parents: set) -> None:
+def schedule(project: str, parents: set) -> None:
+    """After the commit: these groups ("" = the project's roots) must be recomputed."""
     def push():
         frappe.cache.sadd(_key(project), *parents)
         frappe.enqueue("project_manager.project_manager.services.rollup.process", queue=QUEUE, project=project,
@@ -176,11 +178,13 @@ def _aggregate(project: str, names: list) -> dict:
             from `tabTask` where project = %(project)s and parent_task in %(names)s group by parent_task""",
         {"project": project, "names": tuple(names)}, as_dict=True)
     out = {}
+    finished = [row.parent_task for row in rows if row.closed == row.children and row.cancelled < row.children]
+    waiting = gates.blocked(finished)
     for row in rows:
         weight = flt(row.weight)
         progress = round(flt(row.weighted) / weight, 2) if weight else (100.0 if row.closed == row.children else 0.0)
         if row.closed == row.children and row.cancelled < row.children:
-            status = C.COMPLETED
+            status = C.WORKING if row.parent_task in waiting else C.COMPLETED  # all done, but a form is still required
             progress = 100.0
         elif row.cancelled == row.children:
             status = C.CANCELLED

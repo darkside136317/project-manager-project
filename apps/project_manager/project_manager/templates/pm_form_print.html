@@ -1,0 +1,78 @@
+{% autoescape true %}<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 11pt; color: #111; line-height: 1.4; }
+  .company { font-size: 10pt; color: #444; }
+  h1 { font-size: 16pt; text-align: center; margin: 14pt 0 2pt; }
+  .code { text-align: center; color: #444; font-size: 9pt; margin-bottom: 12pt; }
+  .draft { text-align: center; color: #b00020; font-weight: bold; margin-bottom: 10pt; }
+  table.info { width: 100%; border-collapse: collapse; margin-bottom: 12pt; }
+  table.info td { padding: 2pt 4pt; vertical-align: top; }
+  table.info td.k { width: 26%; color: #444; }
+  .section { font-weight: bold; font-size: 12pt; border-bottom: 1px solid #333; margin: 12pt 0 6pt; padding-bottom: 2pt; }
+  .field { margin-bottom: 6pt; page-break-inside: avoid; }
+  .field .k { color: #444; font-size: 9pt; }
+  .field .v { white-space: pre-wrap; min-height: 12pt; }
+  table.grid { width: 100%; border-collapse: collapse; margin-top: 3pt; }
+  table.grid th, table.grid td { border: 1px solid #555; padding: 3pt 4pt; font-size: 9.5pt; text-align: left; vertical-align: top; }
+  table.grid th { background: #eee; }
+  table.grid tr { page-break-inside: avoid; }
+  img.photo { max-width: 48%; max-height: 7cm; margin: 3pt 3pt 0 0; }
+  img.sign { max-width: 6cm; max-height: 2.5cm; }
+  .foot { margin-top: 16pt; padding-top: 6pt; border-top: 1px solid #999; font-size: 9pt; color: #333; }
+</style>
+</head>
+<body>
+  <div class="company">{{ company }}</div>
+  <h1>{{ title }}</h1>
+  <div class="code">Mẫu {{ code }} · Số {{ number }}</div>
+  {% if not approved %}<div class="draft">BẢN CHƯA DUYỆT ({{ state }})</div>{% endif %}
+  <table class="info">
+    <tr><td class="k">Dự án</td><td>{{ project }}</td></tr>
+    {% if task %}<tr><td class="k">Công việc</td><td>{{ task }}</td></tr>{% endif %}
+    {% if submitted %}<tr><td class="k">Người nộp</td><td>{{ submitted }}</td></tr>{% endif %}
+    {% if reviewed and approved %}<tr><td class="k">Người duyệt</td><td>{{ reviewed }}</td></tr>{% endif %}
+  </table>
+
+  {% for row in rows %}
+    {% if row.kind == "Tiêu đề mục" %}
+      <div class="section">{{ row.label }}</div>
+    {% elif row.kind == "Bảng" %}
+      <div class="field">
+        <div class="k">{{ row.label }}</div>
+        <table class="grid">
+          <thead><tr>{% for c in row.columns %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            {% for line in row.rows %}<tr>{% for cell in line %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% elif row.kind == "Ảnh" %}
+      <div class="field">
+        <div class="k">{{ row.label }}</div>
+        {% for src in row.pictures %}<img class="photo" src="{{ src }}">{% endfor %}
+      </div>
+    {% elif row.kind == "Chữ ký" %}
+      <div class="field">
+        <div class="k">{{ row.label }}</div>
+        {% for src in row.pictures %}<img class="sign" src="{{ src }}">{% endfor %}
+      </div>
+    {% else %}
+      <div class="field">
+        <div class="k">{{ row.label }}</div>
+        <div class="v">{{ row.text }}</div>
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  {% if review_note or print_note %}
+  <div class="foot">
+    {% if review_note and approved %}<div>Ghi chú khi duyệt: {{ review_note }}</div>{% endif %}
+    {% if print_note %}<div>{{ print_note }}</div>{% endif %}
+  </div>
+  {% endif %}
+</body>
+</html>
+{% endautoescape %}

@@ -1,0 +1,13 @@
+{
+  "name": "project-manager-e2e-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser flows of the app, through Playwright with an installed browser (Edge or Chrome).",
+  "scripts": {
+    "forms": "node forms_flow.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

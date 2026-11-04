@@ -28,6 +28,7 @@ def seed_all():
     ensure_project_roles()
     ensure_node_types()
     ensure_delay_masters()
+    ensure_form_packs()
     ensure_single_defaults("PM Settings")
     ensure_custom_fields()
     ensure_erpnext_permissions()
@@ -80,6 +81,16 @@ def ensure_delay_masters():
             if not frappe.db.exists(doctype, value):
                 frappe.get_doc({"doctype": doctype, field: value, "sort_order": order * 10, "is_builtin": 1}).insert(
                     ignore_permissions=True)
+
+
+def ensure_form_packs():
+    """The ready-made forms: the core's general ones, and those of any installed layer (hook `pm_form_packs`)."""
+    from project_manager.project_manager.services import form_templates
+    from project_manager.project_manager.setup.form_pack import GENERAL_FORMS
+
+    form_templates.install_pack(GENERAL_FORMS)
+    for path in frappe.get_hooks("pm_form_packs"):
+        form_templates.install_pack(frappe.get_attr(path)())
 
 
 def ensure_single_defaults(doctype: str, overrides: dict | None = None):

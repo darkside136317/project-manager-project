@@ -37,6 +37,12 @@ docker compose exec backend bench --site pm.localhost execute project_manager.pr
 docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - < ../scripts/perf/rollup_check.py
 ```
 
+Kịch bản trình duyệt (cần Edge hoặc Chrome đã cài; tạo một dự án và một mẫu mã `E2E-...`, nên chỉ chạy trên site thử hoặc site dev; ảnh chụp từng bước nằm ở `scripts/e2e/ui/out/`):
+
+```bash
+cd scripts/e2e/ui && npm ci && node forms_flow.mjs
+```
+
 ## Lưu ý
 
 - **Git Bash trên Windows** đổi đường dẫn dạng `/home/...` trong tham số lệnh: đặt `MSYS_NO_PATHCONV=1` khi gọi `docker exec -w /home/...` hoặc truyền đường dẫn container. `scripts/bootstrap.sh` đã đặt sẵn.
@@ -47,5 +53,7 @@ docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/si
 - **MariaDB 11.8** cần `innodb_snapshot_isolation=OFF` (đã đặt trong `docker/mariadb/my_custom.cnf`), nếu không sẽ gặp lỗi 1020 "Record has changed since last read".
 - **Jinja của Frappe v16 không tự escape**: luôn dùng `| e` hoặc `{% autoescape true %}`; dữ liệu JSON nhúng vào `<script>` dùng `services/web.inline_json`.
 - Không ghi secret vào code, tài liệu hay log; chỉ dùng tên biến môi trường.
+- **Frappe lưu các tệp cùng nội dung chung một URL:** test cần hai ảnh "khác nhau" phải dùng nội dung khác nhau.
+- **Heredoc dài có dấu nháy làm hỏng công cụ Bash của Claude:** ghi tệp bằng Write rồi chạy.
 - **Ngày của Task trong ERPNext v16 là Datetime** (`exp_start_date`, `exp_end_date`): so sánh bằng `getdate`, ô `type="date"` lấy 10 ký tự đầu.
 - **Test có `frappe.db.rollback()` toàn phần** (ví dụ job xử lý lỗi) phải mock `frappe.db.rollback`, nếu không savepoint của `PMTestCase` mất và test sau lỗi.

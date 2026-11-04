@@ -48,6 +48,8 @@ def build_boot() -> dict:
            {"group": GROUP_WORK, "items": [
                {"label": "Việc của tôi", "route": f"{SPA_HOME}/viec-cua-toi", "icon": "clipboard-check"},
                {"label": "Dự án", "route": f"{SPA_HOME}/du-an", "icon": "folder-kanban"}]}]
+    if has_capability("forms.manage"):
+        nav[-1]["items"].append({"label": "Mẫu biểu mẫu", "route": f"{SPA_HOME}/bieu-mau-mau", "icon": "clipboard-list"})
     masters = [m for m in MASTERS if _can_read(m["doctype"])]
     if masters:
         nav.append({"group": GROUP_CATALOGUES, "items": [

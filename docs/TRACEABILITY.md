@@ -39,4 +39,11 @@ Mục yêu cầu theo `prompt-project-manager-plan.md` (prompt gốc) và [KE_HO
 | 4.2 Đường cong S từ số liệu hằng ngày | M2 | PM Snapshot, `rollup.take_snapshots`, SPA `SCurve.vue` | `test_rollup.test_daily_snapshot_is_one_row_per_day`, vitest |
 | 4.4 Ai đang làm gì, chậm ở khâu nào | M2 | `services/work.who_does_what`, SPA tab Ai làm gì | `test_work.test_who_does_what` |
 | 3.5 Gửi lại không bị trùng (`client_uuid`) | M2 (báo tiến độ) | PM Progress Entry `client_uuid` unique | `test_progress.test_the_same_send_twice_is_one_report` |
-
+| 4.8 Người dùng tự thiết kế biểu mẫu: văn bản, số, ngày, chọn, hộp kiểm, bảng, ảnh, chữ ký | M3 | PM Form Template, `services/form_templates.py`, SPA `FormTemplatePage.vue`, `DynamicForm.vue` | `test_forms.TestTemplates`, `TestValues`, vitest `forms.test.js`, `forms_flow.mjs` |
+| 4.8 Mẫu có phiên bản, đổi phiên bản không hỏng bản đã nộp | M3 | `form_templates.new_version/activate`, controller PM Form Template | `test_forms.TestTemplates.test_a_new_version_leaves_filled_forms_alone`, `test_a_template_in_use_is_frozen` |
+| 4.8 Biểu mẫu gắn dự án / hạng mục / công việc; Nháp → Đã nộp → Đã duyệt | M3 | PM Form Submission, `services/forms.py`, SPA `FormSubmissionPage.vue`, `TaskForms.vue`, `FormsTab.vue` | `test_forms.TestWorkflow` |
+| 4.8 In PDF, xuất Excel | M3 | `services/form_output.py`, `templates/pm_form_print.html` | `test_forms.TestOutput`, `forms_flow.mjs` |
+| 4.8 Bắt buộc biểu mẫu đã duyệt mới đóng được việc, hạng mục | M3 | PM Gate Requirement, `services/gates.py`, `overrides/task.py`, `rollup._aggregate` | `test_forms.TestGates` |
+| 4.8 Gói mẫu có sẵn, lớp ngành thêm gói riêng | M3 (chung) | `setup/form_pack.py`, hook `pm_form_packs` | `test_forms.TestTemplates.test_the_general_pack_is_installed_once` |
+| 3.5 Ảnh, chữ ký trên điện thoại | M3 | `FormPictures.vue`, `SignaturePad.vue`, `forms.attach` | `test_forms.TestFiles`, `forms_flow.mjs` (390 px, có cảm ứng) |
+| 5.5 Tệp private theo quyền của biểu mẫu; không mượn tệp người khác; escape khi in | M3 | `forms._files`, `forms.attach`, `form_output._picture` | `test_forms.TestFiles`, `TestOutput.test_answers_are_escaped_in_the_print`, `test_pictures_of_another_form_are_not_printed` |

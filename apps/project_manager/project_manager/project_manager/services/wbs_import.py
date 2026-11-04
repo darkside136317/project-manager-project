@@ -15,7 +15,6 @@ The sheet (first worksheet, first row = headers, matched without accents or case
 
 import io
 import re
-import unicodedata
 from datetime import date, datetime
 
 import frappe
@@ -25,6 +24,7 @@ from frappe.utils import flt, getdate
 from project_manager.project_manager import constants as C
 from project_manager.project_manager.policy import assert_project_capability, get_access, project_in
 from project_manager.project_manager.services import assignments, tree
+from project_manager.project_manager.services.text import plain as _plain
 
 MAX_ROWS = 5000
 COLUMNS = {
@@ -39,11 +39,6 @@ COLUMNS = {
 }
 HEADERS = ("Mã WBS", "Tên công việc", "Loại", "Bắt đầu", "Kết thúc", "Trọng số", "Người phụ trách", "Ghi chú")
 CODE = re.compile(r"^\d+(\.\d+)*$")
-
-
-def _plain(text) -> str:
-    text = unicodedata.normalize("NFD", str(text or "")).replace("đ", "d").replace("Đ", "D")
-    return " ".join("".join(c for c in text if unicodedata.category(c) != "Mn").lower().split())
 
 
 def _read(content: bytes) -> list[list]:

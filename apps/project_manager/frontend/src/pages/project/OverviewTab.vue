@@ -43,6 +43,10 @@ const base = computed(() => `/du-an/${encodeURIComponent(name.value)}`);
         {{ data.pending_acceptance }} phân công chưa được nhận.
         <RouterLink :to="`${base}/ai-lam-gi`" class="font-medium underline">Xem ai làm gì</RouterLink>
       </p>
+      <p v-if="data.forms_waiting" class="mt-3 rounded-md bg-warning-soft px-3 py-2 text-sm">
+        {{ data.forms_waiting }} biểu mẫu chờ duyệt.
+        <RouterLink :to="`${base}/bieu-mau`" class="font-medium underline">Xem biểu mẫu</RouterLink>
+      </p>
       <p v-if="!data.sees_all_tasks" class="mt-3 text-xs text-ink-muted">Bạn chỉ thấy các việc được giao cho mình hoặc đội của mình.</p>
     </section>
 

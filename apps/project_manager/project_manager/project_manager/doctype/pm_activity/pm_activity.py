@@ -17,3 +17,4 @@ def on_doctype_update():
     frappe.db.add_index("PM Activity", ["reference_doctype", "reference_name", "name"])
     frappe.db.add_index("PM Activity", ["project", "name"])
     frappe.db.add_index("PM Activity", ["actor", "name"])
+    frappe.db.add_index("PM Activity", ["task", "name"])  # the timeline of a task

@@ -80,6 +80,24 @@ def progress_entry_query(user):
     return _task_query(user, "tabPM Progress Entry", "task")
 
 
+def gate_query(user):
+    return _task_query(user, "tabPM Gate Requirement", "task")
+
+
+def form_submission_query(user):
+    """Forms of the tasks the user sees, and always the user's own (a project-level form has no task)."""
+    access = get_access(user)
+    if access.kind == "admin":
+        return ""
+    table = "`tabPM Form Submission`"
+    scoped = task_sql(access, f"{table}.`task`", f"{table}.`project`")
+    if not scoped:
+        return ""
+    own = f"{table}.`owner` = {frappe.db.escape(access.user)}"
+    projects = project_sql(access.read, f"{table}.`project`")
+    return f"({scoped} OR ({own}{' AND ' + projects if projects else ''}))"
+
+
 # --- has_permission ---------------------------------------------------------------------------------------------------
 
 def _scoped(doc, user, ptype) -> bool:
@@ -152,3 +170,14 @@ has_activity_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user,
 has_snapshot_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
 has_assignment_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
 has_progress_entry_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
+has_gate_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
+
+
+def _form_scoped(doc, ptype, user) -> bool:
+    if _task_scoped(doc, user, ptype, doc.task):
+        return True
+    user = user or frappe.session.user
+    return doc.owner == user and project_in(get_access(user).read, doc.project)
+
+
+has_form_submission_permission = _read_only(lambda doc, ptype, user: _form_scoped(doc, ptype, user))

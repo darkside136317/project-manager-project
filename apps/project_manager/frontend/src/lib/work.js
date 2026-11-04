@@ -84,5 +84,6 @@ export const PROJECT_TABS = [
   { slug: "cong-viec", label: "Công việc", icon: "list-tree" },
   { slug: "kanban", label: "Kanban", icon: "kanban" },
   { slug: "ai-lam-gi", label: "Ai làm gì", icon: "user-check" },
+  { slug: "bieu-mau", label: "Biểu mẫu", icon: "clipboard-list" },
   { slug: "thanh-vien", label: "Thành viên", icon: "users" },
 ];

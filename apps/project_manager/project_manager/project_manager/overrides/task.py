@@ -24,13 +24,14 @@ What changes, and why:
                        on save and refreshed daily), never the status.
 * validate             While a Timesheet is being submitted or cancelled ERPNext forces the status of its tasks to
                        Completed / Working; the status and progress the team set are kept (hooks: Timesheet events).
-                       A leaf's roll-up weight and its lateness are computed here too.
+                       A leaf's roll-up weight and its lateness are computed here too, and a move to Completed is
+                       refused while a required form is not approved (services/gates.py).
 """
 
 import frappe
 from frappe.utils import flt
 
-from project_manager.project_manager.services import rollup, wbs
+from project_manager.project_manager.services import gates, rollup, wbs
 
 OVERRIDDEN = (
     "validate", "update_nsm_model", "populate_depends_on", "check_recursion", "reschedule_dependent_tasks",
@@ -49,6 +50,7 @@ class PMTaskMixin:
         if not self.is_group and self.project:
             self.pm_rollup_weight = rollup.leaf_weight(self, rollup.method_of(self.project))
         self.pm_is_overdue, self.pm_delay_days = rollup.overdue_state(self)
+        gates.check_close(self)
 
     def before_save(self):
         parent = getattr(super(), "before_save", None)

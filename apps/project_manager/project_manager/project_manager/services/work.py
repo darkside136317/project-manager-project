@@ -160,8 +160,7 @@ def task_detail(task: str) -> dict:
     names = _full_names([doc.pm_accountable, doc.pm_reviewer])
     data["accountable_name"] = names.get(doc.pm_accountable)
     data["reviewer_name"] = names.get(doc.pm_reviewer)
-    timeline = frappe.get_list("PM Activity", filters={"reference_doctype": "Task", "reference_name": task,
-                                                       "is_deleted": 0},
+    timeline = frappe.get_list("PM Activity", filters={"task": task, "is_deleted": 0},
                                fields=["name", "activity_type", "actor", "content", "creation", "data"],
                                order_by="name desc", limit_page_length=50)
     actor_names = _full_names(r.actor for r in timeline)

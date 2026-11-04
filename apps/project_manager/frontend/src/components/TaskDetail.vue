@@ -18,6 +18,7 @@ import {
 import Icon from "./Icon.vue";
 import LinkSelect from "./LinkSelect.vue";
 import ReasonDialog from "./ReasonDialog.vue";
+import TaskForms from "./forms/TaskForms.vue";
 
 // One task in full: where it sits, who holds it (and their answers), the progress form, dates, the timeline.
 // Used in a drawer (lists, board, tree) and as the page /pm/cong-viec/:id (links of notifications).
@@ -303,6 +304,8 @@ watch(() => props.name, load, { immediate: true });
           </ul>
         </details>
       </section>
+
+      <TaskForms :task="name" :project="task.project" @changed="load" />
 
       <!-- timeline -->
       <section aria-labelledby="timeline-title">

@@ -48,7 +48,7 @@ async function move(card, status) {
   } catch (e) {
     card.status = before;
     toast(e.message, "error", 8000);
-    if (/quá hạn|lý do chậm/i.test(e.message)) openTask(card.name);
+    if (/quá hạn|lý do chậm|biểu mẫu/i.test(e.message)) openTask(card.name);
   }
   await load();
 }

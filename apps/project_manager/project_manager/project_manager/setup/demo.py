@@ -5,6 +5,7 @@ of history, so every screen of the app has something to show.
     bench --site <site> execute project_manager.project_manager.setup.demo.down
 
 Everything it creates is marked (project code DEMO-*, accounts demo.*@pm.localhost) and `down` removes exactly that.
+Forms: the general checklist is approved on 2.1, waits for approval on 2.3, and is required (not yet filled in) on 2.5.
 The demo accounts get no password: an administrator sets one (Người dùng → Gửi liên kết đặt mật khẩu) to log in as them.
 """
 
@@ -14,9 +15,10 @@ import frappe
 from frappe.utils import add_days, getdate, nowdate
 
 from project_manager.project_manager import constants as C
-from project_manager.project_manager.services import assignments, projects, rollup, tree
+from project_manager.project_manager.services import assignments, forms, gates, projects, rollup, tree
 
 TEMPLATE_CODE = "DEMO-MAU"
+SIGNATURE = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 PROJECT_CODE = "DEMO-NP01"
 PEOPLE = (
     ("demo.quanly@pm.localhost", "Trần Quản Lý", "Quản lý dự án"),
@@ -127,11 +129,30 @@ def up():
         if end <= add_days(today, 15):
             for name in live:
                 frappe.db.set_value("PM Task Assignment", name, "state", C.ACCEPTED, update_modified=False)
+    _forms(project, tasks, eng1, commander)
     rollup.reconcile(project)
     rollup.refresh_overdue_flags()
     _history(project, start, today)
     frappe.db.commit()
     print(f"Demo created: {project} (template {template.name})")
+
+
+def _forms(project, tasks, engineer, commander):
+    """An approved checklist, one waiting for approval, and a task that cannot close until its form is approved."""
+    gates.add(tasks["2.5"].name, "CL-CHUNG", "Kiểm tra trước khi đổ bê tông")
+    today = nowdate()
+    answers = {"ngay_kiem_tra": today, "ket_luan": "Đạt",
+               "danh_muc_kiem_tra": [{"ket_qua": "Đạt"} for _ in range(5)]}
+    decided = None
+    for code in ("2.1", "2.3"):
+        frappe.set_user(engineer)
+        name = forms.start("CL-CHUNG", project, tasks[code].name)["name"]
+        signature = forms.attach(name, SIGNATURE, "chu-ky.png")
+        forms.submit(name, {**answers, "nguoi_kiem_tra_ky": [signature]})
+        decided = decided or name
+    frappe.set_user(commander)
+    forms.approve(decided, "Đạt yêu cầu")
+    frappe.set_user("Administrator")
 
 
 def _set(task, progress, status, reporter, reason=None, source=None):
@@ -165,7 +186,8 @@ def down():
     frappe.set_user("Administrator")
     for code in (PROJECT_CODE, TEMPLATE_CODE):
         for project in frappe.get_all("Project", filters={"pm_code": code}, pluck="name"):
-            for doctype in ("PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Project Member"):
+            for doctype in ("PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Project Member",
+                            "PM Form Submission", "PM Gate Requirement"):
                 frappe.db.delete(doctype, {"project": project})
             frappe.db.delete("Task", {"project": project})
             frappe.delete_doc("Project", project, force=True, ignore_permissions=True)

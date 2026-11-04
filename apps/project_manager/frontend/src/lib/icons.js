@@ -8,7 +8,7 @@ import {
   Warehouse, X, Upload, UserPlus, Copy, Link2, MessageSquare, Undo2, CalendarPlus, PackageCheck, Send, Clock, Printer, Download, SlidersHorizontal, Bookmark, Command, FileImage, FileSpreadsheet, File, CornerDownLeft,
   ChartBar, ClipboardCheck, FolderKanban, IdCard, ListTree, ArrowLeftRight, TrendingUp, FileCode, Play, Ban, History, FileDown, Server, Activity, LockKeyhole, Maximize, Minimize,
   Kanban, UserCheck, CalendarClock, Flag, ArrowUp, ArrowDown, Hourglass, ListChecks, Ellipsis, CornerDownRight, UserX,
-  ThumbsUp, ThumbsDown, ChartLine,
+  ThumbsUp, ThumbsDown, ChartLine, Camera,
 } from "lucide-vue-next";
 
 export const icons = {
@@ -109,6 +109,7 @@ export const icons = {
   "thumbs-up": ThumbsUp,
   "thumbs-down": ThumbsDown,
   "chart-line": ChartLine,
+  camera: Camera,
 };
 
 export const iconFor = (name) => icons[name] || FileText;

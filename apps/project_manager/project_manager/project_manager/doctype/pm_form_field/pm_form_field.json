@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "label",
+  "fieldname",
+  "fieldtype",
+  "reqd",
+  "description",
+  "options",
+  "preset_rows",
+  "unit",
+  "min_value",
+  "max_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Nhãn",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Data",
+   "label": "Mã trường",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Giữ nguyên qua các phiên bản để số liệu các bản nộp ghép được với nhau."
+  },
+  {
+   "fieldname": "fieldtype",
+   "fieldtype": "Select",
+   "label": "Kiểu",
+   "options": "Văn bản\nVăn bản dài\nSố\nNgày\nChọn\nHộp kiểm\nBảng\nẢnh\nChữ ký\nTiêu đề mục",
+   "default": "Văn bản",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reqd",
+   "fieldtype": "Check",
+   "label": "Bắt buộc",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Gợi ý khi điền"
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "label": "Lựa chọn / cột của bảng",
+   "description": "Chọn: mỗi dòng một lựa chọn. Bảng: mỗi dòng một cột, dạng \"Nhãn | Số\" hoặc \"Kết quả | Chọn: Đạt, Không đạt\"."
+  },
+  {
+   "fieldname": "preset_rows",
+   "fieldtype": "Small Text",
+   "label": "Các hàng có sẵn của bảng",
+   "description": "Mỗi dòng là nội dung cột đầu của một hàng (danh mục kiểm tra). Có hàng sẵn thì người điền không thêm, bớt hàng."
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "label": "Đơn vị (Số)"
+  },
+  {
+   "fieldname": "min_value",
+   "fieldtype": "Data",
+   "label": "Nhỏ nhất (Số)"
+  },
+  {
+   "fieldname": "max_value",
+   "fieldtype": "Data",
+   "label": "Lớn nhất (Số)"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Form Field",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

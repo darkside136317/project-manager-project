@@ -45,6 +45,8 @@ permission_query_conditions = {
     "PM Snapshot": _P + "snapshot_query",
     "PM Task Assignment": _P + "assignment_query",
     "PM Progress Entry": _P + "progress_entry_query",
+    "PM Form Submission": _P + "form_submission_query",
+    "PM Gate Requirement": _P + "gate_query",
 }
 has_permission = {
     "Project": _P + "has_project_permission",
@@ -54,6 +56,8 @@ has_permission = {
     "PM Snapshot": _P + "has_snapshot_permission",
     "PM Task Assignment": _P + "has_assignment_permission",
     "PM Progress Entry": _P + "has_progress_entry_permission",
+    "PM Form Submission": _P + "has_form_submission_permission",
+    "PM Gate Requirement": _P + "has_gate_permission",
 }
 
 # =============================================================================

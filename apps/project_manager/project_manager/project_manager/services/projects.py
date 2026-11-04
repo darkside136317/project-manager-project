@@ -17,7 +17,7 @@ from project_manager.project_manager.policy import (
     get_access,
     has_project_capability,
 )
-from project_manager.project_manager.services import activity, rollup, tree
+from project_manager.project_manager.services import activity, gates, rollup, tree
 
 MANAGER_ROLE = "Quản lý dự án"
 LIST_FIELDS = ["name", "project_name", "pm_code", "pm_state", "percent_complete", "expected_start_date",
@@ -95,6 +95,7 @@ def overview(project: str) -> dict:
             from `tabTask` t where project = %s and is_group = 0 and pm_is_overdue = 1{task_filter}
             group by pm_delay_source, pm_delay_reason order by tasks desc limit 20""", project, as_dict=True)
     pending = frappe.db.count("PM Task Assignment", {"project": project, "is_active": 1, "state": C.PENDING})
+    forms_waiting = frappe.db.count("PM Form Submission", {"project": project, "state": C.SUB_SUBMITTED})
     recent = frappe.get_list("PM Activity", filters={"project": project, "is_deleted": 0},
                              fields=["name", "reference_doctype", "reference_name", "task", "activity_type", "actor",
                                      "content", "creation"], order_by="name desc", limit_page_length=20)
@@ -108,7 +109,8 @@ def overview(project: str) -> dict:
         "project": {f: doc.get(f) for f in LIST_FIELDS + ["notes", "percent_complete"]},
         "planned_progress": rollup.planned_progress(doc.expected_start_date, doc.expected_end_date),
         "tasks": {k: cint(v) for k, v in leaf.items()},
-        "phases": phases, "curve": curve, "delays": delays, "pending_acceptance": pending, "recent": recent,
+        "phases": phases, "curve": curve, "delays": delays, "pending_acceptance": pending, "forms_waiting": forms_waiting,
+        "recent": recent,
         "sees_all_tasks": sees_all,
         "can": {cap: has_project_capability(project, cap) for cap in
                 ("project.edit", "project.members", "plan.edit", "task.assign", "task.update", "task.approve")},
@@ -197,7 +199,9 @@ def copy_wbs(source, target) -> int:
                       "priority": row.priority, "task_weight": row.task_weight, "pm_node_type": row.pm_node_type,
                       "exp_start_date": add_days(row.exp_start_date, shift) if row.exp_start_date else None,
                       "exp_end_date": add_days(row.exp_end_date, shift) if row.exp_end_date else None})
-    return len(tree.bulk_insert(target.name, nodes))
+    names = tree.bulk_insert(target.name, nodes)
+    gates.copy_to(dict(zip((n["key"] for n in nodes), names)))
+    return len(names)
 
 
 def update(project: str, values: dict) -> dict:

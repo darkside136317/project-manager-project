@@ -3,6 +3,9 @@ import { boot } from "./lib/boot.js";
 import { pageTitle } from "./lib/page.js";
 import DashboardHome from "./pages/DashboardHome.vue";
 import ForbiddenPage from "./pages/ForbiddenPage.vue";
+import FormSubmissionPage from "./pages/FormSubmissionPage.vue";
+import FormTemplatePage from "./pages/FormTemplatePage.vue";
+import FormTemplatesPage from "./pages/FormTemplatesPage.vue";
 import LogsPage from "./pages/LogsPage.vue";
 import MasterPage from "./pages/MasterPage.vue";
 import MonitorPage from "./pages/MonitorPage.vue";
@@ -21,6 +24,9 @@ export const routes = [
   { path: "/du-an", name: "projects", component: ProjectsPage, meta: { title: "Dự án" } },
   { path: "/du-an/:id/:tab?", name: "project", component: ProjectPage, meta: { title: "Dự án" } },
   { path: "/cong-viec/:id", name: "task", component: TaskPage, meta: { title: "Công việc" } },
+  { path: "/bieu-mau/:id", name: "form", component: FormSubmissionPage, meta: { title: "Biểu mẫu" } },
+  { path: "/bieu-mau-mau", name: "form-templates", component: FormTemplatesPage, meta: { title: "Mẫu biểu mẫu" } },
+  { path: "/bieu-mau-mau/:name", name: "form-template", component: FormTemplatePage, meta: { title: "Mẫu biểu mẫu" } },
   { path: "/danh-muc/:slug", name: "master", component: MasterPage, meta: { title: "Danh mục", sources: ["masters"] } },
   { path: "/quan-tri/nguoi-dung", name: "users", component: UsersPage, meta: { title: "Người dùng" } },
   { path: "/quan-tri/phan-quyen", name: "roles", component: RolesPage, meta: { title: "Phân quyền" } },

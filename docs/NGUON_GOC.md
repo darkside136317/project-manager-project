@@ -40,3 +40,6 @@ Không sao chép: `docker/.env.dev` của `document_manager` (đang bị commit 
 
 Không sao chép thêm từ `document_manager`. Các dịch vụ (giao việc, tiến độ, rollup, cây WBS, mẫu dự án, nhập Excel), các màn hình (Dự án, Kanban, Ai làm gì, Việc của tôi, chi tiết công việc) và biểu đồ đường cong S đều viết mới.
 
+## M3
+
+Không sao chép thêm từ `document_manager`. Biểu mẫu động, bản in, chữ ký và kịch bản Playwright đều viết mới.

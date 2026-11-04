@@ -20,6 +20,7 @@ const more = ref(false);
 const loading = ref(false);
 const error = ref("");
 const open = ref(String(route.query.viec || ""));
+const waiting = ref({ rows: [], total: 0 });
 
 async function load(append = false) {
   loading.value = true;
@@ -36,13 +37,24 @@ async function load(append = false) {
   }
 }
 
+async function loadWaiting() {
+  try {
+    waiting.value = await api.forms.waiting();
+  } catch {
+    waiting.value = { rows: [], total: 0 };  // the list of work above matters more
+  }
+}
+
 function show(name) {
   open.value = name;
   router.replace({ query: { ...route.query, viec: name || undefined } });
 }
 
 watch(done, () => load());
-onMounted(load);
+onMounted(() => {
+  load();
+  loadWaiting();
+});
 </script>
 
 <template>
@@ -59,6 +71,19 @@ onMounted(load);
     <div class="card px-4 py-3"><p class="m-0 text-xs text-ink-muted">Quá hạn</p><p class="m-0 text-xl font-semibold text-danger">{{ counts.late || 0 }}</p></div>
     <div class="card px-4 py-3"><p class="m-0 text-xs text-ink-muted">Sắp đến hạn (2 ngày)</p><p class="m-0 text-xl font-semibold">{{ counts.soon || 0 }}</p></div>
   </div>
+
+  <section v-if="waiting.total && !done" class="mb-4" aria-labelledby="forms-waiting">
+    <h2 id="forms-waiting" class="m-0 mb-2 text-sm font-semibold">Biểu mẫu chờ bạn duyệt ({{ waiting.total }})</h2>
+    <ul class="m-0 list-none space-y-2 p-0">
+      <li v-for="form in waiting.rows" :key="form.name">
+        <RouterLink :to="`/bieu-mau/${form.name}`" class="card flex flex-wrap items-center gap-2 border-warning px-4 py-2 text-sm text-ink no-underline hover:shadow-pop">
+          <span class="font-medium">{{ form.title }}</span>
+          <span class="text-xs text-ink-muted">{{ form.task_label || "Cả dự án" }} · {{ form.who }}</span>
+          <span class="ml-auto text-xs text-ink-muted">{{ formatDate(form.submitted_on) }}</span>
+        </RouterLink>
+      </li>
+    </ul>
+  </section>
 
   <p v-if="error" class="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">{{ error }}</p>
   <EmptyState v-else-if="!loading && !rows.length" icon="clipboard-check" :title="done ? 'Chưa có việc nào xong' : 'Bạn chưa được giao việc nào'" />
