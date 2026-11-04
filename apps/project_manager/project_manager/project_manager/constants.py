@@ -97,15 +97,48 @@ DOCTYPE_LABELS = {
     "PM Project Role": "Vai trò trong dự án", "PM Group": "Nhóm nhân viên", "PM Access": "Phạm vi truy cập",
     "PM Settings": "Thiết lập hệ thống", "PM Audit Log": "Nhật ký hệ thống", "PM Activity": "Dòng thời gian dự án",
 }
+DOCTYPE_LABELS.update({
+    "PM Team": "Đội / tổ", "PM Task Assignment": "Phân công", "PM Delay Reason": "Lý do chậm",
+    "PM Delay Source": "Khâu gây chậm", "PM Progress Entry": "Cập nhật tiến độ", "PM Snapshot": "Ảnh chụp tiến độ",
+})
 ROLE_MATRIX = (
-    ("Dự án", ("Project", "Task", "PM Project Member")),
-    ("Danh mục", ("PM Node Type", "PM Project Role")),
+    ("Dự án", ("Project", "Task", "PM Project Member", "PM Task Assignment", "PM Progress Entry")),
+    ("Danh mục", ("PM Node Type", "PM Project Role", "PM Team", "PM Delay Reason", "PM Delay Source")),
     ("Quản trị", ("PM Group", "PM Access", "PM Settings", "PM Audit Log")),
 )
 
 # DocTypes whose rows belong to one project (field `project`): each one must have the project-scope hooks
-# (tests/test_hook_coverage.py). Project itself is scoped on its name.
-PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity")
+# (tests/test_hook_coverage.py). Project itself is scoped on its name. TASK_SCOPED ones follow the task visibility
+# too (a member who sees only their assigned tasks sees only those tasks' rows).
+PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot")
+TASK_SCOPED = ("Task", "PM Task Assignment", "PM Progress Entry")
+
+# --- responsibility (PM Task Assignment) -----------------------------------------------------------------------------
+ACCOUNTABLE, RESPONSIBLE, CONSULTED, INFORMED, REVIEWER = (
+    "Chịu trách nhiệm chính", "Thực hiện", "Tham vấn", "Được báo", "Duyệt")
+RACI_ROLES = (ACCOUNTABLE, RESPONSIBLE, CONSULTED, INFORMED, REVIEWER)
+PENDING, ACCEPTED, DECLINED, REVOKED, DONE = "Chờ nhận", "Đã nhận", "Từ chối", "Thu hồi", "Hoàn thành"
+LIVE_STATES = (PENDING, ACCEPTED)  # an active assignment in one of these is someone's current work
+
+# ERPNext Task.status values the app uses ("Overdue" is never written: lateness is pm_is_overdue)
+OPEN, WORKING, REVIEW, COMPLETED, CANCELLED = "Open", "Working", "Pending Review", "Completed", "Cancelled"
+STATUS_LABELS = {OPEN: "Chưa làm", WORKING: "Đang làm", REVIEW: "Chờ duyệt", COMPLETED: "Xong", CANCELLED: "Hủy"}
+CLOSED_STATUSES = (COMPLETED, CANCELLED)
+
+# --- delays (seeded once; industry layers add their own) ------------------------------------------------------------
+DEFAULT_DELAY_REASONS = (
+    "Chờ đầu vào từ bên khác", "Thay đổi yêu cầu / thiết kế", "Thiếu nhân lực", "Thiếu vật tư, thiết bị",
+    "Chờ duyệt, nghiệm thu", "Sự cố kỹ thuật", "Yếu tố bên ngoài (thời tiết, pháp lý...)", "Ước lượng sai khối lượng",
+    "Khác",
+)
+DEFAULT_DELAY_SOURCES = (
+    "Đội thực hiện", "Bộ phận khác trong công ty", "Nhà cung cấp", "Khách hàng / chủ đầu tư", "Đơn vị tư vấn",
+    "Bên ngoài",
+)
+
+# --- progress roll-up (Project.pm_rollup_method) ------------------------------------------------------------------
+ROLLUP_DURATION, ROLLUP_WEIGHT, ROLLUP_EQUAL = "Theo thời lượng", "Theo trọng số", "Bằng nhau"
+ROLLUP_METHODS = (ROLLUP_DURATION, ROLLUP_WEIGHT, ROLLUP_EQUAL)
 
 # --- screens of the SPA on the generic list / form API (api/crud.py, api/meta.py) ---------------------------------
 # The generic API refuses every DocType that is not registered here; permissions still decide who may read or change
@@ -115,6 +148,12 @@ MASTERS = [
      "list_fields": ["node_type", "is_group", "counts_in_rollup", "sort_order"]},
     {"doctype": "PM Project Role", "slug": "vai-tro-du-an", "label": "Vai trò trong dự án", "icon": "id-card",
      "list_fields": ["role_name", "task_visibility", "is_builtin"]},
+    {"doctype": "PM Team", "slug": "doi-to", "label": "Đội, tổ", "icon": "users",
+     "list_fields": ["team_name", "team_type", "leader", "is_active"]},
+    {"doctype": "PM Delay Reason", "slug": "ly-do-cham", "label": "Lý do chậm", "icon": "alert-triangle",
+     "list_fields": ["reason", "sort_order", "is_active"]},
+    {"doctype": "PM Delay Source", "slug": "khau-gay-cham", "label": "Khâu gây chậm", "icon": "network",
+     "list_fields": ["source", "sort_order", "is_active"]},
 ]
 ADMIN_SCREENS = [
     {"doctype": "PM Group", "slug": "nhom-nhan-vien", "label": "Nhóm nhân viên", "icon": "users",

@@ -35,3 +35,8 @@ Không sao chép: `docker/.env.dev` của `document_manager` (đang bị commit 
 | DocType PM Role Profile/Capability, PM Group (+Member, Role), PM Access (+Project), PM Settings, PM Audit Log | Staff Role Profile/Capability, Staff Group, Staff Access, Document Manager Settings, Business Activity Log | Tiền tố `PM`, phạm vi theo dự án |
 | `frontend/src/components/*`, `lib/*`, `pages/{MasterList,MasterPage,MasterTree,UsersPage,RolesPage,LogsPage,MonitorPage,SettingsPage,NotFound,ForbiddenPage}.vue`, `styles/` | `frontend/src/...` | Tiền tố `--pm-`, `/pm`, `__PM_BOOT__`; bỏ số hóa, độc giả, phiếu, tìm kiếm lưu trữ; `ProjectPicker` thay `FondsPicker`; viết lại `api.js`, `boot.js`, `router.js`, `DashboardHome.vue`, `MonitorPage.vue` |
 | `frontend/tests/{admin,api,components,lib,permissions}.test.js` | `frontend/tests/` | Dữ liệu và kỳ vọng theo phạm vi dự án |
+
+## M2
+
+Không sao chép thêm từ `document_manager`. Các dịch vụ (giao việc, tiến độ, rollup, cây WBS, mẫu dự án, nhập Excel), các màn hình (Dự án, Kanban, Ai làm gì, Việc của tôi, chi tiết công việc) và biểu đồ đường cong S đều viết mới.
+

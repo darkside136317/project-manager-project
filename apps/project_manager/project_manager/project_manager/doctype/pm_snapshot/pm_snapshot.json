@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "description": "Ảnh chụp tiến độ hằng ngày của dự án và các giai đoạn (dữ liệu cho đường cong S).",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "task",
+  "snapshot_date",
+  "progress",
+  "planned_progress",
+  "total_tasks",
+  "completed_tasks",
+  "overdue_tasks"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Nút (trống = cả dự án)",
+   "options": "Task"
+  },
+  {
+   "fieldname": "snapshot_date",
+   "fieldtype": "Date",
+   "label": "Ngày",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "progress",
+   "fieldtype": "Percent",
+   "label": "Tiến độ thực tế",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "planned_progress",
+   "fieldtype": "Percent",
+   "label": "Tiến độ kế hoạch",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_tasks",
+   "fieldtype": "Int",
+   "label": "Số công việc"
+  },
+  {
+   "fieldname": "completed_tasks",
+   "fieldtype": "Int",
+   "label": "Đã xong"
+  },
+  {
+   "fieldname": "overdue_tasks",
+   "fieldtype": "Int",
+   "label": "Quá hạn"
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Snapshot",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

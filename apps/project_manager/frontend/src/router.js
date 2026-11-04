@@ -6,13 +6,21 @@ import ForbiddenPage from "./pages/ForbiddenPage.vue";
 import LogsPage from "./pages/LogsPage.vue";
 import MasterPage from "./pages/MasterPage.vue";
 import MonitorPage from "./pages/MonitorPage.vue";
+import MyTasksPage from "./pages/MyTasksPage.vue";
 import NotFound from "./pages/NotFound.vue";
+import ProjectPage from "./pages/ProjectPage.vue";
+import ProjectsPage from "./pages/ProjectsPage.vue";
 import RolesPage from "./pages/RolesPage.vue";
+import TaskPage from "./pages/TaskPage.vue";
 import UsersPage from "./pages/UsersPage.vue";
 
 // Frappe serves this app for /pm and every /pm/... path (hooks.website_route_rules).
 export const routes = [
   { path: "/", name: "home", component: DashboardHome, meta: { title: "Tổng quan" } },
+  { path: "/viec-cua-toi", name: "my-tasks", component: MyTasksPage, meta: { title: "Việc của tôi" } },
+  { path: "/du-an", name: "projects", component: ProjectsPage, meta: { title: "Dự án" } },
+  { path: "/du-an/:id/:tab?", name: "project", component: ProjectPage, meta: { title: "Dự án" } },
+  { path: "/cong-viec/:id", name: "task", component: TaskPage, meta: { title: "Công việc" } },
   { path: "/danh-muc/:slug", name: "master", component: MasterPage, meta: { title: "Danh mục", sources: ["masters"] } },
   { path: "/quan-tri/nguoi-dung", name: "users", component: UsersPage, meta: { title: "Người dùng" } },
   { path: "/quan-tri/phan-quyen", name: "roles", component: RolesPage, meta: { title: "Phân quyền" } },

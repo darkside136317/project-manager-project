@@ -27,6 +27,14 @@ docker compose exec backend bench --site pm.localhost migrate
 docker compose exec backend bench --site pm.localhost console
 docker compose exec backend bench --site pm.localhost run-tests --app project_manager --module project_manager.tests.test_bootstrap
 docker compose logs -f backend queue-pm
+docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.setup.demo.up    # dữ liệu mẫu
+docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.setup.demo.down  # gỡ dữ liệu mẫu
+```
+
+Đo rollup (dự án tạm 2.000 việc, tự xóa; worker `queue-pm` phải đang chạy):
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - < ../scripts/perf/rollup_check.py
 ```
 
 ## Lưu ý
@@ -39,3 +47,5 @@ docker compose logs -f backend queue-pm
 - **MariaDB 11.8** cần `innodb_snapshot_isolation=OFF` (đã đặt trong `docker/mariadb/my_custom.cnf`), nếu không sẽ gặp lỗi 1020 "Record has changed since last read".
 - **Jinja của Frappe v16 không tự escape**: luôn dùng `| e` hoặc `{% autoescape true %}`; dữ liệu JSON nhúng vào `<script>` dùng `services/web.inline_json`.
 - Không ghi secret vào code, tài liệu hay log; chỉ dùng tên biến môi trường.
+- **Ngày của Task trong ERPNext v16 là Datetime** (`exp_start_date`, `exp_end_date`): so sánh bằng `getdate`, ô `type="date"` lấy 10 ký tự đầu.
+- **Test có `frappe.db.rollback()` toàn phần** (ví dụ job xử lý lỗi) phải mock `frappe.db.rollback`, nếu không savepoint của `PMTestCase` mất và test sau lỗi.

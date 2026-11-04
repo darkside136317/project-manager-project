@@ -42,12 +42,18 @@ permission_query_conditions = {
     "Task": _P + "task_query",
     "PM Project Member": _P + "project_member_query",
     "PM Activity": _P + "activity_query",
+    "PM Snapshot": _P + "snapshot_query",
+    "PM Task Assignment": _P + "assignment_query",
+    "PM Progress Entry": _P + "progress_entry_query",
 }
 has_permission = {
     "Project": _P + "has_project_permission",
     "Task": _P + "has_task_permission",
     "PM Project Member": _P + "has_project_member_permission",
     "PM Activity": _P + "has_activity_permission",
+    "PM Snapshot": _P + "has_snapshot_permission",
+    "PM Task Assignment": _P + "has_assignment_permission",
+    "PM Progress Entry": _P + "has_progress_entry_permission",
 }
 
 # =============================================================================
@@ -59,6 +65,7 @@ doc_events = {
     doctype: {event: _AUDIT for event in ("after_insert", "on_update", "on_update_after_submit", "on_trash")}
     for doctype in AUDITED_DOCTYPES
 }
+doc_events["Task"] = {"on_update": "project_manager.project_manager.services.progress.record_activity"}
 doc_events["Timesheet"] = {
     "before_submit": _TASK + "timesheet_started",
     "before_cancel": _TASK + "timesheet_started",
@@ -69,8 +76,18 @@ doc_events["Timesheet"] = {
 on_login = "project_manager.project_manager.services.audit.on_login"
 on_logout = "project_manager.project_manager.services.audit.on_logout"
 
+_ROLLUP = "project_manager.project_manager.services.rollup."
 scheduler_events = {
+    "cron": {
+        "*/5 * * * *": [_ROLLUP + "sweep"],
+        "0 7 * * *": ["project_manager.project_manager.services.reminders.send_daily"],
+    },
     "daily": [
         "project_manager.project_manager.services.audit.purge_expired",
+        _ROLLUP + "refresh_overdue_flags",
+        _ROLLUP + "take_snapshots",
+    ],
+    "daily_long": [
+        _ROLLUP + "reconcile_all",
     ],
 }

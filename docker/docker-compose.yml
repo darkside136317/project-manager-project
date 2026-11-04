@@ -31,7 +31,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         ERPNEXT_VERSION: ${ERPNEXT_VERSION:?}
-    restart: on-failure
+    restart: unless-stopped
     environment:
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: "${DB_PORT:-3306}"
@@ -142,7 +142,7 @@ services:
     image: mariadb:11.8.6
     networks:
       - frappe_network
-    restart: on-failure
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 5s
@@ -160,7 +160,7 @@ services:
   # ---------------------------------------------------------------------------
   frontend:
     <<: *app-image
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - backend
       - websocket
@@ -180,7 +180,7 @@ services:
   # ---------------------------------------------------------------------------
   websocket:
     <<: *app-image
-    restart: on-failure
+    restart: unless-stopped
     command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
     environment: *redis-env
 
@@ -188,13 +188,13 @@ services:
     image: redis:7.4.9-alpine
     networks:
       - frappe_network
-    restart: on-failure
+    restart: unless-stopped
 
   redis-queue:
     image: redis:7.4.9-alpine
     networks:
       - frappe_network
-    restart: on-failure
+    restart: unless-stopped
     volumes:
       - redis-queue-data:/data
 
@@ -204,25 +204,25 @@ services:
   # ---------------------------------------------------------------------------
   queue-pm:
     <<: *app-image
-    restart: on-failure
+    restart: unless-stopped
     command: ["bench", "worker", "--queue", "pm,short"]
     environment: *redis-env
 
   queue-short:
     <<: *app-image
-    restart: on-failure
+    restart: unless-stopped
     command: ["bench", "worker", "--queue", "short,default"]
     environment: *redis-env
 
   queue-long:
     <<: *app-image
-    restart: on-failure
+    restart: unless-stopped
     command: ["bench", "worker", "--queue", "long,default,short"]
     environment: *redis-env
 
   scheduler:
     <<: *app-image
-    restart: on-failure
+    restart: unless-stopped
     command: ["bench", "schedule"]
 
   # ---------------------------------------------------------------------------
@@ -234,7 +234,7 @@ services:
       - frappe_network
     expose:
       - "7700"
-    restart: on-failure
+    restart: unless-stopped
     environment:
       MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:?}
       MEILI_ENV: production

@@ -7,6 +7,8 @@ import {
   Network, Pencil, Plus, RefreshCw, Save, ScrollText, Search, Settings, ShieldCheck, Sun, Trash2, Users,
   Warehouse, X, Upload, UserPlus, Copy, Link2, MessageSquare, Undo2, CalendarPlus, PackageCheck, Send, Clock, Printer, Download, SlidersHorizontal, Bookmark, Command, FileImage, FileSpreadsheet, File, CornerDownLeft,
   ChartBar, ClipboardCheck, FolderKanban, IdCard, ListTree, ArrowLeftRight, TrendingUp, FileCode, Play, Ban, History, FileDown, Server, Activity, LockKeyhole, Maximize, Minimize,
+  Kanban, UserCheck, CalendarClock, Flag, ArrowUp, ArrowDown, Hourglass, ListChecks, Ellipsis, CornerDownRight, UserX,
+  ThumbsUp, ThumbsDown, ChartLine,
 } from "lucide-vue-next";
 
 export const icons = {
@@ -93,6 +95,20 @@ export const icons = {
   "lock-keyhole": LockKeyhole,
   maximize: Maximize,
   minimize: Minimize,
+  kanban: Kanban,
+  "user-check": UserCheck,
+  "calendar-clock": CalendarClock,
+  flag: Flag,
+  "arrow-up": ArrowUp,
+  "arrow-down": ArrowDown,
+  hourglass: Hourglass,
+  "list-checks": ListChecks,
+  ellipsis: Ellipsis,
+  "corner-down-right": CornerDownRight,
+  "user-x": UserX,
+  "thumbs-up": ThumbsUp,
+  "thumbs-down": ThumbsDown,
+  "chart-line": ChartLine,
 };
 
 export const iconFor = (name) => icons[name] || FileText;

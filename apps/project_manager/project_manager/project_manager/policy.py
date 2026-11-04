@@ -5,7 +5,8 @@
     kind          "admin" | "user" | "guest"
     read          None for every project, else the set of projects the user may see
     read_tasks    the same for the tasks inside them (None = every project's tasks); projects where the user's only
-                  roles see "Chỉ việc được giao" are left out: their tasks come from assignments (M2)
+                  roles see "Chỉ việc được giao" are left out of it and listed in `assigned_only`
+    assigned_only projects where the user sees only the tasks assigned to them or to one of their teams
     write         None for every project, else the set of projects whose data the user may change
     capabilities  frozenset of global capability codes (permission groups)
 
@@ -204,11 +205,11 @@ def get_access(user: str | None = None) -> frappe._dict:
     if user in memo:
         return memo[user]
     if user == "Guest":
-        access = frappe._dict(user=user, kind="guest", read=set(), read_tasks=set(), write=set(), granted_write=set(),
-                              capabilities=frozenset())
+        access = frappe._dict(user=user, kind="guest", read=set(), read_tasks=set(), assigned_only=set(), write=set(),
+                              granted_write=set(), capabilities=frozenset())
     elif is_admin(user):
-        access = frappe._dict(user=user, kind="admin", read=None, read_tasks=None, write=None, granted_write=set(),
-                              capabilities=capabilities_of(user))
+        access = frappe._dict(user=user, kind="admin", read=None, read_tasks=None, assigned_only=set(), write=None,
+                              granted_write=set(), capabilities=capabilities_of(user))
     else:
         roles = project_roles()
         member = memberships(user)
@@ -235,6 +236,7 @@ def get_access(user: str | None = None) -> frappe._dict:
         access = frappe._dict(user=user, kind="user",
                               read=None if read_all else read,
                               read_tasks=None if read_all else read_tasks,
+                              assigned_only=set() if read_all else read - read_tasks,
                               write=None if write_all else write,
                               granted_write=granted_write,
                               capabilities=capabilities_of(user))
@@ -242,6 +244,59 @@ def get_access(user: str | None = None) -> frappe._dict:
             access.granted_write = None
     memo[user] = access
     return access
+
+
+def teams_of(user: str | None = None) -> set:
+    """The active teams `user` belongs to (work given to a team is theirs too)."""
+    user = user or frappe.session.user
+    memo = _memo().setdefault("teams", {})
+    if user not in memo:
+        teams = set()
+        if frappe.db.table_exists("PM Team Member"):
+            names = frappe.get_all("PM Team Member", filters={"user": user, "parenttype": "PM Team"}, pluck="parent")
+            if names:
+                teams = set(frappe.get_all("PM Team", filters={"name": ["in", names], "is_active": 1}, pluck="name"))
+        memo[user] = teams
+    return memo[user]
+
+
+def assigned_task_sql(user: str, task_column: str) -> str:
+    """SQL condition: the task in `task_column` is actively assigned to `user` or to one of their teams."""
+    owners = [f"`a`.`user` = {frappe.db.escape(user)}"]
+    teams = teams_of(user)
+    if teams:
+        owners.append(f"`a`.`team` IN ({', '.join(frappe.db.escape(t) for t in sorted(teams))})")
+    return (f"{task_column} IN (SELECT `a`.`task` FROM `tabPM Task Assignment` `a` WHERE `a`.`is_active` = 1 "
+            f"AND `a`.`state` IN ('{C.PENDING}', '{C.ACCEPTED}', '{C.DONE}') AND ({' OR '.join(owners)}))")
+
+
+def is_assigned(task: str, user: str | None = None) -> bool:
+    """Is `task` actively assigned to `user` or to one of their teams?"""
+    user = user or frappe.session.user
+    filters = {"task": task, "is_active": 1, "state": ["in", [C.PENDING, C.ACCEPTED, C.DONE]]}
+    if frappe.db.exists("PM Task Assignment", {**filters, "user": user}):
+        return True
+    teams = teams_of(user)
+    return bool(teams) and bool(frappe.db.exists("PM Task Assignment", {**filters, "team": ["in", list(teams)]}))
+
+
+def task_sql(access, task_column: str, project_column: str) -> str:
+    """SQL condition limiting rows that belong to a task to the tasks the user may see ("" = every task)."""
+    full = project_sql(access.read_tasks, project_column)
+    if not access.assigned_only:
+        return full
+    assigned = (f"({project_sql(access.assigned_only, project_column)} AND "
+                f"{assigned_task_sql(access.user, task_column)})")
+    if access.read_tasks is not None and not access.read_tasks:
+        return assigned
+    return f"({full} OR {assigned})"
+
+
+def can_see_task(task: str, project: str | None, user: str | None = None) -> bool:
+    access = get_access(user)
+    if access.kind == "admin" or project_in(access.read_tasks, project):
+        return True
+    return bool(project) and project in access.assigned_only and is_assigned(task, access.user)
 
 
 def project_in(allowed, project) -> bool:

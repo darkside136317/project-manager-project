@@ -79,6 +79,35 @@ def main() -> int:
     status, _, _ = request("/desk")  # Frappe v16 Desk; /app only redirects here
     check("/desk (ERPNext Desk)", status == 200, str(status))
 
+    # M2: projects, WBS, work (read-only: the smoke test leaves no data behind)
+    api = "/api/method/project_manager.project_manager.api."
+
+    def message(path):
+        status, _, body = request(api + path)
+        try:
+            return status, json.loads(body).get("message")
+        except ValueError:
+            return status, body[:200]
+
+    status, listed = message("projects.list_projects")
+    check("project list", status == 200 and isinstance(listed, dict) and "rows" in listed, f"{status} {listed}")
+    status, mine = message("tasks.my_tasks")
+    check("my tasks", status == 200 and isinstance(mine, dict) and "counts" in mine, f"{status} {mine}")
+    projects = (listed or {}).get("rows") if isinstance(listed, dict) else None
+    if projects:
+        project = urllib.parse.quote(projects[0]["name"])
+        for name, path, key in (("project overview", f"projects.overview?project={project}", "tasks"),
+                                ("WBS level", f"wbs.children?project={project}", "rows"),
+                                ("Kanban", f"tasks.kanban?project={project}", "columns"),
+                                ("who does what", f"tasks.who_does_what?project={project}", "rows"),
+                                ("project members", f"projects.members?project={project}", "rows")):
+            status, value = message(path)
+            check(name, status == 200 and isinstance(value, dict) and key in value, f"{status} {value}")
+    else:
+        print("SKIP project screens: no project on this site")
+    status, headers, body = request(api + "wbs.import_template")
+    check("WBS import template (.xlsx)", status == 200 and body[:2] == "PK", f"{status} {headers.get('Content-Type')}")
+
     print(f"{failures} failure(s)")
     return failures
 

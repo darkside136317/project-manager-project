@@ -26,3 +26,17 @@ Mục yêu cầu theo `prompt-project-manager-plan.md` (prompt gốc) và [KE_HO
 | 3.6 SPA ưu tiên điện thoại | M1 (khung) | `frontend/src` (AppShell, SidebarNav, router) | vitest `boot.test.js`; kiểm 390 px không cuộn ngang |
 | 12 Hiệu năng 1 triệu task | M1 | `scripts/perf/volume_check.py` | HIEU_NANG.md (thêm task 9 ms) |
 | D11 Chọn Gantt | M1 (spike) | `spikes/gantt/` | spikes/GANTT.md |
+| 4.1 Mỗi việc đúng một người chịu trách nhiệm chính; RACI; nhận / từ chối có lý do; thu hồi; lịch sử không xóa | M2 | PM Task Assignment, `services/assignments.py`, `api/tasks.py` | `test_assignments` |
+| 4.1 Giao cho đội / tổ / nhà thầu phụ | M2 | PM Team, `policy.teams_of`, `policy.assigned_task_sql` | `test_assignments.test_a_team_member_answers_for_the_team`, `test_a_crew_lead_sees_only_the_tasks_given_to_their_crew` |
+| 4.1 Lịch sử đổi người, đổi hạn kèm lý do | M2 | `services/progress.record_activity` (doc_event Task), `services/tree.update` | `test_progress.test_deadline_changes_need_a_reason_once_work_is_given`, `test_assignments.test_one_accountable_person_at_a_time` |
+| 4.1 Cây WBS: giai đoạn → hạng mục → công việc; thêm, di chuyển, sắp xếp, hủy | M2 | `services/tree.py`, `api/wbs.py`, SPA tab Công việc | `test_tree` |
+| 4.1 Tạo dự án từ mẫu | M2 | `services/projects.create/copy_wbs`, `services/tree.bulk_insert` | `test_tree.test_project_from_a_template` |
+| 4.10 Nhập WBS từ Excel, có chạy thử | M2 | `services/wbs_import.py`, SPA `ImportDialog.vue` | `test_tree.test_import_preview_shows_every_problem`, `test_import_writes_the_tree_and_the_owners` |
+| 4.2 Cập nhật tiến độ theo việc, Kanban, kế hoạch so với thực tế | M2 | `services/progress.py`, `services/work.kanban`, SPA Kanban, `ProgressBar`, `SCurve` | `test_progress`, `test_work`, vitest `work.test.js` |
+| 4.3 Tiến độ tự cộng dồn lên nhóm và dự án | M2 | `services/rollup.py`, `overrides/task.update_project`, queue `pm`, cron `sweep`, `reconcile_all` | `test_rollup`; HIEU_NANG.md (báo tiến độ → % dự án < 5 s) |
+| 4.3 Lý do chậm và khâu gây chậm bắt buộc khi trễ | M2 | PM Delay Reason, PM Delay Source, `progress._apply_delay` | `test_progress.test_late_work_says_why` |
+| 4.3 Cảnh báo đến hạn và quá hạn (bản đơn giản) | M2 | `services/reminders.py` (07:00), `rollup.refresh_overdue_flags` (hằng ngày) | `test_work.test_daily_reminder_once_a_day`, `test_rollup.test_lateness` |
+| 4.2 Đường cong S từ số liệu hằng ngày | M2 | PM Snapshot, `rollup.take_snapshots`, SPA `SCurve.vue` | `test_rollup.test_daily_snapshot_is_one_row_per_day`, vitest |
+| 4.4 Ai đang làm gì, chậm ở khâu nào | M2 | `services/work.who_does_what`, SPA tab Ai làm gì | `test_work.test_who_does_what` |
+| 3.5 Gửi lại không bị trùng (`client_uuid`) | M2 (báo tiến độ) | PM Progress Entry `client_uuid` unique | `test_progress.test_the_same_send_twice_is_one_report` |
+

@@ -6,7 +6,11 @@
  "field_order": [
   "audit_section",
   "enable_audit_log",
-  "audit_retention_days"
+  "audit_retention_days",
+  "work_section",
+  "default_rollup_method",
+  "daily_reminders",
+  "due_soon_days"
  ],
  "fields": [
   {
@@ -27,12 +31,38 @@
    "default": "180",
    "non_negative": 1,
    "description": "Nhật ký cũ hơn số ngày này được phép dọn (tối thiểu 7)."
+  },
+  {
+   "fieldname": "work_section",
+   "fieldtype": "Section Break",
+   "label": "Công việc"
+  },
+  {
+   "fieldname": "default_rollup_method",
+   "fieldtype": "Select",
+   "label": "Cách tính tiến độ mặc định của dự án mới",
+   "options": "Theo thời lượng\nTheo trọng số\nBằng nhau",
+   "default": "Theo thời lượng"
+  },
+  {
+   "fieldname": "daily_reminders",
+   "fieldtype": "Check",
+   "label": "Nhắc việc sắp đến hạn và quá hạn lúc 7 giờ sáng",
+   "default": "1"
+  },
+  {
+   "fieldname": "due_soon_days",
+   "fieldtype": "Int",
+   "label": "Coi là sắp đến hạn trước (ngày)",
+   "default": "2",
+   "non_negative": 1,
+   "depends_on": "eval:doc.daily_reminders"
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-02 12:00:00.000000",
+ "modified": "2026-11-04 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Project Manager",
  "name": "PM Settings",

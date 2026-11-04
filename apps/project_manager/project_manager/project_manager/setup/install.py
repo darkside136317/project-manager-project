@@ -27,6 +27,7 @@ def seed_all():
     ensure_role_profiles()
     ensure_project_roles()
     ensure_node_types()
+    ensure_delay_masters()
     ensure_single_defaults("PM Settings")
     ensure_custom_fields()
     ensure_erpnext_permissions()
@@ -72,6 +73,15 @@ def ensure_node_types():
         frappe.get_doc({"doctype": "PM Node Type", "is_builtin": 1, **spec}).insert(ignore_permissions=True)
 
 
+def ensure_delay_masters():
+    for doctype, field, values in (("PM Delay Reason", "reason", C.DEFAULT_DELAY_REASONS),
+                                   ("PM Delay Source", "source", C.DEFAULT_DELAY_SOURCES)):
+        for order, value in enumerate(values, 1):
+            if not frappe.db.exists(doctype, value):
+                frappe.get_doc({"doctype": doctype, field: value, "sort_order": order * 10, "is_builtin": 1}).insert(
+                    ignore_permissions=True)
+
+
 def ensure_single_defaults(doctype: str, overrides: dict | None = None):
     """Store the default of every field of a Single that has no saved value yet (a Single read before it was saved
     gives 0/empty, not the defaults of its definition)."""
@@ -97,6 +107,10 @@ CUSTOM_FIELDS = {
         {"fieldname": "pm_column", "fieldtype": "Column Break", "insert_after": "pm_state"},
         {"fieldname": "pm_manager", "fieldtype": "Link", "options": "User", "label": "Quản lý dự án",
          "insert_after": "pm_column"},
+        {"fieldname": "pm_rollup_method", "fieldtype": "Select", "label": "Cách tính tiến độ",
+         "options": "\n".join(C.ROLLUP_METHODS), "default": C.ROLLUP_DURATION, "insert_after": "pm_manager"},
+        {"fieldname": "pm_is_template", "fieldtype": "Check", "label": "Là dự án mẫu", "insert_after": "pm_rollup_method",
+         "in_standard_filter": 1},
     ],
     "Task": [
         {"fieldname": "pm_node_type", "fieldtype": "Link", "options": "PM Node Type", "label": "Loại nút",
@@ -109,6 +123,27 @@ CUSTOM_FIELDS = {
          "insert_after": "pm_path", "no_copy": 1},
         {"fieldname": "pm_level", "fieldtype": "Int", "label": "Cấp", "read_only": 1, "hidden": 1,
          "insert_after": "pm_sort", "no_copy": 1},
+        {"fieldname": "pm_responsibility_section", "fieldtype": "Section Break", "label": "Trách nhiệm",
+         "insert_after": "pm_level"},
+        {"fieldname": "pm_accountable", "fieldtype": "Link", "options": "User", "label": "Người chịu trách nhiệm chính",
+         "read_only": 1, "insert_after": "pm_responsibility_section", "in_standard_filter": 1, "no_copy": 1},
+        {"fieldname": "pm_reviewer", "fieldtype": "Link", "options": "User", "label": "Người duyệt", "read_only": 1,
+         "insert_after": "pm_accountable", "no_copy": 1},
+        {"fieldname": "pm_responsibility_column", "fieldtype": "Column Break", "insert_after": "pm_reviewer"},
+        {"fieldname": "pm_is_overdue", "fieldtype": "Check", "label": "Đang trễ hạn", "read_only": 1,
+         "insert_after": "pm_responsibility_column", "no_copy": 1},
+        {"fieldname": "pm_delay_days", "fieldtype": "Int", "label": "Số ngày trễ", "read_only": 1,
+         "insert_after": "pm_is_overdue", "no_copy": 1},
+        {"fieldname": "pm_delay_reason", "fieldtype": "Link", "options": "PM Delay Reason", "label": "Lý do chậm",
+         "insert_after": "pm_delay_days", "no_copy": 1},
+        {"fieldname": "pm_delay_source", "fieldtype": "Link", "options": "PM Delay Source", "label": "Khâu gây chậm",
+         "insert_after": "pm_delay_reason", "no_copy": 1},
+        {"fieldname": "pm_delay_note", "fieldtype": "Small Text", "label": "Giải trình chậm",
+         "insert_after": "pm_delay_source", "no_copy": 1},
+        {"fieldname": "pm_rollup_weight", "fieldtype": "Float", "label": "Trọng số tính tiến độ", "read_only": 1,
+         "hidden": 1, "insert_after": "pm_delay_note", "no_copy": 1},
+        {"fieldname": "pm_last_progress_on", "fieldtype": "Datetime", "label": "Cập nhật tiến độ lần cuối",
+         "read_only": 1, "insert_after": "pm_rollup_weight", "no_copy": 1},
     ],
 }
 
@@ -156,6 +191,8 @@ def ensure_erpnext_permissions():
 def ensure_task_indexes():
     frappe.db.add_index("Task", ["project", "pm_path"])
     frappe.db.add_index("Task", ["project", "parent_task"])
+    frappe.db.add_index("Task", ["pm_accountable", "status"])
+    frappe.db.add_index("Task", ["project", "status"])
 
 
 def ensure_task_paths():

@@ -68,9 +68,16 @@ def drop_project(project: str):
     for name in frappe.get_all("PM Project Member", filters={"project": project}, pluck="name"):
         frappe.delete_doc("PM Project Member", name, force=True, ignore_permissions=True)
     frappe.db.delete("PM Activity", {"project": project})
+    for doctype in ("PM Task Assignment", "PM Progress Entry", "PM Snapshot"):  # history: never deleted by the app
+        frappe.db.delete(doctype, {"project": project})
     for name in frappe.get_all("Task", filters={"project": project}, pluck="name", order_by="pm_level desc"):
         frappe.delete_doc("Task", name, force=True, ignore_permissions=True)
     frappe.delete_doc("Project", project, force=True, ignore_permissions=True, ignore_missing=True)
+
+
+def drop_team(team: str):
+    frappe.db.delete("PM Task Assignment", {"team": team})
+    frappe.delete_doc("PM Team", team, force=True, ignore_permissions=True, ignore_missing=True)
 
 
 def make_task(project: str | None, subject: str, parent: str | None = None, is_group: int = 0, **values) -> str:

@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "task",
+  "project",
+  "entry_date",
+  "reporter",
+  "progress_before",
+  "progress_after",
+  "man_days",
+  "note",
+  "delay_reason",
+  "delay_source",
+  "client_uuid"
+ ],
+ "fields": [
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Công việc",
+   "options": "Task",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "entry_date",
+   "fieldtype": "Date",
+   "label": "Ngày",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reporter",
+   "fieldtype": "Link",
+   "label": "Người cập nhật",
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "progress_before",
+   "fieldtype": "Percent",
+   "label": "Tiến độ trước"
+  },
+  {
+   "fieldname": "progress_after",
+   "fieldtype": "Percent",
+   "label": "Tiến độ sau",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "man_days",
+   "fieldtype": "Float",
+   "label": "Số công"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú"
+  },
+  {
+   "fieldname": "delay_reason",
+   "fieldtype": "Link",
+   "label": "Lý do chậm",
+   "options": "PM Delay Reason"
+  },
+  {
+   "fieldname": "delay_source",
+   "fieldtype": "Link",
+   "label": "Khâu gây chậm",
+   "options": "PM Delay Source"
+  },
+  {
+   "fieldname": "client_uuid",
+   "fieldtype": "Data",
+   "label": "Mã gửi từ máy khách",
+   "unique": 1,
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Progress Entry",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

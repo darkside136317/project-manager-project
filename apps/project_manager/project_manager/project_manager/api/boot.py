@@ -7,6 +7,7 @@ from project_manager.project_manager.constants import ADMIN_SCREENS, MASTERS, SP
 from project_manager.project_manager.policy import capabilities_of, get_access, has_capability, is_admin, is_staff
 
 GROUP_OVERVIEW = "Tổng quan"
+GROUP_WORK = "Công việc"
 GROUP_CATALOGUES = "Danh mục"
 GROUP_ADMIN = "Quản trị"
 
@@ -43,7 +44,10 @@ def _admin_nav() -> list:
 def build_boot() -> dict:
     """Sidebar sections filtered by the user's permissions (the server still enforces every call)."""
     user = frappe.session.user
-    nav = [{"group": GROUP_OVERVIEW, "items": [{"label": "Tổng quan", "route": SPA_HOME, "icon": "layout-dashboard"}]}]
+    nav = [{"group": GROUP_OVERVIEW, "items": [{"label": "Tổng quan", "route": SPA_HOME, "icon": "layout-dashboard"}]},
+           {"group": GROUP_WORK, "items": [
+               {"label": "Việc của tôi", "route": f"{SPA_HOME}/viec-cua-toi", "icon": "clipboard-check"},
+               {"label": "Dự án", "route": f"{SPA_HOME}/du-an", "icon": "folder-kanban"}]}]
     masters = [m for m in MASTERS if _can_read(m["doctype"])]
     if masters:
         nav.append({"group": GROUP_CATALOGUES, "items": [

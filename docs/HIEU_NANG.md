@@ -35,3 +35,23 @@
 **Nhận xét:**
 - Thêm, sửa, di chuyển công việc không phụ thuộc kích thước bảng: chỉ chạm vào dữ liệu của một dự án.
 - Danh sách "mọi dự án" mới nhất trước (319 ms) và phép đếm (169 ms) đạt ngưỡng < 1 s, nhưng là hai chỗ cần theo dõi khi làm màn hình danh sách ở M2. Hướng xử lý: phân trang keyset, `capped_count`, index `(project, modified)` nếu cần.
+
+## M2 — rollup trên dự án 2.000 việc (2026-11-04)
+
+Đo bằng `scripts/perf/rollup_check.py` trên site dev: script tạo một dự án tạm 2.045 việc (5 giai đoạn × 8 nhóm × 50 việc), đo, rồi xóa. Docker Desktop trên Windows 11.
+
+| Thao tác | Thời gian | Ghi chú |
+|---|---|---|
+| Chèn 2.045 việc (mẫu, Excel) kèm tính cộng dồn | 933–977 ms | Giữ trước tên Task một lần, chèn 500 dòng mỗi câu |
+| Đối soát toàn dự án (từ việc lá lên) | 32–45 ms | Mỗi cấp một câu `GROUP BY` |
+| **Báo tiến độ một việc lá → % dự án đổi** (đường thật: lưu → commit → Redis + job queue `pm` → worker) | **trung vị 963 ms, tối đa 3.266 ms** (5 lần) | Mục tiêu < 5 s. Phần lớn thời gian là chờ worker nhận job |
+| Job tự thân: tính lại một nhánh (3 cấp + dự án) | 7,6 ms | Ghi 3 dòng |
+| Job tự thân: 19 nhánh một lúc | 44,9 ms | Ghi 24 dòng |
+| Cây WBS: một cấp | 3 ms | |
+| Kanban (500 thẻ) | 6 ms | |
+| Ai làm gì | 4 ms | |
+| Tổng quan dự án | 15 ms | |
+| Danh sách dự án | 6 ms | |
+
+Các số trên đo với tài khoản Administrator (không có điều kiện phạm vi). Điều kiện phạm vi của người dùng thường đã được đo ở M1 trên 1 triệu việc.
+

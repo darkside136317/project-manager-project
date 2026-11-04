@@ -14,20 +14,23 @@ What changes, and why:
 * check_recursion      Walks ERPNext's dependency table (empty here) and gives up after 15 steps.
 * reschedule_dependent_tasks  Never effective in v16 (it filters on a column nothing fills); scheduling is ours (M4).
 * update_project       Recounted every task of the project and saved a possibly stale cached Project on every task
-                       save. Progress roll-up becomes incremental (M2); until then nothing is recomputed here.
+                       save (and after a delete). Here it only marks the parent for the incremental roll-up, which
+                       runs after the commit on the "pm" queue (services/rollup.py).
 * validate_parent_expected_end_date / validate_parent_project_dates
                        Refused a late task (an actual date after the project's planned end) or a child ending after its
                        parent. Late work must be recordable; dates of group tasks will come from roll-up (M2/M4).
 * update_status        Called by ERPNext's daily job to overwrite the status with "Overdue"; that job is stopped
-                       (setup/install.py) and lateness is a separate flag (M2), never the status.
+                       (setup/install.py) and lateness is a separate flag (pm_is_overdue / pm_delay_days, set here
+                       on save and refreshed daily), never the status.
 * validate             While a Timesheet is being submitted or cancelled ERPNext forces the status of its tasks to
                        Completed / Working; the status and progress the team set are kept (hooks: Timesheet events).
+                       A leaf's roll-up weight and its lateness are computed here too.
 """
 
 import frappe
 from frappe.utils import flt
 
-from project_manager.project_manager.services import wbs
+from project_manager.project_manager.services import rollup, wbs
 
 OVERRIDDEN = (
     "validate", "update_nsm_model", "populate_depends_on", "check_recursion", "reschedule_dependent_tasks",
@@ -43,6 +46,9 @@ class PMTaskMixin:
             if kept:
                 self.status, self.progress = kept.status, flt(kept.progress)
         super().validate()
+        if not self.is_group and self.project:
+            self.pm_rollup_weight = rollup.leaf_weight(self, rollup.method_of(self.project))
+        self.pm_is_overdue, self.pm_delay_days = rollup.overdue_state(self)
 
     def before_save(self):
         parent = getattr(super(), "before_save", None)
@@ -65,7 +71,9 @@ class PMTaskMixin:
         pass
 
     def update_project(self):
-        pass
+        # on_update and after_delete
+        if rollup.changed(self):
+            rollup.mark_dirty(self)
 
     def validate_parent_expected_end_date(self):
         pass
