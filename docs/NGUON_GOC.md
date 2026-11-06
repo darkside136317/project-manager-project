@@ -43,3 +43,7 @@ Không sao chép thêm từ `document_manager`. Các dịch vụ (giao việc, t
 ## M3
 
 Không sao chép thêm từ `document_manager`. Biểu mẫu động, bản in, chữ ký và kịch bản Playwright đều viết mới.
+
+## M4
+
+Không sao chép thêm từ `document_manager`. `GanttChart.vue` phát triển từ `spikes/gantt/src/CanvasView.vue` của chính repo này (spike ở M1). Đường găng, dự báo, baseline, lịch và các tab đều viết mới.

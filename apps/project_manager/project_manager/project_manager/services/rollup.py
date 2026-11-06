@@ -328,13 +328,17 @@ def take_snapshots(day=None) -> int:
     day = getdate(day or nowdate())
     written = 0
     projects = frappe.get_all("Project", filters={"pm_state": ["not in", ["Đóng", "Hủy"]], "pm_is_template": 0},
-                              fields=["name", "percent_complete", "expected_start_date", "expected_end_date"])
+                              fields=["name", "percent_complete", "expected_start_date", "expected_end_date", "pm_spi",
+                                      "pm_forecast_end"])
     for project in projects:
         counts = frappe.db.sql(
             f"""select count(*) as total, sum(status = '{C.COMPLETED}') as done, sum(pm_is_overdue = 1) as late
                 from `tabTask` where project = %s and is_group = 0""", project.name, as_dict=True)[0]
-        written += _snapshot(project.name, None, day, project.percent_complete,
-                             planned_progress(project.expected_start_date, project.expected_end_date, day), counts)
+        from project_manager.project_manager.services import baseline
+
+        planned = baseline.planned_on(project.name, day, planned_progress(project.expected_start_date, project.expected_end_date, day))
+        written += _snapshot(project.name, None, day, project.percent_complete, planned, counts,
+                             {"spi": project.pm_spi, "forecast_end": project.pm_forecast_end})
         for phase in frappe.get_all("Task", filters={"project": project.name, "pm_level": 1},
                                     fields=["name", "progress", "exp_start_date", "exp_end_date"]):
             written += _snapshot(project.name, phase.name, day, phase.progress,
@@ -343,9 +347,9 @@ def take_snapshots(day=None) -> int:
     return written
 
 
-def _snapshot(project, task, day, progress, planned, counts) -> int:
+def _snapshot(project, task, day, progress, planned, counts, extra=None) -> int:
     filters = {"project": project, "task": task or ("is", "not set"), "snapshot_date": day}
-    values = {"progress": flt(progress), "planned_progress": planned}
+    values = {"progress": flt(progress), "planned_progress": planned, **(extra or {})}
     if counts:
         values.update(total_tasks=cint(counts.total), completed_tasks=cint(counts.done), overdue_tasks=cint(counts.late))
     existing = frappe.db.get_value("PM Snapshot", filters, "name")

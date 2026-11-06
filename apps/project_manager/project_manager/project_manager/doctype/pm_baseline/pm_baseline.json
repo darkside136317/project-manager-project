@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "baseline_no",
+  "title",
+  "is_primary",
+  "taken_on",
+  "taken_by",
+  "start_date",
+  "end_date",
+  "task_count",
+  "total_weight",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "reqd": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "baseline_no",
+   "fieldtype": "Int",
+   "label": "Số",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Tên",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_primary",
+   "fieldtype": "Check",
+   "label": "Là baseline chính",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "taken_on",
+   "fieldtype": "Datetime",
+   "label": "Lúc chụp",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "taken_by",
+   "fieldtype": "Link",
+   "label": "Người chụp",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Bắt đầu",
+   "read_only": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "Kết thúc",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "task_count",
+   "fieldtype": "Int",
+   "label": "Số việc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_weight",
+   "fieldtype": "Float",
+   "label": "Tổng trọng số",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Baseline",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}

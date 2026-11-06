@@ -82,8 +82,11 @@ export function clientUuid() {
 export const PROJECT_TABS = [
   { slug: "tong-quan", label: "Tổng quan", icon: "layout-dashboard" },
   { slug: "cong-viec", label: "Công việc", icon: "list-tree" },
+  { slug: "gantt", label: "Gantt", icon: "chart-bar" },
   { slug: "kanban", label: "Kanban", icon: "kanban" },
+  { slug: "lich", label: "Lịch", icon: "calendar-clock" },
   { slug: "ai-lam-gi", label: "Ai làm gì", icon: "user-check" },
   { slug: "bieu-mau", label: "Biểu mẫu", icon: "clipboard-list" },
+  { slug: "baseline", label: "Baseline", icon: "history" },
   { slug: "thanh-vien", label: "Thành viên", icon: "users" },
 ];

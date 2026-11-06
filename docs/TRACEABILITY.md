@@ -47,3 +47,10 @@ Mục yêu cầu theo `prompt-project-manager-plan.md` (prompt gốc) và [KE_HO
 | 4.8 Gói mẫu có sẵn, lớp ngành thêm gói riêng | M3 (chung) | `setup/form_pack.py`, hook `pm_form_packs` | `test_forms.TestTemplates.test_the_general_pack_is_installed_once` |
 | 3.5 Ảnh, chữ ký trên điện thoại | M3 | `FormPictures.vue`, `SignaturePad.vue`, `forms.attach` | `test_forms.TestFiles`, `forms_flow.mjs` (390 px, có cảm ứng) |
 | 5.5 Tệp private theo quyền của biểu mẫu; không mượn tệp người khác; escape khi in | M3 | `forms._files`, `forms.attach`, `form_output._picture` | `test_forms.TestFiles`, `TestOutput.test_answers_are_escaped_in_the_print`, `test_pictures_of_another_form_are_not_printed` |
+| 4.2 Phụ thuộc FS/SS/FF/SF có độ trễ, phát hiện vòng tròn | M4 | PM Task Dependency, `services/schedule.add_dependency`, `services/cpm.order`, SPA `TaskLinks.vue` | `test_cpm.test_circles_are_found_at_any_length`, `test_schedule.TestDependencies` |
+| D10 Đường găng tính ở server, theo ngày làm việc | M4 | `services/cpm.py`, `services/workdays.py`, `schedule.compute_plan` | `test_cpm`, `test_schedule.TestPlan` |
+| 4.2 Gantt: phụ thuộc, đường găng, kéo-thả, so với baseline; điện thoại chỉ xem | M4 | `GanttChart.vue`, `lib/gantt.js`, `GanttTab.vue`, `schedule.gantt` | vitest `gantt.test.js`, `schedule_flow.mjs`, HIEU_NANG.md |
+| 4.2 Xem trước khi dời lịch, việc sau bị đẩy theo, có lý do và lịch sử | M4 | `schedule.preview/apply`, `MovePreview.vue`, `activity.record_many` | `test_schedule.TestMoving`, `schedule_flow.mjs` |
+| 4.2 Lịch thi công | M4 | `schedule.calendar_view`, `CalendarTab.vue` | `test_schedule.TestScreens.test_calendar`, vitest |
+| 4.2 Baseline nhiều phiên bản, so sánh trên Gantt và bảng | M4 | PM Baseline (+Task, Curve), `services/baseline.py`, `BaselineTab.vue` | `test_schedule.TestBaseline` |
+| 4.2 Đường cong S kế hoạch và thực tế, chênh lệch ngày, dự báo ngày hoàn thành | M4 | `baseline.curve_points/curve_for_chart`, `schedule.compute_forecast`, `SCurve.vue`, `OverviewTab.vue` | `test_schedule.TestForecast`, `test_baseline_move_gantt_forecast` |

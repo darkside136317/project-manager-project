@@ -108,6 +108,7 @@ onMounted(load);
           <span>{{ row.done }}/{{ row.tasks }} việc xong</span>
           <span v-if="row.late" class="font-medium text-danger">{{ row.late }} việc quá hạn</span>
           <span>{{ formatDate(row.expected_start_date) }} → {{ formatDate(row.expected_end_date) }}</span>
+          <span v-if="row.pm_forecast_end" :class="row.expected_end_date && row.pm_forecast_end > row.expected_end_date ? 'font-medium text-danger' : ''">Dự báo xong {{ formatDate(row.pm_forecast_end) }}</span>
         </div>
       </RouterLink>
     </li>

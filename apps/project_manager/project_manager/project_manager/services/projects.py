@@ -17,13 +17,13 @@ from project_manager.project_manager.policy import (
     get_access,
     has_project_capability,
 )
-from project_manager.project_manager.services import activity, gates, rollup, tree
+from project_manager.project_manager.services import activity, baseline, gates, rollup, schedule, tree
 
 MANAGER_ROLE = "Quản lý dự án"
 LIST_FIELDS = ["name", "project_name", "pm_code", "pm_state", "percent_complete", "expected_start_date",
-               "expected_end_date", "pm_manager", "pm_is_template", "pm_rollup_method", "company"]
+               "expected_end_date", "pm_manager", "pm_is_template", "pm_rollup_method", "company", "pm_forecast_end", "pm_spi"]
 EDITABLE = ("project_name", "pm_code", "pm_state", "expected_start_date", "expected_end_date", "pm_manager",
-            "pm_rollup_method", "pm_is_template", "notes")
+            "pm_rollup_method", "pm_is_template", "notes", "pm_holiday_list")
 MAX_PAGE = 200
 
 
@@ -58,7 +58,7 @@ def list_projects(state: str | None = None, search: str | None = None, templates
         row["tasks"] = cint(c.get("total"))
         row["done"] = cint(c.get("done"))
         row["late"] = cint(c.get("late"))
-        row["planned_progress"] = rollup.planned_progress(row.expected_start_date, row.expected_end_date)
+        row["planned_progress"] = baseline.planned_on(row.name, nowdate(), rollup.planned_progress(row.expected_start_date, row.expected_end_date))
         row["manager_name"] = full_names.get(row.pm_manager)
     from project_manager.project_manager.policy import has_capability
 
@@ -107,9 +107,10 @@ def overview(project: str) -> dict:
         row["task_label"] = labels.get(row.task)
     return {
         "project": {f: doc.get(f) for f in LIST_FIELDS + ["notes", "percent_complete"]},
-        "planned_progress": rollup.planned_progress(doc.expected_start_date, doc.expected_end_date),
+        "planned_progress": baseline.planned_on(project, nowdate(), rollup.planned_progress(doc.expected_start_date, doc.expected_end_date)),
+        "schedule": schedule.summary(project),
         "tasks": {k: cint(v) for k, v in leaf.items()},
-        "phases": phases, "curve": curve, "delays": delays, "pending_acceptance": pending, "forms_waiting": forms_waiting,
+        "phases": phases, "curve": baseline.curve_for_chart(project, curve), "delays": delays, "pending_acceptance": pending, "forms_waiting": forms_waiting,
         "recent": recent,
         "sees_all_tasks": sees_all,
         "can": {cap: has_project_capability(project, cap) for cap in
@@ -200,7 +201,14 @@ def copy_wbs(source, target) -> int:
                       "exp_start_date": add_days(row.exp_start_date, shift) if row.exp_start_date else None,
                       "exp_end_date": add_days(row.exp_end_date, shift) if row.exp_end_date else None})
     names = tree.bulk_insert(target.name, nodes)
-    gates.copy_to(dict(zip((n["key"] for n in nodes), names)))
+    copies = dict(zip((n["key"] for n in nodes), names))
+    gates.copy_to(copies)
+    for dep in frappe.get_all("PM Task Dependency", filters={"project": source.name},
+                              fields=["predecessor", "successor", "dep_type", "lag_days"], limit_page_length=0):
+        if dep.predecessor in copies and dep.successor in copies:
+            frappe.get_doc({"doctype": "PM Task Dependency", "predecessor": copies[dep.predecessor], "successor": copies[dep.successor],
+                            "dep_type": dep.dep_type, "lag_days": dep.lag_days}).insert(ignore_permissions=True)
+    schedule.mark(target.name)
     return len(names)
 
 

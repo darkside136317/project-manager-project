@@ -43,6 +43,30 @@ Kịch bản trình duyệt (cần Edge hoặc Chrome đã cài; tạo một d�
 cd scripts/e2e/ui && npm ci && node forms_flow.mjs
 ```
 
+Kịch bản lịch trình (chạy từ gốc repo; tạo dự án "Dự án thử lịch trình ..."):
+
+```bash
+cd scripts/e2e/ui && node schedule_flow.mjs
+```
+
+Đo Gantt 2.000 việc, ba bước. Tạo dự án tạm (trong `docker/`), lệnh in ra `PROJECT=PROJ-xxxx`:
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -e PERF_TASKS=2000 -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - seed < ../scripts/perf/gantt_seed.py
+```
+
+Đo trên trình duyệt (từ gốc repo):
+
+```bash
+cd scripts/e2e/ui && node gantt_perf.mjs PROJ-xxxx
+```
+
+Dọn dự án tạm (trong `docker/`):
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - reset < ../scripts/perf/gantt_seed.py
+```
+
 ## Lưu ý
 
 - **Git Bash trên Windows** đổi đường dẫn dạng `/home/...` trong tham số lệnh: đặt `MSYS_NO_PATHCONV=1` khi gọi `docker exec -w /home/...` hoặc truyền đường dẫn container. `scripts/bootstrap.sh` đã đặt sẵn.
@@ -53,6 +77,9 @@ cd scripts/e2e/ui && npm ci && node forms_flow.mjs
 - **MariaDB 11.8** cần `innodb_snapshot_isolation=OFF` (đã đặt trong `docker/mariadb/my_custom.cnf`), nếu không sẽ gặp lỗi 1020 "Record has changed since last read".
 - **Jinja của Frappe v16 không tự escape**: luôn dùng `| e` hoặc `{% autoescape true %}`; dữ liệu JSON nhúng vào `<script>` dùng `services/web.inline_json`.
 - Không ghi secret vào code, tài liệu hay log; chỉ dùng tên biến môi trường.
+- **Chèn hàng loạt vào bảng autoincrement** phải tự xin số: `services/queries.reserve_ids` (Frappe lấy số từ sequence riêng của DocType, bảng không tự tăng).
+- **Xem ảnh chụp của kịch bản trình duyệt** (`scripts/e2e/ui/out/`): nhiều lỗi giao diện test không bắt được, như màu chú giải hay thanh Gantt co lại khi kéo.
+- **Tên lớp CSS trong component có `scoped` vẫn khớp theo tổ tiên:** tránh các tên trùng Tailwind như `.grid`.
 - **Frappe lưu các tệp cùng nội dung chung một URL:** test cần hai ảnh "khác nhau" phải dùng nội dung khác nhau.
 - **Heredoc dài có dấu nháy làm hỏng công cụ Bash của Claude:** ghi tệp bằng Write rồi chạy.
 - **Ngày của Task trong ERPNext v16 là Datetime** (`exp_start_date`, `exp_end_date`): so sánh bằng `getdate`, ô `type="date"` lấy 10 ký tự đầu.

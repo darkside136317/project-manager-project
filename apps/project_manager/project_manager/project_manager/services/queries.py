@@ -47,3 +47,13 @@ def bounded_scan(seconds: int = SCAN_SECONDS):
         raise
     finally:
         frappe.db.sql("set session max_statement_time = %s", previous)
+
+
+def reserve_ids(doctype: str, count: int) -> list[int]:
+    """The next `count` ids of an autoincrement DocType, in one statement, for a bulk insert. Frappe keeps them in a
+    sequence of the DocType's own, and an insert does not draw from it by itself."""
+    if count <= 0:
+        return []
+    sequence = frappe.scrub(f"{doctype}_id_seq")
+    return sorted(row[0] for row in frappe.db.sql(f"select nextval(`{sequence}`) from seq_1_to_{int(count)}"))
+

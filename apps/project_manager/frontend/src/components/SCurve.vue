@@ -1,10 +1,12 @@
 <script setup>
 import { computed, ref } from "vue";
 import { formatDate } from "../lib/format.js";
+import { dayNumber } from "../lib/gantt.js";
 
-// Đường cong S: actual progress against plan over time (daily snapshots), one axis 0-100 %.
-// Two series: actual (solid, slot 1) and plan (dashed, slot 2); legend + direct labels at the last point,
-// a crosshair tooltip that lists both values, and a table for readers who cannot use the chart.
+// Đường cong S: actual progress against plan over time, one axis 0-100 %. Two series: actual (solid, slot 1), which stops
+// at the last daily snapshot, and plan (dashed, slot 2), which goes on to the end when there is a baseline. Legend and
+// direct labels at each line's last point, a crosshair tooltip with both values, and a table for readers who cannot use
+// the chart.
 const props = defineProps({ points: { type: Array, default: () => [] } });
 
 const W = 640;
@@ -13,33 +15,57 @@ const PAD = { left: 36, right: 64, top: 12, bottom: 26 };
 const hover = ref(-1);
 const showTable = ref(false);
 
-const n = computed(() => props.points.length);
-const x = (i) => PAD.left + (n.value <= 1 ? 0 : (i * (W - PAD.left - PAD.right)) / (n.value - 1));
+const rows = computed(() => props.points.map((point) => ({ ...point, number: dayNumber(point.snapshot_date) })));
+const n = computed(() => rows.value.length);
+const firstDay = computed(() => rows.value[0]?.number ?? 0);
+const lastDay = computed(() => rows.value[n.value - 1]?.number ?? 0);
+const x = (number) => PAD.left + (lastDay.value === firstDay.value ? 0 : ((number - firstDay.value) * (W - PAD.left - PAD.right)) / (lastDay.value - firstDay.value));
 const y = (v) => PAD.top + (1 - Math.min(100, Math.max(0, Number(v) || 0)) / 100) * (H - PAD.top - PAD.bottom);
-const path = (key) => props.points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p[key]).toFixed(1)}`).join(" ");
-const last = computed(() => props.points[n.value - 1] || null);
+const hasValue = (value) => value !== null && value !== undefined;
+
+function path(key) {
+  return rows.value.filter((row) => hasValue(row[key]))
+    .map((row, index) => `${index ? "L" : "M"}${x(row.number).toFixed(1)},${y(row[key]).toFixed(1)}`).join(" ");
+}
+
+const lastActual = computed(() => [...rows.value].reverse().find((row) => hasValue(row.progress)) || null);
+const lastPlan = computed(() => rows.value[n.value - 1] || null);
 const ticks = [0, 25, 50, 75, 100];
 const dateTicks = computed(() => {
   if (!n.value) return [];
-  const step = Math.max(1, Math.ceil(n.value / 5));
   const out = [];
-  for (let i = 0; i < n.value; i += step) out.push(i);
-  if (out[out.length - 1] !== n.value - 1) out.push(n.value - 1);
+  const steps = 5;
+  for (let step = 0; step <= steps; step += 1) {
+    const number = firstDay.value + Math.round(((lastDay.value - firstDay.value) * step) / steps);
+    out.push({ number, label: formatDate(new Date(number * 86400000).toISOString().slice(0, 10)).slice(0, 5) });
+    if (lastDay.value === firstDay.value) break;
+  }
   return out;
 });
+const labelsClash = computed(() => lastActual.value && lastPlan.value && lastActual.value.number === lastPlan.value.number
+  && Math.abs(y(lastActual.value.progress) - y(lastPlan.value.planned_progress)) < 12);
 
 function onMove(event) {
   const box = event.currentTarget.getBoundingClientRect();
-  const px = ((event.clientX - box.left) / box.width) * W;
-  const span = (W - PAD.left - PAD.right) / Math.max(1, n.value - 1);
-  hover.value = Math.min(n.value - 1, Math.max(0, Math.round((px - PAD.left) / span)));
+  const position = ((event.clientX - box.left) / box.width) * W;
+  let best = -1;
+  let distance = Infinity;
+  rows.value.forEach((row, index) => {
+    const gap = Math.abs(x(row.number) - position);
+    if (gap < distance) {
+      distance = gap;
+      best = index;
+    }
+  });
+  hover.value = best;
 }
-const tip = computed(() => (hover.value >= 0 ? props.points[hover.value] : null));
-const pct = (v) => `${Math.round(Number(v) || 0)}%`;
+const tip = computed(() => (hover.value >= 0 ? rows.value[hover.value] : null));
+const pct = (v) => (hasValue(v) ? `${Math.round(Number(v) || 0)}%` : "—");
+const summary = computed(() => `Đường cong S: thực tế ${pct(lastActual.value?.progress)}, kế hoạch cuối kỳ ${pct(lastPlan.value?.planned_progress)}`);
 </script>
 
 <template>
-  <figure class="m-0 s-curve">
+  <figure class="s-curve m-0">
     <div class="mb-2 flex flex-wrap items-center gap-4 text-xs text-ink-soft">
       <span class="flex items-center gap-1.5"><svg width="18" height="6" aria-hidden="true"><line x1="0" y1="3" x2="18" y2="3" class="actual" /></svg> Thực tế</span>
       <span class="flex items-center gap-1.5"><svg width="18" height="6" aria-hidden="true"><line x1="0" y1="3" x2="18" y2="3" class="plan" /></svg> Kế hoạch</span>
@@ -47,27 +73,25 @@ const pct = (v) => `${Math.round(Number(v) || 0)}%`;
     </div>
     <p v-if="!n" class="m-0 py-8 text-center text-sm text-ink-muted">Chưa có số liệu: tiến độ được ghi lại mỗi ngày từ hôm nay.</p>
     <div v-else-if="!showTable" class="relative">
-      <svg :viewBox="`0 0 ${W} ${H}`" class="block h-auto w-full" role="img" :aria-label="`Đường cong S: thực tế ${pct(last.progress)}, kế hoạch ${pct(last.planned_progress)}`"
-        @pointermove="onMove" @pointerleave="hover = -1">
-        <g class="grid">
+      <svg :viewBox="`0 0 ${W} ${H}`" class="block h-auto w-full" role="img" :aria-label="summary" @pointermove="onMove" @pointerleave="hover = -1">
+        <g class="s-gridlines">
           <line v-for="t in ticks" :key="t" :x1="PAD.left" :x2="W - PAD.right" :y1="y(t)" :y2="y(t)" />
         </g>
         <g class="axis">
           <text v-for="t in ticks" :key="`l${t}`" :x="PAD.left - 6" :y="y(t) + 4" text-anchor="end">{{ t }}%</text>
-          <text v-for="i in dateTicks" :key="`d${i}`" :x="x(i)" :y="H - 6" text-anchor="middle">{{ formatDate(points[i].snapshot_date).slice(0, 5) }}</text>
+          <text v-for="tick in dateTicks" :key="`d${tick.number}`" :x="x(tick.number)" :y="H - 6" text-anchor="middle">{{ tick.label }}</text>
         </g>
         <path :d="path('planned_progress')" class="plan" fill="none" />
         <path :d="path('progress')" class="actual" fill="none" />
-        <text :x="x(n - 1) + 6" :y="y(last.progress) + 4" class="label">{{ pct(last.progress) }}</text>
-        <text :x="x(n - 1) + 6" :y="y(last.planned_progress) + (Math.abs(y(last.progress) - y(last.planned_progress)) < 12 ? 16 : 4)" class="label muted">{{ pct(last.planned_progress) }}</text>
+        <text v-if="lastActual" :x="x(lastActual.number) + 6" :y="y(lastActual.progress) + 4" class="label">{{ pct(lastActual.progress) }}</text>
+        <text v-if="lastPlan" :x="x(lastPlan.number) + 6" :y="y(lastPlan.planned_progress) + (labelsClash ? 16 : 4)" class="label muted">{{ pct(lastPlan.planned_progress) }}</text>
         <g v-if="tip">
-          <line :x1="x(hover)" :x2="x(hover)" :y1="PAD.top" :y2="H - PAD.bottom" class="cross" />
-          <circle :cx="x(hover)" :cy="y(tip.progress)" r="4" class="dot-actual" />
-          <circle :cx="x(hover)" :cy="y(tip.planned_progress)" r="4" class="dot-plan" />
+          <line :x1="x(tip.number)" :x2="x(tip.number)" :y1="PAD.top" :y2="H - PAD.bottom" class="cross" />
+          <circle v-if="hasValue(tip.progress)" :cx="x(tip.number)" :cy="y(tip.progress)" r="4" class="dot-actual" />
+          <circle v-if="hasValue(tip.planned_progress)" :cx="x(tip.number)" :cy="y(tip.planned_progress)" r="4" class="dot-plan" />
         </g>
       </svg>
-      <div v-if="tip" class="pointer-events-none absolute top-1 rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs shadow-pop"
-        :style="{ left: `${Math.min(70, (x(hover) / W) * 100)}%` }">
+      <div v-if="tip" class="pointer-events-none absolute top-1 rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs shadow-pop" :style="{ left: `${Math.min(70, (x(tip.number) / W) * 100)}%` }">
         <p class="m-0 text-ink-muted">{{ formatDate(tip.snapshot_date) }}</p>
         <p class="m-0"><strong>{{ pct(tip.progress) }}</strong> <span class="text-ink-muted">thực tế</span></p>
         <p class="m-0"><strong>{{ pct(tip.planned_progress) }}</strong> <span class="text-ink-muted">kế hoạch</span></p>
@@ -89,7 +113,7 @@ const pct = (v) => `${Math.round(Number(v) || 0)}%`;
 :global(html[data-theme="dark"]) .s-curve { --series-actual: #3987e5; --series-plan: #d95926; }
 .actual { stroke: var(--series-actual); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .plan { stroke: var(--series-plan); stroke-width: 2; stroke-dasharray: 5 4; stroke-linecap: round; }
-.grid line { stroke: var(--pm-border); stroke-width: 1; }
+.s-gridlines line { stroke: var(--pm-border); stroke-width: 1; }
 .axis text, .label { fill: var(--pm-muted); font-size: 11px; }
 .label { fill: var(--pm-ink); font-weight: 600; }
 .label.muted { fill: var(--pm-ink-soft); }

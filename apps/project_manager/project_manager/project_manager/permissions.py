@@ -84,6 +84,22 @@ def gate_query(user):
     return _task_query(user, "tabPM Gate Requirement", "task")
 
 
+def dependency_query(user):
+    return _task_query(user, "tabPM Task Dependency", "successor")
+
+
+def baseline_query(user):
+    return _query(user, "`tabPM Baseline`.`project`")
+
+
+def baseline_task_query(user):
+    return _task_query(user, "tabPM Baseline Task", "task")
+
+
+def baseline_curve_query(user):
+    return _query(user, "`tabPM Baseline Curve`.`project`")
+
+
 def form_submission_query(user):
     """Forms of the tasks the user sees, and always the user's own (a project-level form has no task)."""
     access = get_access(user)
@@ -171,6 +187,10 @@ has_snapshot_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user,
 has_assignment_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
 has_progress_entry_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
 has_gate_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
+has_dependency_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.successor))
+has_baseline_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
+has_baseline_task_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
+has_baseline_curve_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
 
 
 def _form_scoped(doc, ptype, user) -> bool:

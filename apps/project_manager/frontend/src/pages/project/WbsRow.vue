@@ -40,6 +40,7 @@ function act(event, dom) {
         <button class="min-w-0 truncate rounded px-1 text-left text-sm hover:underline" :class="{ 'font-semibold': node.is_group, 'text-ink-subtle line-through': node.status === 'Cancelled' }"
           type="button" @click="emit('open', node.name)">{{ node.subject }}</button>
         <span v-if="node.pm_is_overdue" class="badge badge-danger shrink-0">Trễ {{ node.pm_delay_days }}n</span>
+        <span v-if="node.pm_is_critical && !node.is_group && node.status !== 'Completed'" class="badge badge-danger shrink-0" title="Trên đường găng">Găng</span>
         <span class="ml-auto shrink-0 pl-1 text-xs text-ink-muted sm:hidden">{{ Math.round(node.progress || 0) }}%</span>
       </div>
       <div class="hidden items-center gap-2 sm:flex">

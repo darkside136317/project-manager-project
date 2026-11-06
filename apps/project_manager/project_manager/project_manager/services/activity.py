@@ -8,6 +8,10 @@ import json
 
 import frappe
 
+from project_manager.project_manager.services.queries import reserve_ids
+
+MANY_FIELDS = ("name", "project", "reference_doctype", "reference_name", "task", "activity_type", "actor", "content", "data", "is_deleted",
+               "owner", "modified_by", "creation", "modified", "docstatus", "idx")
 TYPES = frozenset({"Bình luận", "Tiến độ", "Thay đổi", "Giao việc", "Đổi hạn", "Trạng thái", "Tệp", "Biểu mẫu", "Hệ thống"})
 
 
@@ -38,3 +42,17 @@ def record(reference_doctype: str, reference_name: str, activity_type: str, cont
     })
     entry.insert(ignore_permissions=True)
     return entry.name
+
+
+def record_many(project: str, entries: list) -> int:
+    """Many entries of one project in a few statements (a move that pushes hundreds of tasks).
+    `entries`: (reference_doctype, reference_name, activity_type, content, data)."""
+    if not entries:
+        return 0
+    now, user = frappe.utils.now_datetime(), frappe.session.user
+    rows = []
+    for number, (doctype, name, kind, content, data) in zip(reserve_ids("PM Activity", len(entries)), entries):
+        rows.append((number, project, doctype, name, name if doctype == "Task" else None, kind, user, content or "",
+                     json.dumps(data, ensure_ascii=False, default=str) if data is not None else None, 0, user, user, now, now, 0, 0))
+    frappe.db.bulk_insert("PM Activity", MANY_FIELDS, rows, chunk_size=500)
+    return len(rows)

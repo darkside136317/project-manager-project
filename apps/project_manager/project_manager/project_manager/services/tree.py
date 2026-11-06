@@ -24,7 +24,7 @@ from project_manager.project_manager.services import activity, rollup, wbs
 MAX_LEVEL_ROWS = 500
 TREE_FIELDS = ["name", "subject", "is_group", "status", "progress", "exp_start_date", "exp_end_date", "pm_wbs_code",
                "pm_level", "pm_sort", "pm_node_type", "pm_accountable", "pm_reviewer", "pm_is_overdue", "pm_delay_days",
-               "parent_task", "priority", "task_weight"]
+               "parent_task", "priority", "task_weight", "pm_is_critical", "pm_conflict_days"]
 EDITABLE = ("subject", "description", "pm_node_type", "task_weight", "priority", "exp_start_date", "exp_end_date")
 DATE_FIELDS = ("exp_start_date", "exp_end_date")
 
@@ -239,10 +239,13 @@ def delete(task: str) -> dict:
     if frappe.db.exists("Task", {"parent_task": task}):
         frappe.throw(_("Hãy xóa hoặc chuyển các việc con trước"))
     for doctype, what in (("PM Task Assignment", _("đã giao việc")), ("PM Progress Entry", _("đã báo cáo tiến độ")),
-                          ("PM Form Submission", _("đã có biểu mẫu")), ("PM Activity", _("đã có trao đổi, lịch sử"))):
+                          ("PM Form Submission", _("đã có biểu mẫu")), ("PM Baseline Task", _("đã có trong baseline")),
+                          ("PM Activity", _("đã có trao đổi, lịch sử"))):
         if frappe.db.exists(doctype, {"task": task}):
             frappe.throw(_("Công việc {0}: hãy hủy thay vì xóa để giữ lịch sử").format(what), title=_("Không xóa được"))
     frappe.db.delete("PM Gate Requirement", {"task": task})
+    frappe.db.delete("PM Task Dependency", {"predecessor": task})
+    frappe.db.delete("PM Task Dependency", {"successor": task})
     project, subject, code = doc.project, doc.subject, doc.pm_wbs_code
     frappe.delete_doc("Task", task)
     activity.record("Project", project, "Thay đổi", _("Xóa công việc {0} {1}").format(code or "", subject).strip(),

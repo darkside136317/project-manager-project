@@ -4,6 +4,7 @@ import Icon from "../../components/Icon.vue";
 import ProgressBar from "../../components/ProgressBar.vue";
 import SCurve from "../../components/SCurve.vue";
 import { formatDate, formatDateTime } from "../../lib/format.js";
+import { slipText, slipTone } from "../../lib/gantt.js";
 import { statusBadge, statusLabel, variance } from "../../lib/work.js";
 
 // Tổng quan: actual against plan, the state of the work, where it is late and why, what happened lately.
@@ -11,6 +12,7 @@ const { overview, openTask, name } = inject("project");
 const data = computed(() => overview.value);
 const gap = computed(() => variance(data.value.project.percent_complete, data.value.planned_progress));
 const base = computed(() => `/du-an/${encodeURIComponent(name.value)}`);
+const schedule = computed(() => data.value.schedule || {});
 </script>
 
 <template>
@@ -26,6 +28,12 @@ const base = computed(() => `/du-an/${encodeURIComponent(name.value)}`);
           <strong :class="gap < -5 ? 'text-danger' : 'text-success'">({{ gap >= 0 ? "+" : "" }}{{ gap }} điểm)</strong></p>
       </div>
       <ProgressBar class="mt-3" :value="data.project.percent_complete" :planned="data.planned_progress" />
+      <dl class="m-0 mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+        <div><dt class="text-xs text-ink-muted">Dự báo xong</dt><dd class="m-0 font-medium">{{ formatDate(schedule.forecast_end) || "—" }} <span class="block text-xs font-normal" :class="slipTone(schedule.forecast_slip)">{{ slipText(schedule.forecast_slip) }}</span></dd></div>
+        <div><dt class="text-xs text-ink-muted">Kế hoạch xong</dt><dd class="m-0 font-medium">{{ formatDate(schedule.plan_end) || "—" }}</dd></div>
+        <div><dt class="text-xs text-ink-muted">{{ schedule.baseline_title ? `Baseline: ${schedule.baseline_title}` : "Chưa có baseline" }}</dt><dd class="m-0 font-medium">{{ formatDate(schedule.baseline_end) || "—" }}</dd></div>
+        <div><dt class="text-xs text-ink-muted" title="Tiến độ đạt được chia cho tiến độ kế hoạch; dưới 1 là chậm">SPI</dt><dd class="m-0 font-medium" :class="schedule.spi && schedule.spi < 0.95 ? 'text-danger' : ''">{{ schedule.spi ? schedule.spi.toFixed(2) : "—" }}</dd></div>
+      </dl>
       <div class="mt-4"><SCurve :points="data.curve" /></div>
     </section>
 
@@ -42,6 +50,10 @@ const base = computed(() => `/du-an/${encodeURIComponent(name.value)}`);
       <p v-if="data.pending_acceptance" class="mt-3 rounded-md bg-warning-soft px-3 py-2 text-sm">
         {{ data.pending_acceptance }} phân công chưa được nhận.
         <RouterLink :to="`${base}/ai-lam-gi`" class="font-medium underline">Xem ai làm gì</RouterLink>
+      </p>
+      <p v-if="schedule.conflicts" class="mt-3 rounded-md bg-warning-soft px-3 py-2 text-sm">
+        {{ schedule.conflicts }} việc bắt đầu sớm hơn phụ thuộc cho phép.
+        <RouterLink :to="`${base}/gantt`" class="font-medium underline">Xem Gantt</RouterLink>
       </p>
       <p v-if="data.forms_waiting" class="mt-3 rounded-md bg-warning-soft px-3 py-2 text-sm">
         {{ data.forms_waiting }} biểu mẫu chờ duyệt.

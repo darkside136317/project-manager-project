@@ -14,8 +14,9 @@ What changes, and why:
 * check_recursion      Walks ERPNext's dependency table (empty here) and gives up after 15 steps.
 * reschedule_dependent_tasks  Never effective in v16 (it filters on a column nothing fills); scheduling is ours (M4).
 * update_project       Recounted every task of the project and saved a possibly stale cached Project on every task
-                       save (and after a delete). Here it only marks the parent for the incremental roll-up, which
-                       runs after the commit on the "pm" queue (services/rollup.py).
+                       save (and after a delete). Here it only marks the parent for the incremental roll-up and the
+                       project for its schedule, both of which run after the commit on the "pm" queue
+                       (services/rollup.py, services/schedule.py).
 * validate_parent_expected_end_date / validate_parent_project_dates
                        Refused a late task (an actual date after the project's planned end) or a child ending after its
                        parent. Late work must be recordable; dates of group tasks will come from roll-up (M2/M4).
@@ -31,7 +32,7 @@ What changes, and why:
 import frappe
 from frappe.utils import flt
 
-from project_manager.project_manager.services import gates, rollup, wbs
+from project_manager.project_manager.services import gates, rollup, schedule, wbs
 
 OVERRIDDEN = (
     "validate", "update_nsm_model", "populate_depends_on", "check_recursion", "reschedule_dependent_tasks",
@@ -76,6 +77,7 @@ class PMTaskMixin:
         # on_update and after_delete
         if rollup.changed(self):
             rollup.mark_dirty(self)
+            schedule.mark(self.project)
 
     def validate_parent_expected_end_date(self):
         pass

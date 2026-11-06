@@ -11,7 +11,8 @@
   "requires_accountable",
   "default_gate_mode",
   "sort_order",
-  "is_builtin"
+  "is_builtin",
+  "is_milestone"
  ],
  "fields": [
   {
@@ -57,11 +58,17 @@
    "fieldtype": "Check",
    "label": "Có sẵn",
    "read_only": 1
+  },
+  {
+   "fieldname": "is_milestone",
+   "fieldtype": "Check",
+   "label": "Là mốc (không tốn thời gian)",
+   "in_list_view": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-02 12:00:00.000000",
+ "modified": "2026-11-06 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Project Manager",
  "name": "PM Node Type",

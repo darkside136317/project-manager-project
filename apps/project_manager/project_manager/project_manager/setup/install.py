@@ -70,6 +70,8 @@ def ensure_project_roles():
 def ensure_node_types():
     for spec in C.DEFAULT_NODE_TYPES:
         if frappe.db.exists("PM Node Type", spec["node_type"]):
+            if spec.get("is_milestone"):  # a site from before M4
+                frappe.db.set_value("PM Node Type", spec["node_type"], "is_milestone", 1, update_modified=False)
             continue
         frappe.get_doc({"doctype": "PM Node Type", "is_builtin": 1, **spec}).insert(ignore_permissions=True)
 
@@ -122,6 +124,16 @@ CUSTOM_FIELDS = {
          "options": "\n".join(C.ROLLUP_METHODS), "default": C.ROLLUP_DURATION, "insert_after": "pm_manager"},
         {"fieldname": "pm_is_template", "fieldtype": "Check", "label": "Là dự án mẫu", "insert_after": "pm_rollup_method",
          "in_standard_filter": 1},
+        {"fieldname": "pm_holiday_list", "fieldtype": "Link", "options": "Holiday List", "label": "Lịch nghỉ của dự án",
+         "description": "Để trống thì dùng lịch nghỉ của công ty.", "insert_after": "pm_is_template"},
+        {"fieldname": "pm_schedule_column", "fieldtype": "Column Break", "insert_after": "pm_holiday_list"},
+        {"fieldname": "pm_primary_baseline", "fieldtype": "Link", "options": "PM Baseline", "label": "Baseline chính",
+         "read_only": 1, "insert_after": "pm_schedule_column", "no_copy": 1},
+        {"fieldname": "pm_plan_end", "fieldtype": "Date", "label": "Kế hoạch kết thúc", "read_only": 1,
+         "insert_after": "pm_primary_baseline", "no_copy": 1},
+        {"fieldname": "pm_forecast_end", "fieldtype": "Date", "label": "Dự báo kết thúc", "read_only": 1,
+         "insert_after": "pm_plan_end", "no_copy": 1},
+        {"fieldname": "pm_spi", "fieldtype": "Float", "label": "SPI", "read_only": 1, "insert_after": "pm_forecast_end", "no_copy": 1},
     ],
     "Task": [
         {"fieldname": "pm_node_type", "fieldtype": "Link", "options": "PM Node Type", "label": "Loại nút",
@@ -155,6 +167,16 @@ CUSTOM_FIELDS = {
          "hidden": 1, "insert_after": "pm_delay_note", "no_copy": 1},
         {"fieldname": "pm_last_progress_on", "fieldtype": "Datetime", "label": "Cập nhật tiến độ lần cuối",
          "read_only": 1, "insert_after": "pm_rollup_weight", "no_copy": 1},
+        {"fieldname": "pm_schedule_section", "fieldtype": "Section Break", "label": "Lịch trình", "insert_after": "pm_last_progress_on"},
+        {"fieldname": "pm_is_critical", "fieldtype": "Check", "label": "Trên đường găng", "read_only": 1,
+         "insert_after": "pm_schedule_section", "no_copy": 1},
+        {"fieldname": "pm_total_float", "fieldtype": "Int", "label": "Thời gian dự trữ (ngày làm việc)", "read_only": 1,
+         "insert_after": "pm_is_critical", "no_copy": 1},
+        {"fieldname": "pm_conflict_days", "fieldtype": "Int", "label": "Bắt đầu sớm hơn phụ thuộc cho phép (ngày)", "read_only": 1,
+         "insert_after": "pm_total_float", "no_copy": 1},
+        {"fieldname": "pm_forecast_end", "fieldtype": "Date", "label": "Dự báo kết thúc", "read_only": 1,
+         "insert_after": "pm_conflict_days", "no_copy": 1},
+        {"fieldname": "pm_spi", "fieldtype": "Float", "label": "SPI", "read_only": 1, "insert_after": "pm_forecast_end", "no_copy": 1},
     ],
 }
 

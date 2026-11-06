@@ -15,7 +15,7 @@ import frappe
 from frappe.utils import add_days, getdate, nowdate
 
 from project_manager.project_manager import constants as C
-from project_manager.project_manager.services import assignments, forms, gates, projects, rollup, tree
+from project_manager.project_manager.services import assignments, baseline, forms, gates, projects, rollup, schedule, tree
 
 TEMPLATE_CODE = "DEMO-MAU"
 SIGNATURE = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
@@ -51,6 +51,14 @@ WBS = (
     ("4.2", "Trát, bả, sơn", 74, 15),
     ("4.3", "Lắp điện nước", 70, 20),
     ("4.4", "Bàn giao", 90, 1),
+)
+
+
+LINKS = (
+    ("1.1", "1.2", "FS", 0), ("1.2", "2.1", "FS", 0), ("2.1", "2.2", "FS", 0), ("2.2", "2.3", "FS", 0), ("2.3", "2.4", "SS", 2),
+    ("2.3", "2.5", "FS", 1), ("2.4", "2.5", "FS", 0), ("2.5", "2.6", "FS", 0), ("2.6", "3.1.1", "FS", 0), ("3.1.1", "3.1.2", "FS", 0),
+    ("3.1.2", "3.2.1", "FS", 0), ("3.2.1", "3.2.2", "FS", 0), ("3.2.2", "4.1", "FS", 0), ("4.1", "4.2", "FS", 0), ("4.1", "4.3", "SS", 5),
+    ("4.2", "4.4", "FS", 0), ("4.3", "4.4", "FF", 0),
 )
 
 
@@ -130,8 +138,14 @@ def up():
             for name in live:
                 frappe.db.set_value("PM Task Assignment", name, "state", C.ACCEPTED, update_modified=False)
     _forms(project, tasks, eng1, commander)
+    for before, after, kind, lag in LINKS:
+        schedule.add_dependency(tasks[before].name, tasks[after].name, kind, lag)
     rollup.reconcile(project)
     rollup.refresh_overdue_flags()
+    baseline.capture(project, "Kế hoạch được duyệt", "Trước khi khởi công")
+    schedule.apply(tasks["3.1.2"].name, add_days(start, 34), add_days(start, 56), "Chờ thép về")  # a slip after the baseline
+    rollup.reconcile(project)
+    schedule.refresh(project)
     _history(project, start, today)
     frappe.db.commit()
     print(f"Demo created: {project} (template {template.name})")
@@ -187,7 +201,8 @@ def down():
     for code in (PROJECT_CODE, TEMPLATE_CODE):
         for project in frappe.get_all("Project", filters={"pm_code": code}, pluck="name"):
             for doctype in ("PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Project Member",
-                            "PM Form Submission", "PM Gate Requirement"):
+                            "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline Task",
+                            "PM Baseline Curve", "PM Baseline"):
                 frappe.db.delete(doctype, {"project": project})
             frappe.db.delete("Task", {"project": project})
             frappe.delete_doc("Project", project, force=True, ignore_permissions=True)

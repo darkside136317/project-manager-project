@@ -47,6 +47,10 @@ permission_query_conditions = {
     "PM Progress Entry": _P + "progress_entry_query",
     "PM Form Submission": _P + "form_submission_query",
     "PM Gate Requirement": _P + "gate_query",
+    "PM Task Dependency": _P + "dependency_query",
+    "PM Baseline": _P + "baseline_query",
+    "PM Baseline Task": _P + "baseline_task_query",
+    "PM Baseline Curve": _P + "baseline_curve_query",
 }
 has_permission = {
     "Project": _P + "has_project_permission",
@@ -58,6 +62,10 @@ has_permission = {
     "PM Progress Entry": _P + "has_progress_entry_permission",
     "PM Form Submission": _P + "has_form_submission_permission",
     "PM Gate Requirement": _P + "has_gate_permission",
+    "PM Task Dependency": _P + "has_dependency_permission",
+    "PM Baseline": _P + "has_baseline_permission",
+    "PM Baseline Task": _P + "has_baseline_task_permission",
+    "PM Baseline Curve": _P + "has_baseline_curve_permission",
 }
 
 # =============================================================================
@@ -81,9 +89,10 @@ on_login = "project_manager.project_manager.services.audit.on_login"
 on_logout = "project_manager.project_manager.services.audit.on_logout"
 
 _ROLLUP = "project_manager.project_manager.services.rollup."
+_SCHEDULE = "project_manager.project_manager.services.schedule."
 scheduler_events = {
     "cron": {
-        "*/5 * * * *": [_ROLLUP + "sweep"],
+        "*/5 * * * *": [_ROLLUP + "sweep", _SCHEDULE + "sweep"],
         "0 7 * * *": ["project_manager.project_manager.services.reminders.send_daily"],
     },
     "daily": [
@@ -93,5 +102,6 @@ scheduler_events = {
     ],
     "daily_long": [
         _ROLLUP + "reconcile_all",
+        _SCHEDULE + "refresh_all",
     ],
 }

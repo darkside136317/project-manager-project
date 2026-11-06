@@ -19,6 +19,8 @@ import Icon from "./Icon.vue";
 import LinkSelect from "./LinkSelect.vue";
 import ReasonDialog from "./ReasonDialog.vue";
 import TaskForms from "./forms/TaskForms.vue";
+import MovePreview from "./gantt/MovePreview.vue";
+import TaskLinks from "./gantt/TaskLinks.vue";
 
 // One task in full: where it sits, who holds it (and their answers), the progress form, dates, the timeline.
 // Used in a drawer (lists, board, tree) and as the page /pm/cong-viec/:id (links of notifications).
@@ -34,6 +36,7 @@ const form = reactive({ progress: 0, note: "", delay_reason: "", delay_source: "
 const assignForm = reactive({ open: false, raci: RACI.RESPONSIBLE, kind: "user", user: "", team: "", note: "" });
 const dates = reactive({ open: false, start: "", end: "", reason: "" });
 const dialog = reactive({ open: false, kind: "", target: null, title: "", label: "Lý do", error: "" });
+const move = reactive({ plan: null });
 
 const task = computed(() => detail.value?.task || {});
 const can = computed(() => detail.value?.can || {});
@@ -101,6 +104,10 @@ function report() {
 const approve = () => run(() => api.tasks.review(props.name, true), "Đã duyệt công việc");
 const accept = (row) => run(() => api.tasks.respond(row.name, true), "Đã nhận việc");
 
+function onLinksChanged() {
+  emit("changed", props.name);
+}
+
 function ask(kind, target, title, label = "Lý do") {
   Object.assign(dialog, { open: true, kind, target, title, label, error: "" });
 }
@@ -129,10 +136,29 @@ async function assign() {
   if (done) Object.assign(assignForm, { open: false, user: "", team: "", note: "" });
 }
 
+// Changing dates may push the tasks that depend on this one: when it does, show them before anything changes.
 async function saveDates() {
-  const done = await run(() => api.wbs.update(props.name, { exp_start_date: dates.start, exp_end_date: dates.end }, dates.reason),
-    "Đã đổi ngày");
-  if (done) Object.assign(dates, { open: false, reason: "" });
+  busy.value = true;
+  try {
+    const plan = await api.schedule.previewMove(props.name, dates.start, dates.end);
+    if (plan.total > 1 || !plan.total) {
+      move.plan = plan;
+      return;
+    }
+    await applyDates(dates.reason);
+  } catch (e) {
+    toast(e.message, "error", 8000);
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function applyDates(reason) {
+  const done = await run(() => api.schedule.applyMove(props.name, dates.start, dates.end, reason || dates.reason), "Đã đổi ngày");
+  if (done) {
+    Object.assign(dates, { open: false, reason: "" });
+    move.plan = null;
+  }
 }
 
 watch(() => props.name, load, { immediate: true });
@@ -305,6 +331,8 @@ watch(() => props.name, load, { immediate: true });
         </details>
       </section>
 
+      <TaskLinks v-if="task.project" :task="name" :project="task.project" @changed="onLinksChanged" />
+
       <TaskForms :task="name" :project="task.project" @changed="load" />
 
       <!-- timeline -->
@@ -320,6 +348,7 @@ watch(() => props.name, load, { immediate: true });
       </section>
     </article>
 
+    <MovePreview :plan="move.plan" title="Đổi ngày kế hoạch" :busy="busy" @confirm="applyDates" @cancel="move.plan = null" />
     <ReasonDialog :open="dialog.open" :title="dialog.title" :label="dialog.label" :busy="busy" :error="dialog.error"
       @confirm="confirmDialog" @cancel="dialog.open = false" />
   </div>

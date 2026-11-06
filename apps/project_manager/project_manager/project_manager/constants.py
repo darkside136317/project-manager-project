@@ -89,7 +89,7 @@ DEFAULT_NODE_TYPES = (
     {"node_type": "Nhóm việc", "is_group": 1, "counts_in_rollup": 1, "sort_order": 20},
     {"node_type": "Công việc", "is_group": 0, "counts_in_rollup": 1, "requires_accountable": 1, "sort_order": 30},
     {"node_type": "Việc con", "is_group": 0, "counts_in_rollup": 1, "sort_order": 40},
-    {"node_type": "Mốc", "is_group": 0, "counts_in_rollup": 0, "sort_order": 50},
+    {"node_type": "Mốc", "is_group": 0, "counts_in_rollup": 0, "is_milestone": 1, "sort_order": 50},
 )
 
 # --- permission matrix -----------------------------------------------------------------------------------------------
@@ -106,9 +106,13 @@ DOCTYPE_LABELS.update({
     "PM Form Template": "Mẫu biểu mẫu", "PM Form Submission": "Biểu mẫu đã điền",
     "PM Gate Requirement": "Điều kiện đóng việc",
 })
+DOCTYPE_LABELS.update({
+    "PM Task Dependency": "Phụ thuộc giữa các việc", "PM Baseline": "Baseline", "PM Baseline Task": "Dòng của baseline",
+    "PM Baseline Curve": "Đường cong của baseline",
+})
 ROLE_MATRIX = (
     ("Dự án", ("Project", "Task", "PM Project Member", "PM Task Assignment", "PM Progress Entry", "PM Form Submission",
-               "PM Gate Requirement")),
+               "PM Gate Requirement", "PM Task Dependency", "PM Baseline")),
     ("Danh mục", ("PM Node Type", "PM Project Role", "PM Team", "PM Delay Reason", "PM Delay Source", "PM Form Template")),
     ("Quản trị", ("PM Group", "PM Access", "PM Settings", "PM Audit Log")),
 )
@@ -117,8 +121,10 @@ ROLE_MATRIX = (
 # (tests/test_hook_coverage.py). Project itself is scoped on its name. TASK_SCOPED ones follow the task visibility
 # too (a member who sees only their assigned tasks sees only those tasks' rows).
 PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot",
-                  "PM Form Submission", "PM Gate Requirement")
-TASK_SCOPED = ("Task", "PM Task Assignment", "PM Progress Entry", "PM Form Submission", "PM Gate Requirement")
+                  "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline", "PM Baseline Task",
+                  "PM Baseline Curve")
+TASK_SCOPED = ("Task", "PM Task Assignment", "PM Progress Entry", "PM Form Submission", "PM Gate Requirement",
+               "PM Task Dependency", "PM Baseline Task")
 
 # --- responsibility (PM Task Assignment) -----------------------------------------------------------------------------
 ACCOUNTABLE, RESPONSIBLE, CONSULTED, INFORMED, REVIEWER = (

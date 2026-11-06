@@ -55,3 +55,24 @@
 
 Các số trên đo với tài khoản Administrator (không có điều kiện phạm vi). Điều kiện phạm vi của người dùng thường đã được đo ở M1 trên 1 triệu việc.
 
+## M4 — Gantt và đường găng trên dự án 2.000 việc (2026-11-06)
+
+Dữ liệu: `scripts/perf/gantt_seed.py` tạo dự án tạm 2.000 việc và 2.394 phụ thuộc (mọi việc nối tiếp nhau, thêm nối chéo giữa các nhóm). Đo Gantt bằng `scripts/e2e/ui/gantt_perf.mjs` trên Edge thật, mỗi cỡ 3 lần. Docker Desktop trên Windows 11, tài khoản Administrator.
+
+| Thao tác trên máy chủ | Thời gian |
+|---|---|
+| Tính đường găng và dự báo, không có gì đổi | 285 ms |
+| Tính lần đầu, ghi kết quả mọi việc | 581 ms |
+| Dữ liệu Gantt (API) | 147 ms, 68 KB sau nén |
+| Xem trước dời một việc giữa dự án (đẩy theo 997 việc) | 134 ms |
+| Áp dụng lần dời đó, kèm lịch sử 997 dòng | 1.545 ms |
+| Chụp baseline | 1.918 ms |
+
+| Gantt trên trình duyệt | Vẽ xong (từ lúc mở trang, 3 lần) | Cuộn: trung vị / p95 |
+|---|---|---|
+| Máy tính | 694 / 563 / 751 ms | 6,9 / 7,1 ms mỗi khung |
+| Điện thoại 390 px, CPU giảm 4 lần | 1.638 / 983 / 753 ms | 25,4 / 37,1 ms mỗi khung |
+
+Mục tiêu của kế hoạch là dưới 2 s: đạt ở cả hai cỡ. Trước khi tối ưu, cuộn trên điện thoại là 39,6 ms mỗi khung: đọc lại màu CSS mỗi khung hình và cập nhật từng dòng danh sách là hai phần tốn nhất.
+
+Thuật toán thuần (`test_cpm`): 20.000 việc, khoảng 12.000 phụ thuộc, dưới 2 s, chạy trên máy chủ.
