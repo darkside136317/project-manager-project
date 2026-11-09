@@ -182,6 +182,11 @@ CUSTOM_FIELDS = {
 
 
 def ensure_custom_fields():
+    from project_manager.project_manager.services.projects import rollup_choices
+
+    for field in CUSTOM_FIELDS["Project"]:
+        if field["fieldname"] == "pm_rollup_method":  # the core's methods and those of the installed layers
+            field["options"] = "\n".join(rollup_choices())
     create_custom_fields(CUSTOM_FIELDS, ignore_validate=True, update=True)
     # Progress roll-up is the app's (incremental, M2): ERPNext's own recount on every task save stays off.
     make_property_setter("Project", "percent_complete_method", "default", "Manual", "Text", validate_fields_for_doctype=False)

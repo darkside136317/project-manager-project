@@ -17,6 +17,7 @@ import ProjectsPage from "./pages/ProjectsPage.vue";
 import RolesPage from "./pages/RolesPage.vue";
 import TaskPage from "./pages/TaskPage.vue";
 import UsersPage from "./pages/UsersPage.vue";
+import { moduleRoutes } from "./modules.js";
 
 // Frappe serves this app for /pm and every /pm/... path (hooks.website_route_rules).
 export const routes = [
@@ -36,6 +37,7 @@ export const routes = [
   { path: "/quan-tri/giam-sat", name: "monitor", component: MonitorPage, meta: { title: "Giám sát hệ thống" } },
   { path: "/quan-tri/:slug", name: "admin-screen", component: MasterPage, meta: { title: "Quản trị", sources: ["admin"] } },
   { path: "/khong-co-quyen", name: "forbidden", component: ForbiddenPage, meta: { title: "Không có quyền" } },
+  ...moduleRoutes(),  // pages of the installed industry layers
   { path: "/:pathMatch(.*)*", name: "not-found", component: NotFound, meta: { title: "Không tìm thấy" } },
 ];
 

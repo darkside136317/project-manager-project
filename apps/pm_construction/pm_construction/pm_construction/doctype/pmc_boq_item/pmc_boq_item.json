@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "boq",
+  "project",
+  "line_no",
+  "code",
+  "norm_code",
+  "description",
+  "uom",
+  "qty",
+  "unit_price",
+  "amount",
+  "is_group",
+  "level",
+  "parent_line",
+  "task",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "boq",
+   "fieldtype": "Link",
+   "label": "BOQ",
+   "options": "PMC BOQ",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "read_only": 1
+  },
+  {
+   "fieldname": "line_no",
+   "fieldtype": "Int",
+   "label": "Dòng",
+   "read_only": 1
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "STT",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "norm_code",
+   "fieldtype": "Data",
+   "label": "Mã hiệu định mức",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Nội dung công việc",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Data",
+   "label": "Đơn vị",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "label": "Khối lượng",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unit_price",
+   "fieldtype": "Currency",
+   "label": "Đơn giá",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Thành tiền",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Là hạng mục",
+   "read_only": 1
+  },
+  {
+   "fieldname": "level",
+   "fieldtype": "Int",
+   "label": "Cấp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "parent_line",
+   "fieldtype": "Int",
+   "label": "Thuộc dòng",
+   "read_only": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Công việc",
+   "options": "Task",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Construction",
+ "name": "PMC BOQ Item",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

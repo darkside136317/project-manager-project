@@ -20,7 +20,8 @@ import frappe
 from frappe.utils import cint, flt, getdate, nowdate
 
 from project_manager.project_manager import constants as C
-from project_manager.project_manager.services import gates
+from project_manager.project_manager import extensions
+from project_manager.project_manager.services import gates, jobs
 from project_manager.project_manager.services.errors import retry_on_deadlock
 
 QUEUE = "pm"
@@ -52,6 +53,9 @@ def leaf_weight(task, method: str) -> float:
         return max(0.0, flt(task.get("task_weight"))) or 1.0
     if method == C.ROLLUP_EQUAL:
         return 1.0
+    field = extensions.rollup_methods().get(method)
+    if field:  # a layer's method: the leaf weighs what this Task field says (its estimate value...)
+        return max(0.0, flt(task.get(field)))
     start, end = task.get("exp_start_date"), task.get("exp_end_date")
     if start and end:
         return float(max(1, (getdate(end) - getdate(start)).days + 1))
@@ -88,8 +92,8 @@ def schedule(project: str, parents: set) -> None:
     """After the commit: these groups ("" = the project's roots) must be recomputed."""
     def push():
         frappe.cache.sadd(_key(project), *parents)
-        frappe.enqueue("project_manager.project_manager.services.rollup.process", queue=QUEUE, project=project,
-                       job_id=f"pm-rollup:{project}", deduplicate=True, enqueue_after_commit=False)
+        jobs.enqueue_once("project_manager.project_manager.services.rollup.process", f"pm-rollup:{project}", QUEUE,
+                          project=project, enqueue_after_commit=False)
     frappe.db.after_commit.add(push)
 
 
@@ -121,7 +125,7 @@ def recompute(project: str, parents) -> int:
 
 def _recompute(project: str, dirty: set) -> int:
     method = method_of(project)
-    written = _refresh_leaf_weights(project, method, {p for p in dirty if p})
+    written = _refresh_leaf_weights(project, method, set(dirty))
     roots_dirty = "" in dirty
     level = {p for p in dirty if p}
     while level:
@@ -145,14 +149,24 @@ def _recompute(project: str, dirty: set) -> int:
     return written
 
 
+def weight_columns(method: str) -> str:
+    """Task columns leaf_weight needs, a layer method's field included."""
+    field = extensions.rollup_methods().get(method)
+    extra = f", `{field}`" if field and frappe.get_meta("Task").has_field(field) else ""
+    return "name, pm_node_type, status, task_weight, exp_start_date, exp_end_date, pm_rollup_weight" + extra
+
+
 def _refresh_leaf_weights(project: str, method: str, parents: set) -> int:
-    """Leaves under the dirty groups get their weight for the current method (cheap: indexed by parent)."""
+    """Leaves under the dirty groups ("" = the project's roots) get their weight for the current method (cheap:
+    indexed by parent)."""
     if not parents:
         return 0
+    named = tuple(p for p in parents if p) or ("",)
     rows = frappe.db.sql(
-        """select name, pm_node_type, status, task_weight, exp_start_date, exp_end_date, pm_rollup_weight
-           from `tabTask` where project = %(project)s and parent_task in %(parents)s and is_group = 0""",
-        {"project": project, "parents": tuple(parents)}, as_dict=True)
+        f"""select {weight_columns(method)}
+           from `tabTask` where project = %(project)s and is_group = 0
+           and (parent_task in %(parents)s or (%(roots)s and ifnull(parent_task, '') = ''))""",
+        {"project": project, "parents": named, "roots": 1 if "" in parents else 0}, as_dict=True)
     count = 0
     for row in rows:
         weight = leaf_weight(row, method)
@@ -232,7 +246,7 @@ def _write_project(project: str) -> int:
 # --- background jobs ------------------------------------------------------------------------------------------------
 
 def sweep() -> int:
-    """Every 5 minutes: projects with dirty groups whose job did not run (deduplicated while one was running)."""
+    """Every 5 minutes: projects with dirty groups whose job did not run (a worker restarted, Redis was away)."""
     count = 0
     for key in frappe.cache.get_keys("pm_rollup:"):
         project = key.decode().split("pm_rollup:", 1)[1] if isinstance(key, bytes) else key.split("pm_rollup:", 1)[1]
@@ -250,7 +264,7 @@ def reconcile(project: str) -> int:
         return _write_project(project)
     groups = {r.name for r in rows if r.is_group}
     parents_of_leaves = {r.parent_task or "" for r in rows if not r.is_group}
-    fixed = _refresh_leaf_weights(project, method_of(project), {p for p in parents_of_leaves if p})
+    fixed = _refresh_leaf_weights(project, method_of(project), parents_of_leaves)
     # deepest groups first, so each level aggregates children that are already right
     by_level = sorted((r for r in rows if r.name in groups), key=lambda r: -cint(r.pm_level))
     levels = {}

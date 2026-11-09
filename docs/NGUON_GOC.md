@@ -57,3 +57,7 @@ Không sao chép thêm từ `document_manager`. `GanttChart.vue` phát triển t
 | `docker/minio/Dockerfile.server`, `Dockerfile.mc` | `document_manager/docker/minio/` | Sao chép (cùng bản phát hành); thêm `curl` để healthcheck. Chính sách quyền của ứng dụng sinh trong `minio-init` theo tên bucket |
 
 Phần còn lại (dòng thời gian, ảnh, tài liệu, hàng đợi gửi lại, service worker, realtime) viết mới.
+
+## M6
+
+Không sao chép thêm từ `document_manager`. Lớp thi công (`apps/pm_construction`) và các điểm mở rộng của lõi (`extensions.py`, `frontend/src/modules.js`, `services/jobs.py`) đều viết mới. BOQ mẫu (`services/boq_import.SAMPLE`) là số liệu minh họa, mã hiệu theo cách đánh mã định mức thông dụng, đơn giá không lấy từ bộ đơn giá nào.

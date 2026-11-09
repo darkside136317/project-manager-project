@@ -22,6 +22,7 @@ from frappe import _
 from frappe.utils import cint, now_datetime
 
 from project_manager.project_manager import constants as C
+from project_manager.project_manager import extensions
 from project_manager.project_manager.policy import can_see_task, has_project_capability, is_admin
 from project_manager.project_manager.services import activity, form_templates, gates, rollup
 from project_manager.project_manager.services.notify import notify_user
@@ -315,6 +316,7 @@ def approve(name, note: str = "") -> dict:
                     "PM Form Submission", str(doc.name))
     if doc.task and frappe.db.get_value("Task", doc.task, "is_group"):
         rollup.schedule(doc.project, {doc.task})  # a finished group may have been waiting only for this form
+    extensions.form_event("approved", doc.name)
     frappe.enqueue("project_manager.project_manager.services.form_output.make_pdf_job", queue="default",
                    submission=doc.name, enqueue_after_commit=True, job_id=f"pm-form-pdf:{doc.name}", deduplicate=True)
     return detail(doc.name)

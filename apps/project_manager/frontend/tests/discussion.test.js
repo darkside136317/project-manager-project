@@ -26,6 +26,7 @@ vi.mock("../src/lib/sync.js", async () => {
     removeQueued: vi.fn(),
     retryQueued: vi.fn(),
     sendNow: vi.fn(),
+    KINDS: { comment: { label: "Trao đổi" }, progress: { label: "Báo cáo tiến độ" } },
   };
 });
 

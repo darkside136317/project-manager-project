@@ -66,6 +66,11 @@ def report(task: str, progress, note: str = "", delay_reason=None, delay_source=
     _apply_delay(doc, finishing, delay_reason, delay_source, delay_note)
     if finishing:
         gates.assert_ready(task, allow_submitted=bool(doc.get("pm_reviewer")))
+    _write(doc, before, progress, note, man_days, client_uuid)
+    return state_of(task)
+
+
+def _write(doc, before: float, progress: float, note: str, man_days=None, client_uuid=None) -> None:
     doc.progress = progress
     doc.status = _status_for(doc, progress)
     doc.pm_last_progress_on = now_datetime()
@@ -76,12 +81,28 @@ def report(task: str, progress, note: str = "", delay_reason=None, delay_source=
     doc.flags.pm_reason = note
     doc.flags.pm_history_type = "Tiến độ"
     doc.save(ignore_permissions=True)
-    frappe.get_doc({"doctype": "PM Progress Entry", "task": task, "entry_date": nowdate(), "reporter": frappe.session.user,
-                    "progress_before": before, "progress_after": progress, "note": note or None,
-                    "man_days": flt(man_days) or None, "delay_reason": doc.pm_delay_reason,
+    frappe.get_doc({"doctype": "PM Progress Entry", "task": doc.name, "entry_date": nowdate(),
+                    "reporter": frappe.session.user, "progress_before": before, "progress_after": progress,
+                    "note": note or None, "man_days": flt(man_days) or None, "delay_reason": doc.pm_delay_reason,
                     "delay_source": doc.pm_delay_source, "client_uuid": client_uuid or None}).insert(ignore_permissions=True)
     if doc.status == C.COMPLETED:
-        assignments.complete_for(task)
+        assignments.complete_for(doc.name)
+
+
+def set_measured(task: str, progress, note: str = "") -> dict | None:
+    """Progress measured from quantities (an industry layer's site diary). The caller has checked the user's right.
+    No delay reason is asked (people give it when they report by hand); a task whose closing conditions are not met
+    yet stops at 99 %. Nothing is written when the figure does not change."""
+    doc = frappe.get_doc("Task", task)
+    if cint(doc.is_group) or doc.status in (C.CANCELLED,):
+        return None
+    progress = max(0.0, min(100.0, flt(progress, 2)))
+    if progress >= 100 and gates.unmet(task, allow_submitted=bool(doc.get("pm_reviewer"))):
+        progress = 99.0
+    before = flt(doc.progress)
+    if abs(before - progress) < 0.005:
+        return None
+    _write(doc, before, progress, note)
     return state_of(task)
 
 

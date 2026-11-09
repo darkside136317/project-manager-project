@@ -24,8 +24,8 @@ export function onSent(listener) {
   return () => sentListeners.delete(listener);
 }
 
-async function sendComment(item, saveProgress) {
-  const { doctype, name } = item.reference;
+/** Upload the photos of a queued item that are not on the server yet, one by one, remembering each one sent. */
+export async function uploadPhotos(item, doctype, name, saveProgress) {
   for (const photo of item.photos) {
     if (photo.done) continue;
     const form = new FormData();
@@ -41,6 +41,11 @@ async function sendComment(item, saveProgress) {
     photo.data = null;  // uploaded: no need to keep the bytes on the phone
     await saveProgress();
   }
+}
+
+async function sendComment(item, saveProgress) {
+  const { doctype, name } = item.reference;
+  await uploadPhotos(item, doctype, name, saveProgress);
   return api.activity.post(doctype, name, {
     content: item.payload.content || "",
     media: item.photos.map((photo) => photo.uuid),
@@ -53,6 +58,24 @@ function sendProgress(item) {
 }
 
 export const SENDERS = { comment: sendComment, progress: sendProgress };
+/** What the queue screen calls each kind; and how it sums one item up (layers add theirs). */
+export const KINDS = {
+  comment: { label: "Trao đổi" },
+  progress: { label: "Báo cáo tiến độ" },
+};
+
+/** A layer's own kind of queued item (frontend/pm-module.js): how to send it, and how to show it. */
+export function registerKind(kind, send, { label = kind, summary = null } = {}) {
+  SENDERS[kind] = send;
+  KINDS[kind] = { label, summary };
+}
+
+/** Queue an item of any kind and send it right away when there is a connection. */
+export async function queueItem(kind, payload, options = {}) {
+  const item = await ensure().add(kind, payload, options);
+  sendNow();
+  return item;
+}
 
 function ensure() {
   if (!outbox) {

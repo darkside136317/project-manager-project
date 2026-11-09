@@ -9,7 +9,8 @@ import {
   ChartBar, ClipboardCheck, FolderKanban, IdCard, ListTree, ArrowLeftRight, TrendingUp, FileCode, Play, Ban, History, FileDown, Server, Activity, LockKeyhole, Maximize, Minimize,
   Kanban, UserCheck, CalendarClock, Flag, ArrowUp, ArrowDown, Hourglass, ListChecks, Ellipsis, CornerDownRight, UserX,
   ThumbsUp, ThumbsDown, ChartLine, Camera,
-  BellOff, EyeOff, CloudUpload, Image, Images, MapPin, WifiOff, Paperclip, FileUp, BadgeCheck,
+  BellOff, EyeOff, CloudUpload, Image, Images, MapPin, WifiOff, Paperclip, FileUp, BadgeCheck, Sheet, NotebookPen,
+  CloudSun,
 } from "lucide-vue-next";
 
 export const icons = {
@@ -121,6 +122,9 @@ export const icons = {
   paperclip: Paperclip,
   "file-up": FileUp,
   "badge-check": BadgeCheck,
+  sheet: Sheet,
+  "notebook-pen": NotebookPen,
+  "cloud-sun": CloudSun,
 };
 
 export const iconFor = (name) => icons[name] || FileText;

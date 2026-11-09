@@ -2,7 +2,7 @@
 const token = (name) => `var(--pm-${name})`;
 
 export default {
-  content: ["./src/**/*.{vue,js}"],
+  content: ["./src/**/*.{vue,js}", "../../*/frontend/src/**/*.{vue,js}", "../../*/frontend/pm-module.js"],
   theme: {
     extend: {
       colors: {

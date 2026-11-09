@@ -83,6 +83,22 @@ docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/si
 docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - reset < ../scripts/perf/timeline_check.py
 ```
 
+Kịch bản lớp thi công (chạy từ gốc repo; tạo dự án "Dự án thử thi công ..."):
+
+```bash
+cd scripts/e2e/ui && node construction_flow.mjs
+```
+
+Dữ liệu mẫu của lớp thi công (trong `docker/`; dựng sau, gỡ trước dữ liệu mẫu của lõi):
+
+```bash
+docker compose exec backend bench --site pm.localhost execute pm_construction.pm_construction.setup.demo.up
+```
+
+```bash
+docker compose exec backend bench --site pm.localhost execute pm_construction.pm_construction.setup.demo.down
+```
+
 ## Lưu ý
 
 - **Git Bash trên Windows** đổi đường dẫn dạng `/home/...` trong tham số lệnh: đặt `MSYS_NO_PATHCONV=1` khi gọi `docker exec -w /home/...` hoặc truyền đường dẫn container. `scripts/bootstrap.sh` đã đặt sẵn.
@@ -93,6 +109,8 @@ docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/si
 - **MariaDB 11.8** cần `innodb_snapshot_isolation=OFF` (đã đặt trong `docker/mariadb/my_custom.cnf`), nếu không sẽ gặp lỗi 1020 "Record has changed since last read".
 - **Jinja của Frappe v16 không tự escape**: luôn dùng `| e` hoặc `{% autoescape true %}`; dữ liệu JSON nhúng vào `<script>` dùng `services/web.inline_json`.
 - Không ghi secret vào code, tài liệu hay log; chỉ dùng tên biến môi trường.
+- **Màn hình của lớp ngành** nằm ở `apps/<app>/frontend/` (`pm-module.js`, `src/`, `tests/*.layer.test.js`), import lõi qua `@pm`. `spa-watch` gắn thư mục `apps/pm_construction` vào `/pm_construction`; sau khi thêm tệp mới cho `pm-module.js` thì khởi động lại `spa-watch`.
+- **Bộ sinh DocType (gen_doctypes) viết controller rỗng trước:** dev-watcher có thể migrate ngay lúc đó và bỏ qua `on_doctype_update`. Thấy thiếu index thì chạy `frappe.reload_doctype(dt, force=True)`.
 - **MinIO:** cấu hình nằm trong `common_site_config.json` (`pm_minio_*`, do `configurator` ghi). Test dùng kho trong bộ nhớ (`tests/helpers.memory_store`) nên không để lại tệp; chỉ test tìm kiếm dùng Meilisearch thật, với chỉ mục riêng.
 - **Service worker:** `/pm/sw.js` đổi theo mỗi bản build nên trình duyệt tự cập nhật. Khi thử offline bằng DevTools, nhớ tải lại một lần khi có mạng để worker giữ trang.
 - **Realtime cần đúng header:** nginx gửi `Origin` và `Host` là `http://<site>:8000` cho `/socket.io`, và backend mang tên site trên mạng Docker (xem `docker/Dockerfile`, `docker-compose.yml`). Thiếu một trong hai thì Socket.IO báo "Invalid origin" hoặc "Unauthorized".

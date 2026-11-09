@@ -10,6 +10,7 @@ from frappe import _
 from frappe.utils import add_days, cint, date_diff, getdate, nowdate
 
 from project_manager.project_manager import constants as C
+from project_manager.project_manager import extensions
 from project_manager.project_manager.policy import (
     assert_capability,
     assert_project_capability,
@@ -25,6 +26,11 @@ LIST_FIELDS = ["name", "project_name", "pm_code", "pm_state", "percent_complete"
 EDITABLE = ("project_name", "pm_code", "pm_state", "expected_start_date", "expected_end_date", "pm_manager",
             "pm_rollup_method", "pm_is_template", "notes", "pm_holiday_list")
 MAX_PAGE = 200
+
+
+def rollup_choices() -> list[str]:
+    """Ways to compute a project's progress: the core's, then those of the installed layers."""
+    return [*C.ROLLUP_METHODS, *(m for m in extensions.rollup_methods() if m not in C.ROLLUP_METHODS)]
 
 
 def list_projects(state: str | None = None, search: str | None = None, templates: int = 0, start: int = 0,
@@ -138,7 +144,7 @@ def _clean(values: dict) -> dict:
     values = {k: v for k, v in (values or {}).items() if k in EDITABLE}
     if "project_name" in values:
         values["project_name"] = (values["project_name"] or "").strip()
-    if values.get("pm_rollup_method") and values["pm_rollup_method"] not in C.ROLLUP_METHODS:
+    if values.get("pm_rollup_method") and values["pm_rollup_method"] not in rollup_choices():
         frappe.throw(_("Cách tính tiến độ không hợp lệ"))
     return values
 

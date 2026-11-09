@@ -19,6 +19,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 
+from project_manager.project_manager import extensions
 from project_manager.project_manager.policy import can_see_task, get_access, is_admin, project_in
 from project_manager.project_manager.services import activity
 from project_manager.project_manager.services.notify import notify_user
@@ -55,7 +56,19 @@ def target(reference_doctype: str, reference_name: str, user: str | None = None)
         if not frappe.db.exists("Project", reference_name) or not project_in(get_access(user).read, reference_name):
             raise frappe.PermissionError(_("Bạn không xem được dự án này"))
         return reference_name, None
-    raise frappe.ValidationError(_("Chỉ trao đổi trên công việc hoặc dự án"))
+    path = extensions.discussion_targets().get(reference_doctype)  # a layer's document (a site diary...)
+    if path and frappe.db.exists(reference_doctype, reference_name):
+        return frappe.get_attr(path)(reference_name, user)
+    raise frappe.ValidationError(_("Chỉ trao đổi trên công việc, dự án hoặc tài liệu được hỗ trợ"))
+
+
+def _scope_filter(reference_doctype: str, reference_name: str, project: str, task: str | None) -> dict:
+    """Which entries a discussion holds: a task's, a whole project's, or one document's."""
+    if task and reference_doctype == "Task":
+        return {"task": task}
+    if reference_doctype == "Project":
+        return {"project": project}
+    return {"reference_doctype": reference_doctype, "reference_name": reference_name}
 
 
 def may_read_entry(row, user: str | None = None) -> bool:
@@ -75,11 +88,7 @@ def feed(reference_doctype: str, reference_name: str, before=None, limit=PAGE, k
     see: PM Activity's query condition applies)."""
     project, task = target(reference_doctype, reference_name)
     limit = max(1, min(cint(limit) or PAGE, MAX_PAGE))
-    filters = {"is_deleted": 0}
-    if task:
-        filters["task"] = task
-    else:
-        filters["project"] = project
+    filters = {"is_deleted": 0, **_scope_filter(reference_doctype, reference_name, project, task)}
     if kind in KINDS:
         filters["activity_type"] = ["in", KINDS[kind]]
     if cint(before):
@@ -90,7 +99,7 @@ def feed(reference_doctype: str, reference_name: str, before=None, limit=PAGE, k
     rows = rows[:limit]
     follow = _follow_row(frappe.session.user, reference_doctype, reference_name)
     return {
-        "entries": decorate(rows, with_task=not task), "more": more, "next": rows[-1].name if more and rows else None,
+        "entries": decorate(rows, with_task=reference_doctype == "Project"), "more": more, "next": rows[-1].name if more and rows else None,
         "following": bool(follow and follow.watching), "last_read": cint(follow.last_read_id) if follow else 0,
         "unread": unread_count(reference_doctype, reference_name, follow),
     }
@@ -363,9 +372,13 @@ def unread_count(reference_doctype: str, reference_name: str, follow_row=None, c
     """Comments by others since the user last read this discussion (capped)."""
     row = follow_row if follow_row is not None else _follow_row(frappe.session.user, reference_doctype, reference_name)
     since = cint(row.last_read_id) if row else 0
-    column = "task" if reference_doctype == "Task" else "project"
+    if reference_doctype == "Task":
+        scope = {"task": reference_name}
+    elif reference_doctype == "Project":
+        scope = {"project": reference_name}
+    else:
+        scope = {"reference_doctype": reference_doctype, "reference_name": reference_name}
     # get_list: PM Activity's query condition keeps out the tasks this user does not see
-    return len(frappe.get_list("PM Activity", filters={column: reference_name, "name": [">", since],
-                                                       "activity_type": COMMENT, "is_deleted": 0,
-                                                       "actor": ["!=", frappe.session.user]},
+    return len(frappe.get_list("PM Activity", filters={**scope, "name": [">", since], "activity_type": COMMENT,
+                                                       "is_deleted": 0, "actor": ["!=", frappe.session.user]},
                                pluck="name", limit_page_length=cap, order_by="name desc"))

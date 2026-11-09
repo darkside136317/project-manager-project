@@ -5,16 +5,15 @@ import Icon from "../components/Icon.vue";
 import { boot } from "../lib/boot.js";
 import { formatDateTime } from "../lib/format.js";
 import { sizeText } from "../lib/outbox.js";
-import { network, removeQueued, retryQueued, sendNow } from "../lib/sync.js";
+import { KINDS, network, removeQueued, retryQueued, sendNow } from "../lib/sync.js";
 import { plainText, queuedState } from "../lib/timeline.js";
 
 // Hàng đợi: what was written without a connection and has not reached the server yet, oldest first (the order it
 // will be sent in). Items of another account that used this phone stay here until that account signs in again.
 const mine = computed(() => network.items.filter((item) => item.user === boot.user.name));
 const others = computed(() => network.items.filter((item) => item.user !== boot.user.name));
-const KIND = { comment: "Trao đổi", progress: "Báo cáo tiến độ" };
-
 function summary(item) {
+  if (KINDS[item.kind]?.summary) return KINDS[item.kind].summary(item);
   if (item.kind === "progress") {
     const values = item.payload.values || {};
     return `${values.progress_value}%${values.note ? ` · ${values.note}` : ""}`;
@@ -24,6 +23,7 @@ function summary(item) {
 }
 
 function linkOf(item) {
+  if (item.reference?.link) return item.reference.link;  // a layer's item says where it belongs
   if (item.reference?.doctype === "Task") return `/cong-viec/${item.reference.name}`;
   if (item.reference?.doctype === "Project") return `/du-an/${item.reference.name}/trao-doi`;
   return null;
@@ -46,7 +46,7 @@ function linkOf(item) {
     <ol v-if="mine.length" class="m-0 list-none space-y-2 p-0">
       <li v-for="item in mine" :key="item.id" class="card p-3 text-sm">
         <div class="flex flex-wrap items-center gap-2">
-          <strong>{{ KIND[item.kind] || item.kind }}</strong>
+          <strong>{{ KINDS[item.kind]?.label || item.kind }}</strong>
           <RouterLink v-if="linkOf(item)" :to="linkOf(item)" class="truncate text-primary">{{ item.label || item.reference?.name }}</RouterLink>
           <span class="ml-auto text-xs text-ink-muted">{{ formatDateTime(new Date(item.created).toISOString()) }}</span>
         </div>

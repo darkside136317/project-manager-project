@@ -39,7 +39,7 @@ from project_manager.project_manager.policy import (
     get_access,
     has_project_capability,
 )
-from project_manager.project_manager.services import activity, rollup
+from project_manager.project_manager.services import activity, jobs, rollup
 from project_manager.project_manager.services.cpm import FF, FS, SF, SS, Activity, CycleError, Link, forward, order, solve
 from project_manager.project_manager.services.errors import retry_on_deadlock
 from project_manager.project_manager.services.notify import notify_user
@@ -313,8 +313,8 @@ def mark(project: str) -> None:
 
     def push():
         frappe.cache.sadd(DIRTY, project)
-        frappe.enqueue("project_manager.project_manager.services.schedule.process", queue=QUEUE, project=project,
-                       job_id=f"pm-cpm:{project}", deduplicate=True, enqueue_after_commit=False)
+        jobs.enqueue_once("project_manager.project_manager.services.schedule.process", f"pm-cpm:{project}", QUEUE,
+                          project=project, enqueue_after_commit=False)
     frappe.db.after_commit.add(push)
 
 

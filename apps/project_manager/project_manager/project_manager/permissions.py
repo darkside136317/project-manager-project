@@ -254,3 +254,30 @@ def _form_scoped(doc, ptype, user) -> bool:
 
 
 has_form_submission_permission = _read_only(lambda doc, ptype, user: _form_scoped(doc, ptype, user))
+
+
+# --- for industry layers ------------------------------------------------------------------------------------------------
+# A layer's DocTypes with a `project` (and maybe a `task`) column use these in its own hooks.py, the same way the
+# core's do.
+
+def scope_condition(user, doctype: str) -> str:
+    """Rows of the projects the user may read."""
+    return _query(user, f"`tab{doctype}`.`project`")
+
+
+def entry_condition(user, doctype: str) -> str:
+    """Rows tied to a task follow the task's visibility, the rest the project's."""
+    return _entry_query(user, f"tab{doctype}")
+
+
+def scoped(doc, ptype="read", user=None) -> bool:
+    """Read within the read scope, change within the write scope."""
+    return _scoped(doc, user, ptype)
+
+
+def entry_scoped(doc, ptype="read", user=None) -> bool:
+    return _entry_scoped(doc, user, ptype)
+
+
+read_only = _read_only
+

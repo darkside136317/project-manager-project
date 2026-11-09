@@ -17,6 +17,8 @@ WORKDIR /src/apps/project_manager/frontend
 COPY apps/project_manager/frontend/package.json apps/project_manager/frontend/package-lock.json ./
 RUN npm ci
 COPY apps/project_manager/frontend/ ./
+# screens of the industry layers, found by src/modules.js beside the core
+COPY apps/pm_construction/frontend/ /src/apps/pm_construction/frontend/
 RUN npm test && npm run build
 
 # -----------------------------------------------------------------------------

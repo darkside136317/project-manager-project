@@ -91,3 +91,16 @@ Trung vị; lần chậm nhất 76 ms. Mục tiêu của kế hoạch là dướ
 
 Ảnh gửi từ điện thoại được thu nhỏ còn tối đa 1.600 px trước khi vào hàng đợi (kịch bản `discussion_flow.mjs` kiểm trên ảnh 1.170 × 2.532). Bundle SPA: 537 KB, 166 KB sau nén (thêm `socket.io-client`).
 
+## M6 — BOQ 3.000 dòng (2026-11-09)
+
+`scripts/perf/boq_check.py` tạo dự án tạm, BOQ 100 hạng mục × 29 công tác, rồi bản 2 đổi khối lượng 1/10 số dòng. Đo ở máy chủ, Docker Desktop trên Windows 11.
+
+| Thao tác | Thời gian |
+|---|---|
+| Đọc tệp Excel (94 KB) | 243–339 ms |
+| Nhập một phiên bản (3.000 dòng, chèn hàng loạt) | 1.234 ms |
+| Duyệt bản đầu: sinh cây WBS 3.000 việc, cộng dồn lại | 3.421 ms (trước khi tối ưu: 8.593 ms) |
+| Duyệt bản sau: nhận ra 3.000 dòng, cập nhật 300 việc | 704 ms (trước khi tối ưu: 10.590 ms) |
+
+Trước khi tối ưu, mỗi dòng ghi riêng 2–3 lệnh, và lần duyệt sau nạp lại mọi công tác để tính tiến độ dù không đổi. Nay ghi theo lô (một lệnh UPDATE cho vài trăm dòng), và chỉ tính lại tiến độ của công tác đổi khối lượng thiết kế.
+

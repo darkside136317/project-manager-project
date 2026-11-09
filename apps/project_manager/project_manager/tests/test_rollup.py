@@ -120,6 +120,17 @@ class TestRollup(PMTestCase):
         self.assertEqual(flt(values(t.phase2, "progress").progress), 40)
         self.assertFalse(frappe.cache.smembers(rollup._key(self.project)))
 
+    def test_a_mark_while_the_job_runs_queues_a_follow_up(self):
+        """The running job may already have looked at the dirty set for the last time: one more job runs after it."""
+        from rq.job import JobStatus
+
+        t = self.tree()
+        with patch("frappe.enqueue") as enqueue,                 patch("frappe.utils.background_jobs.get_job_status", return_value=JobStatus.STARTED):
+            set_progress(t.c, 55)
+            frappe.db.after_commit.run()
+        self.assertTrue(any(c.kwargs.get("job_id") == f"pm-rollup:{self.project}:next" and c.kwargs.get("deduplicate")
+                            for c in enqueue.call_args_list))
+
     def test_a_failed_job_keeps_the_work_for_the_sweeper(self):
         t = self.tree()
         frappe.cache.delete_value(rollup._key(self.project))

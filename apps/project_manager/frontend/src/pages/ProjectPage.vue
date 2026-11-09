@@ -6,6 +6,7 @@ import TaskDrawer from "../components/TaskDrawer.vue";
 import { api } from "../lib/api.js";
 import { pageTitle } from "../lib/page.js";
 import { PROJECT_TABS } from "../lib/work.js";
+import { projectTabs } from "../modules.js";
 import BaselineTab from "./project/BaselineTab.vue";
 import CalendarTab from "./project/CalendarTab.vue";
 import DiscussionTab from "./project/DiscussionTab.vue";
@@ -22,8 +23,10 @@ import WbsTab from "./project/WbsTab.vue";
 // tab opens a task in the drawer through `openTask`, and a change there asks the tab to reload (`version`).
 const route = useRoute();
 const router = useRouter();
-const TABS = { "tong-quan": OverviewTab, "cong-viec": WbsTab, gantt: GanttTab, kanban: KanbanTab, lich: CalendarTab, "ai-lam-gi": PeopleTab,
+const CORE = { "tong-quan": OverviewTab, "cong-viec": WbsTab, gantt: GanttTab, kanban: KanbanTab, lich: CalendarTab, "ai-lam-gi": PeopleTab,
   "bieu-mau": FormsTab, baseline: BaselineTab, "thanh-vien": MembersTab, "trao-doi": DiscussionTab, "tai-lieu": DocumentsTab };
+const tabs = projectTabs(PROJECT_TABS);  // with the tabs of the installed industry layers (modules.js)
+const TABS = { ...CORE, ...Object.fromEntries(tabs.filter((item) => item.component).map((item) => [item.slug, item.component])) };
 
 const project = computed(() => String(route.params.id || ""));
 const tab = computed(() => (TABS[route.params.tab] ? String(route.params.tab) : "tong-quan"));
@@ -68,7 +71,7 @@ watch(project, () => {
       <p v-if="overview" class="m-0 text-sm text-ink-muted">{{ overview.project.pm_code || overview.project.name }} · {{ overview.project.pm_state }}</p>
     </header>
     <nav class="-mx-1 mb-5 flex gap-1 overflow-x-auto border-b border-line px-1" aria-label="Các mục của dự án">
-      <RouterLink v-for="item in PROJECT_TABS" :key="item.slug" :to="`/du-an/${encodeURIComponent(project)}/${item.slug}`"
+      <RouterLink v-for="item in tabs" :key="item.slug" :to="`/du-an/${encodeURIComponent(project)}/${item.slug}`"
         class="-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm no-underline"
         :class="tab === item.slug ? 'border-primary font-semibold text-primary' : 'border-transparent text-ink-muted hover:text-ink'"
         :aria-current="tab === item.slug ? 'page' : undefined">

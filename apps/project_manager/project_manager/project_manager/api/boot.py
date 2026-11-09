@@ -3,6 +3,7 @@
 import frappe
 
 from project_manager import __version__
+from project_manager.project_manager import extensions
 from project_manager.project_manager.constants import ADMIN_SCREENS, MASTERS, SPA_HOME
 from project_manager.project_manager.policy import capabilities_of, get_access, has_capability, is_admin, is_staff
 
@@ -62,6 +63,7 @@ def build_boot() -> dict:
                  "all_projects": access.read is None},
         "company": frappe.defaults.get_user_default("company") or frappe.defaults.get_global_default("company"),
         "site": frappe.local.site,  # the realtime namespace (lib/realtime.js)
+        "modules": extensions.spa_modules(),  # screens of the installed layers (frontend/src/modules.js)
         "version": __version__,
         "home": SPA_HOME,
         "nav": nav,
