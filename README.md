@@ -34,8 +34,8 @@ scripts/bootstrap.sh
 Script bootstrap:
 1. kiểm tra Docker;
 2. tạo `docker/.env` từ `docker/.env.example` và **tự sinh mật khẩu** cho các biến trống;
-3. build image `pm-custom` (lần đầu mất vài phút);
-4. tạo site, cài ERPNext và hai app, chạy setup wizard ERPNext (công ty, năm tài chính, lịch nghỉ có ngày lễ Việt Nam) theo `docker/.env`;
+3. build image `pm-custom` và MinIO (lần đầu mất vài phút; MinIO được build từ mã nguồn nên cần mạng để tải Go module);
+4. tạo bucket MinIO cho ảnh và tài liệu (với tài khoản riêng của ứng dụng); tạo site, cài ERPNext và hai app, chạy setup wizard ERPNext (công ty, năm tài chính, lịch nghỉ có ngày lễ Việt Nam) theo `docker/.env`;
 5. khởi động toàn bộ dịch vụ và chờ site phản hồi.
 
 Sau đó mở:
@@ -45,6 +45,8 @@ Sau đó mở:
 Tài khoản `Administrator`, mật khẩu là `ADMIN_PASSWORD` trong `docker/.env`.
 
 Chạy lại script bất cứ lúc nào: dữ liệu và mật khẩu được giữ nguyên, site được migrate. Muốn đổi tên công ty, viết tắt, năm tài chính… thì sửa `docker/.env` **trước** lần bootstrap đầu tiên.
+
+**Cài lên điện thoại:** mở `/pm` bằng Chrome (Android) hoặc Safari (iPhone), chọn "Thêm vào màn hình chính". Khi mất mạng, ứng dụng vẫn mở được; trao đổi, ảnh và báo cáo tiến độ viết lúc đó nằm ở màn **Hàng đợi gửi** và tự gửi khi có mạng (iPhone: khi mở lại ứng dụng). Ngoài `localhost`, trình duyệt chỉ cho chạy offline khi trang được phục vụ qua HTTPS.
 
 Chạy cùng máy với `document_manager` được: hệ thống này dùng port `8890`, compose project `pmdev`, tiền tố volume `pm`, site `pm.localhost` (đều đổi được trong `docker/.env`).
 
@@ -82,7 +84,7 @@ SPA: `npm ci && npm test` trong `apps/project_manager/frontend`. CI (`.github/wo
 ```
 apps/project_manager/      lõi (Frappe app) + frontend/ (Vue 3 + Vite → public/spa)
 apps/pm_construction/      lớp thi công (Frappe app)
-docker/                    Dockerfile, compose (base, local, dev), .env.example, mariadb/, dev/
+docker/                    Dockerfile, compose (base, local, dev), .env.example, mariadb/, minio/, dev/
 scripts/                   bootstrap.ps1, bootstrap.sh, e2e/, ci/
 docs/                      kế hoạch, nhật ký xây dựng, truy vết yêu cầu, quy trình dev
 ```
@@ -93,6 +95,7 @@ docs/                      kế hoạch, nhật ký xây dựng, truy vết yêu
 |---|---|
 | `Docker chưa chạy` | Mở Docker Desktop, đợi biểu tượng chuyển xanh rồi chạy lại |
 | Port 8890 đã bị dùng | Đổi `HTTP_PUBLISH_PORT` và `PUBLIC_URL` trong `docker/.env`, chạy lại bootstrap |
+| Không tải ảnh, tài liệu lên được (báo MinIO) | `cd docker && docker compose up -d minio && docker compose run --rm minio-init`; màn **Giám sát hệ thống** cho biết MinIO đã bình thường chưa |
 | Site trả 502 sau khi máy ngủ dậy | `cd docker && docker compose up -d` rồi `docker compose restart frontend` |
 | Script `.sh` báo `\r: command not found` | Repo bị clone với CRLF: `git config core.autocrlf false`, xóa thư mục rồi clone lại (`.gitattributes` đã ép LF) |
 | PowerShell chặn script | Chạy đúng lệnh có `-ExecutionPolicy Bypass` ở trên |

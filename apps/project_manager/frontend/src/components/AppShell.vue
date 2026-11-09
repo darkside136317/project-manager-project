@@ -7,6 +7,7 @@ import { theme, toggleTheme } from "../lib/theme.js";
 import ChangePasswordDialog from "./ChangePasswordDialog.vue";
 import CommandPalette from "./CommandPalette.vue";
 import Icon from "./Icon.vue";
+import NetworkStatus from "./NetworkStatus.vue";
 import NotificationBell from "./NotificationBell.vue";
 import SidebarNav from "./SidebarNav.vue";
 import ToastHost from "./ToastHost.vue";
@@ -60,6 +61,7 @@ watch(title, (value) => { document.title = value ? `${value} — ${product}` : p
           <Icon name="search" :size="15" /> Đi tới <kbd class="rounded border border-line px-1.5 text-xs">Ctrl K</kbd>
         </button>
         <button v-if="canSearch" class="btn btn-ghost btn-icon sm:hidden" type="button" aria-label="Tìm nhanh" @click="paletteOpen = true"><Icon name="search" /></button>
+        <NetworkStatus />
         <NotificationBell />
         <button class="btn btn-ghost btn-icon" type="button" :aria-label="theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'" @click="toggleTheme">
           <Icon :name="theme === 'dark' ? 'sun' : 'moon'" />

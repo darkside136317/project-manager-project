@@ -116,3 +116,30 @@ describe("call", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("call, M5", () => {
+  it("renews a stale CSRF token once and tries again", async () => {
+    const { boot } = await import("../src/lib/boot.js");
+    boot.csrf_token = "old";
+    const seen = [];
+    const fetcher = vi.fn(async (url, init) => {
+      seen.push([url, init.headers["X-Frappe-CSRF-Token"]]);
+      if (url.endsWith("boot.csrf_token")) return reply({ message: "new" });
+      if (init.headers["X-Frappe-CSRF-Token"] === "old") return reply({ exc_type: "CSRFTokenError" }, 400);
+      return reply({ message: "ok" });
+    });
+    await expect(call("x.y", { a: 1 }, { post: true, fetcher })).resolves.toBe("ok");
+    expect(seen.map(([url, token]) => [url.split("/").pop(), token])).toEqual([["x.y", "old"], ["project_manager.project_manager.api.boot.csrf_token", "old"], ["x.y", "new"]]);
+    expect(boot.csrf_token).toBe("new");
+  });
+
+  it("sends files as multipart, leaving the boundary to the browser", async () => {
+    const fetcher = vi.fn(async () => reply({ message: 1 }));
+    const form = new FormData();
+    form.append("client_uuid", "u-1");
+    await call("media.upload", form, { post: true, fetcher });
+    const [, init] = fetcher.mock.calls[0];
+    expect(init.body).toBe(form);
+    expect(init.headers["Content-Type"]).toBeUndefined();
+  });
+});

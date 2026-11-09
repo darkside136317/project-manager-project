@@ -54,3 +54,11 @@ Mục yêu cầu theo `prompt-project-manager-plan.md` (prompt gốc) và [KE_HO
 | 4.2 Lịch thi công | M4 | `schedule.calendar_view`, `CalendarTab.vue` | `test_schedule.TestScreens.test_calendar`, vitest |
 | 4.2 Baseline nhiều phiên bản, so sánh trên Gantt và bảng | M4 | PM Baseline (+Task, Curve), `services/baseline.py`, `BaselineTab.vue` | `test_schedule.TestBaseline` |
 | 4.2 Đường cong S kế hoạch và thực tế, chênh lệch ngày, dự báo ngày hoàn thành | M4 | `baseline.curve_points/curve_for_chart`, `schedule.compute_forecast`, `SCurve.vue`, `OverviewTab.vue` | `test_schedule.TestForecast`, `test_baseline_move_gantt_forecast` |
+| 4.7 Trao đổi theo từng công việc và dự án: bình luận, @nhắc tên, ảnh, tiến độ kèm ghi chú, thay đổi | M5 | PM Activity, `services/timeline.py`, `Timeline.vue`, `Composer.vue`, `DiscussionTab.vue` | `test_timeline.TestComments`, vitest `discussion.test.js`, `discussion_flow.mjs` |
+| 4.7 Theo dõi, đã đọc, thông báo khi có trao đổi mới; cập nhật ngay trên màn đang mở | M5 | PM Follow, `timeline.follow/mark_read`, `lib/realtime.js` | `test_timeline.TestComments`, `discussion_flow.mjs` (realtime) |
+| 4.7 Chỉ người xem được công việc mới đọc được trao đổi của nó | M5 | `permissions.entry_sql` (PM Activity, PM Media, PM Document) | `test_timeline.TestScope`, `test_hook_coverage` |
+| 3.5 Ảnh hiện trường: thu nhỏ trên máy, ảnh nhỏ trong nền, thời điểm và vị trí chụp | M5 | PM Media, `services/media.py`, `lib/images.js` | `test_timeline.TestPhotos`, vitest `timeline.test.js` (EXIF) |
+| 4.7 Tài liệu dự án có phiên bản và duyệt, xem trước, tải về | M5 | PM Document (+Version), `services/documents.py`, `DocumentsTab.vue` | `test_timeline.TestDocuments`, `discussion_flow.mjs` |
+| 5.5 Tệp private: MinIO không mở ra ngoài, mỗi lần tải đều kiểm quyền | M5 | `services/object_storage.py`, `services/files.py` | `test_timeline` (ai xem được ảnh, tải về) |
+| 4.7 Tìm kiếm trong trao đổi và tài liệu, trong phạm vi quyền | M5 | `services/search_index.py` (Meilisearch) | `test_timeline.TestSearch` |
+| D12, 3.5 Offline: hàng đợi gửi lại, không trùng (`client_uuid`), mở được khi mất mạng | M5 | `lib/outbox.js`, `lib/sync.js`, `public/sw.js`, `OutboxPage.vue` | vitest `outbox.test.js`, `discussion_flow.mjs` (tiêu chí hoàn thành M5) |

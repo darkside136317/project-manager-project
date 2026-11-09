@@ -1,5 +1,5 @@
 // Thin client for Frappe's /api/method/... : CSRF header, JSON, readable errors.
-import { csrfToken } from "./boot.js";
+import { csrfToken, setCsrfToken } from "./boot.js";
 
 export class ApiError extends Error {
   constructor(message, { status = 0, excType = "", messages = [] } = {}) {
@@ -84,15 +84,34 @@ export function redirectToLogin() {
   window.location.assign(`/login?redirect-to=${encodeURIComponent(here)}`);
 }
 
+const isForm = (value) => typeof FormData !== "undefined" && value instanceof FormData;
+
+/** Frappe answers a stale CSRF token with this exception. */
+export const isCsrfError = (status, payload) => (status === 400 || status === 403) && payload?.exc_type === "CSRFTokenError";
+
 /**
  * Call a whitelisted method. Reads use GET with the arguments in the query string; pass
  * `{ post: true }` for anything that changes data (Frappe requires POST + CSRF for those).
+ * A FormData `args` is sent as multipart (files). A stale CSRF token is renewed once.
  */
-export async function call(method, args = {}, { post = false, fetcher = fetch, loginOn401 = true } = {}) {
+export async function call(method, args = {}, options = {}) {
+  try {
+    return await send(method, args, options);
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.excType !== "CSRFTokenError" || options.renewed) throw error;
+    const token = await send(`${BASE}.boot.csrf_token`, {}, { fetcher: options.fetcher });
+    setCsrfToken(token);
+    return send(method, args, { ...options, renewed: true });
+  }
+}
+
+async function send(method, args = {}, { post = false, fetcher = fetch, loginOn401 = true } = {}) {
   const headers = { Accept: "application/json", "X-Frappe-CSRF-Token": csrfToken() };
   let url = `/api/method/${method}`;
   const init = { method: post ? "POST" : "GET", headers, credentials: "same-origin" };
-  if (post) {
+  if (post && isForm(args)) {
+    init.body = args;
+  } else if (post) {
     headers["Content-Type"] = "application/json";
     init.body = JSON.stringify(args);
   } else {
@@ -120,6 +139,9 @@ export async function call(method, args = {}, { post = false, fetcher = fetch, l
     redirectToLogin();
   }
   if (!response.ok) {
+    if (isCsrfError(response.status, payload)) {
+      throw new ApiError("Phiên làm việc đã đổi: đang thử lại.", { status: response.status, excType: "CSRFTokenError" });
+    }
     throw new ApiError(errorMessage(payload, response.status), {
       status: response.status,
       excType: payload?.exc_type || "",
@@ -242,6 +264,30 @@ export const api = {
     report: (task, values) => call(`${BASE}.tasks.report`, { task, ...values }, { post: true }),
     review: (task, approve, note = "") => call(`${BASE}.tasks.review`, { task, approve: approve ? 1 : 0, note }, { post: true }),
     move: (task, status, values = {}) => call(`${BASE}.tasks.move`, { task, status, ...values }, { post: true }),
+  },
+  activity: {
+    feed: (doctype, name, params = {}) => call(`${BASE}.activity.feed`, { reference_doctype: doctype, reference_name: name, ...params }),
+    entry: (name) => call(`${BASE}.activity.entry`, { name }),
+    people: (doctype, name, search = "") => call(`${BASE}.activity.people`, { reference_doctype: doctype, reference_name: name, search }),
+    post: (doctype, name, values) => call(`${BASE}.activity.post`, { reference_doctype: doctype, reference_name: name, ...values }, { post: true }),
+    hide: (name) => call(`${BASE}.activity.hide`, { name }, { post: true }),
+    follow: (doctype, name, watching) => call(`${BASE}.activity.follow`, { reference_doctype: doctype, reference_name: name, watching: watching ? 1 : 0 }, { post: true }),
+    markRead: (doctype, name, upto) => call(`${BASE}.activity.mark_read`, { reference_doctype: doctype, reference_name: name, upto }, { post: true }),
+    search: (query, params = {}) => call(`${BASE}.activity.search`, { query, ...params }),
+  },
+  media: {
+    upload: (form) => call(`${BASE}.media.upload`, form, { post: true }),
+    gallery: (project, params = {}) => call(`${BASE}.media.gallery`, { project, ...params }),
+    url: (name, size = "thumb") => `/api/method/${BASE}.media.file?name=${encodeURIComponent(name)}&size=${size}`,
+  },
+  documents: {
+    list: (project, params = {}) => call(`${BASE}.documents.listing`, { project, ...params }),
+    detail: (name) => call(`${BASE}.documents.detail`, { name }),
+    create: (form) => call(`${BASE}.documents.create`, form, { post: true }),
+    addVersion: (form) => call(`${BASE}.documents.add_version`, form, { post: true }),
+    approve: (name, versionNo) => call(`${BASE}.documents.approve`, { name, version_no: versionNo }, { post: true }),
+    url: (name, version = null, inline = false) =>
+      `/api/method/${BASE}.documents.download?name=${encodeURIComponent(name)}${version ? `&version=${version}` : ""}${inline ? "&inline=1" : ""}`,
   },
   notifications: {
     list: (params = {}) => call(`${BASE}.account.get_notifications`, params),

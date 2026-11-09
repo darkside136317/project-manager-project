@@ -11,6 +11,7 @@ import MasterPage from "./pages/MasterPage.vue";
 import MonitorPage from "./pages/MonitorPage.vue";
 import MyTasksPage from "./pages/MyTasksPage.vue";
 import NotFound from "./pages/NotFound.vue";
+import OutboxPage from "./pages/OutboxPage.vue";
 import ProjectPage from "./pages/ProjectPage.vue";
 import ProjectsPage from "./pages/ProjectsPage.vue";
 import RolesPage from "./pages/RolesPage.vue";
@@ -24,6 +25,7 @@ export const routes = [
   { path: "/du-an", name: "projects", component: ProjectsPage, meta: { title: "Dự án" } },
   { path: "/du-an/:id/:tab?", name: "project", component: ProjectPage, meta: { title: "Dự án" } },
   { path: "/cong-viec/:id", name: "task", component: TaskPage, meta: { title: "Công việc" } },
+  { path: "/hang-doi", name: "outbox", component: OutboxPage, meta: { title: "Hàng đợi gửi" } },
   { path: "/bieu-mau/:id", name: "form", component: FormSubmissionPage, meta: { title: "Biểu mẫu" } },
   { path: "/bieu-mau-mau", name: "form-templates", component: FormTemplatesPage, meta: { title: "Mẫu biểu mẫu" } },
   { path: "/bieu-mau-mau/:name", name: "form-template", component: FormTemplatePage, meta: { title: "Mẫu biểu mẫu" } },

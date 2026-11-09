@@ -64,8 +64,47 @@ def project_member_query(user):
     return _query(user, "`tabPM Project Member`.`project`")
 
 
+def entry_sql(access, table: str) -> str:
+    """Rows that may belong to a task (timeline entries, photos, documents): the task's visibility when they do,
+    the project's read scope when they do not."""
+    tasks = task_sql(access, f"`{table}`.`task`", f"`{table}`.`project`")
+    projects = project_sql(access.read, f"`{table}`.`project`")
+    if not tasks and not projects:
+        return ""
+    without = f"`{table}`.`task` IS NULL" + (f" AND {projects}" if projects else "")
+    within = f"`{table}`.`task` IS NOT NULL" + (f" AND {tasks}" if tasks else "")
+    return f"(({without}) OR ({within}))"
+
+
+def _entry_query(user, table: str) -> str:
+    access = get_access(user)
+    if access.kind == "admin":
+        return ""
+    return entry_sql(access, table)
+
+
 def activity_query(user):
-    return _query(user, "`tabPM Activity`.`project`")
+    return _entry_query(user, "tabPM Activity")
+
+
+def media_query(user):
+    return _entry_query(user, "tabPM Media")
+
+
+def document_query(user):
+    return _entry_query(user, "tabPM Document")
+
+
+def document_version_query(user):
+    return _entry_query(user, "tabPM Document Version")
+
+
+def follow_query(user):
+    """Each user sees only what they follow."""
+    access = get_access(user)
+    if access.kind == "admin":
+        return ""
+    return f"`tabPM Follow`.`user` = {frappe.db.escape(access.user)}"
 
 
 def snapshot_query(user):
@@ -182,7 +221,21 @@ def _read_only(scope_check):
     return check
 
 
-has_activity_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
+def _entry_scoped(doc, user, ptype) -> bool:
+    task = doc.get("task")
+    return _task_scoped(doc, user, ptype, task) if task else _scoped(doc, user, ptype)
+
+
+def _own_follow(doc, user) -> bool:
+    user = user or frappe.session.user
+    return get_access(user).kind == "admin" or doc.user == user
+
+
+has_activity_permission = _read_only(lambda doc, ptype, user: _entry_scoped(doc, user, ptype))
+has_media_permission = _read_only(lambda doc, ptype, user: _entry_scoped(doc, user, ptype))
+has_document_permission = _read_only(lambda doc, ptype, user: _entry_scoped(doc, user, ptype))
+has_document_version_permission = _read_only(lambda doc, ptype, user: _entry_scoped(doc, user, ptype))
+has_follow_permission = _read_only(lambda doc, ptype, user: _own_follow(doc, user))
 has_snapshot_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
 has_assignment_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
 has_progress_entry_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))

@@ -1,7 +1,7 @@
 # =============================================================================
 # Project Manager — Docker Compose (base)
 # =============================================================================
-# Frappe/ERPNext + project_manager + pm_construction, MariaDB, Redis, Meilisearch.
+# Frappe/ERPNext + project_manager + pm_construction, MariaDB, Redis, Meilisearch, MinIO.
 # Run through scripts/bootstrap.ps1 or scripts/bootstrap.sh: they create docker/.env
 # (secrets included) and pick the overlays through COMPOSE_FILE:
 #   docker-compose.local.yml  publishes the site on 127.0.0.1:${HTTP_PUBLISH_PORT}
@@ -26,6 +26,11 @@ services:
   # ---------------------------------------------------------------------------
   backend:
     <<: *app-image
+    networks:
+      frappe_network:
+        # Socket.IO checks each user by calling the backend at http://<site>:8000 (docker/Dockerfile, nginx)
+        aliases:
+          - ${FRAPPE_SITE_NAME:?}
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -59,6 +64,10 @@ services:
         bench set-config -gp workers '{"pm": {"timeout": 600}}';
         bench set-config -g meilisearch_host "http://meilisearch:7700";
         bench set-config -g meilisearch_master_key "$$MEILISEARCH_MASTER_KEY";
+        bench set-config -g pm_minio_endpoint "http://minio:9000";
+        bench set-config -g pm_minio_bucket "$$MINIO_BUCKET";
+        bench set-config -g pm_minio_access_key "$$MINIO_APP_ACCESS_KEY";
+        bench set-config -g pm_minio_secret_key "$$MINIO_APP_SECRET_KEY";
         if [ -n "$$PUBLIC_URL" ]; then bench set-config -g host_name "$$PUBLIC_URL"; fi;
     environment:
       DB_HOST: ${DB_HOST:-db}
@@ -66,6 +75,9 @@ services:
       REDIS_CACHE: ${REDIS_CACHE:-redis-cache:6379}
       REDIS_QUEUE: ${REDIS_QUEUE:-redis-queue:6379}
       MEILISEARCH_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:?}
+      MINIO_BUCKET: ${MINIO_BUCKET:-pm-files}
+      MINIO_APP_ACCESS_KEY: ${MINIO_APP_ACCESS_KEY:-pm-app}
+      MINIO_APP_SECRET_KEY: ${MINIO_APP_SECRET_KEY:?Run scripts/bootstrap to generate the secrets}
       PUBLIC_URL: ${PUBLIC_URL:-}
 
   # ---------------------------------------------------------------------------
@@ -248,6 +260,77 @@ services:
       retries: 5
       start_period: 10s
 
+  # ---------------------------------------------------------------------------
+  # MinIO: photos and documents (private; only the backend talks to it)
+  # ---------------------------------------------------------------------------
+  minio:
+    image: pm-minio:RELEASE.2025-10-15T17-29-55Z
+    build:
+      context: minio
+      dockerfile: Dockerfile.server
+    networks:
+      - frappe_network
+    expose:
+      - "9000"
+    restart: unless-stopped
+    command: ["server", "/data"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-pmadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Run scripts/bootstrap to generate the secrets}
+      MINIO_BROWSER: "off"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+  # One-shot: the bucket, and an application user that may only read and write it (idempotent)
+  minio-init:
+    image: pm-minio-mc:RELEASE.2025-08-13T08-35-41Z
+    build:
+      context: minio
+      dockerfile: Dockerfile.mc
+    networks:
+      - frappe_network
+    restart: "no"
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        tries=0
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null; do
+          tries=$$((tries + 1))
+          if [ "$$tries" -ge 60 ]; then echo "MinIO did not answer" >&2; exit 1; fi
+          sleep 2
+        done
+        mc mb --ignore-existing "local/$$MINIO_BUCKET"
+        printf '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:ListBucket"],"Resource":["arn:aws:s3:::%s"]},{"Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:DeleteObject"],"Resource":["arn:aws:s3:::%s/*"]}]}' "$$MINIO_BUCKET" "$$MINIO_BUCKET" > /tmp/policy.json
+        if ! mc admin user info local "$$MINIO_APP_ACCESS_KEY" >/dev/null 2>&1; then
+          mc admin user add local "$$MINIO_APP_ACCESS_KEY" "$$MINIO_APP_SECRET_KEY"
+        fi
+        mc admin policy create local pm-app /tmp/policy.json >/dev/null || mc admin policy info local pm-app >/dev/null
+        mc admin policy attach local pm-app --user "$$MINIO_APP_ACCESS_KEY" >/dev/null 2>&1 || true
+        mc alias set app http://minio:9000 "$$MINIO_APP_ACCESS_KEY" "$$MINIO_APP_SECRET_KEY" >/dev/null
+        probe="app/$$MINIO_BUCKET/.pm-check-$$(cat /proc/sys/kernel/random/uuid)"
+        printf ok | mc pipe "$$probe" >/dev/null
+        mc cat "$$probe" >/dev/null
+        mc rm "$$probe" >/dev/null
+        echo "MinIO ready: bucket $$MINIO_BUCKET"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-pmadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?}
+      MINIO_BUCKET: ${MINIO_BUCKET:-pm-files}
+      MINIO_APP_ACCESS_KEY: ${MINIO_APP_ACCESS_KEY:-pm-app}
+      MINIO_APP_SECRET_KEY: ${MINIO_APP_SECRET_KEY:?}
+      MC_CONFIG_DIR: /tmp/mc
+    tmpfs:
+      - /tmp
+    depends_on:
+      minio:
+        condition: service_healthy
+
 # =============================================================================
 # Volumes — one per component, so each can be backed up on its own
 # =============================================================================
@@ -262,6 +345,8 @@ volumes:
     name: ${DATA_VOLUME_PREFIX:-pm}_logs
   meilisearch-data:
     name: ${DATA_VOLUME_PREFIX:-pm}_meilisearch
+  minio-data:
+    name: ${DATA_VOLUME_PREFIX:-pm}_minio
 
 networks:
   frappe_network:

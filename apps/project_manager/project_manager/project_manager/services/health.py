@@ -13,7 +13,7 @@ def check_services(fresh: bool = False) -> dict:
         cached = frappe.cache.get_value(CACHE_KEY)
         if cached:
             return cached
-    result = {"meilisearch": _check_meilisearch(), "overdue_job": _check_overdue_job()}
+    result = {"meilisearch": _check_meilisearch(), "minio": _check_minio(), "overdue_job": _check_overdue_job()}
     frappe.cache.set_value(CACHE_KEY, result, expires_in_sec=CACHE_OK_SECONDS if all(s["ok"] for s in result.values()) else CACHE_DOWN_SECONDS)
     return result
 
@@ -25,6 +25,19 @@ def _check_meilisearch() -> dict:
         client = meilisearch.Client(frappe.conf.get("meilisearch_host") or "http://meilisearch:7700",
                                     frappe.conf.get("meilisearch_master_key") or None, timeout=3)
         client.health()
+        return {"ok": True, "message": "Kết nối thành công"}
+    except Exception as e:
+        return {"ok": False, "message": _short(e)}
+
+
+def _check_minio() -> dict:
+    """The object store of photos and documents (services/object_storage.py)."""
+    from project_manager.project_manager.services import object_storage
+
+    if not object_storage.configured():
+        return {"ok": False, "message": "Chưa cấu hình MinIO (chạy lại scripts/bootstrap)"}
+    try:
+        object_storage.ping()
         return {"ok": True, "message": "Kết nối thành công"}
     except Exception as e:
         return {"ok": False, "message": _short(e)}

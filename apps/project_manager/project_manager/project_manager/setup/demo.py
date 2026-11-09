@@ -15,7 +15,20 @@ import frappe
 from frappe.utils import add_days, getdate, nowdate
 
 from project_manager.project_manager import constants as C
-from project_manager.project_manager.services import assignments, baseline, forms, gates, projects, rollup, schedule, tree
+from project_manager.project_manager.services import (
+    assignments,
+    baseline,
+    documents,
+    forms,
+    gates,
+    media,
+    object_storage,
+    projects,
+    rollup,
+    schedule,
+    timeline,
+    tree,
+)
 
 TEMPLATE_CODE = "DEMO-MAU"
 SIGNATURE = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
@@ -147,8 +160,55 @@ def up():
     rollup.reconcile(project)
     schedule.refresh(project)
     _history(project, start, today)
+    _discussion(project, tasks, manager, commander, eng1)
     frappe.db.commit()
     print(f"Demo created: {project} (template {template.name})")
+
+
+def _mention(email: str) -> str:
+    return f"@[{next(name for e, name, _role in PEOPLE if e == email)}]({email})"
+
+
+def _discussion(project, tasks, manager, commander, engineer):
+    """A few exchanges, a site photo and a drawing with two versions (needs MinIO for the files)."""
+    import io
+    import uuid
+
+    frappe.set_user(manager)
+    timeline.post("Project", project, f"Giao ban 7h sáng thứ Hai hằng tuần tại lán chỉ huy. {_mention(commander)} chuẩn bị "
+                  "báo cáo tiến độ tuần.")
+    frappe.set_user(engineer)
+    timeline.post("Task", tasks["2.4"].name, "Ván khuôn về chậm 3 ngày, đã báo nhà cung cấp, dự kiến thứ Năm có đủ.")
+    frappe.set_user(commander)
+    timeline.post("Task", tasks["2.4"].name, f"{_mention(engineer)} gửi giúp ảnh hiện trạng khu vực trục 3–4 trước khi ghép.")
+    if not object_storage.configured():
+        frappe.set_user("Administrator")
+        return
+    from PIL import Image, ImageDraw
+
+    frappe.set_user(engineer)
+    picture = Image.new("RGB", (1200, 900), (120, 113, 108))
+    pen = ImageDraw.Draw(picture)
+    for x in range(0, 1200, 60):
+        pen.line((x, 0, x, 900), fill=(150, 142, 135), width=6)  # rebar mesh, roughly
+    for y in range(0, 900, 60):
+        pen.line((0, y, 1200, y), fill=(150, 142, 135), width=6)
+    raw = io.BytesIO()
+    picture.save(raw, "JPEG", quality=80)
+    key = str(uuid.uuid4())
+    media.upload("Task", tasks["2.3"].name, key, raw.getvalue(), "cot-thep-mong.jpg", nowdate() + " 08:30:00",
+                 10.7295, 106.7219)
+    timeline.post("Task", tasks["2.3"].name, "Cốt thép móng M1–M4 đã buộc xong, mời nghiệm thu.", [key])
+    frappe.set_user(manager)
+    from frappe.utils.pdf import get_pdf
+
+    sheet = "<h1 style='font-family:sans-serif'>Mặt bằng tầng 1</h1><p>Bản {0}: {1}</p>"
+    drawing = documents.create(project, "Bản vẽ kiến trúc – mặt bằng tầng 1", get_pdf(sheet.format(1, "phát hành thi công")),
+                               "KT-01-mat-bang-tang-1.pdf", "Bản vẽ", note="Phát hành thi công")
+    documents.approve(drawing.name, 1)
+    documents.add_version(drawing.name, get_pdf(sheet.format(2, "dời cửa sổ trục B")), "KT-01-mat-bang-tang-1-r2.pdf",
+                          "Dời cửa sổ trục B theo ý chủ nhà")
+    frappe.set_user("Administrator")
 
 
 def _forms(project, tasks, engineer, commander):
@@ -200,9 +260,16 @@ def down():
     frappe.set_user("Administrator")
     for code in (PROJECT_CODE, TEMPLATE_CODE):
         for project in frappe.get_all("Project", filters={"pm_code": code}, pluck="name"):
+            photos = frappe.get_all("PM Media", filters={"project": project}, fields=["object_key", "thumb_key"])
+            files = frappe.get_all("PM Document Version", filters={"project": project}, pluck="object_key")
+            if object_storage.configured():
+                object_storage.delete_many([p.object_key for p in photos], "media")
+                object_storage.delete_many([p.thumb_key for p in photos], "thumbs")
+                object_storage.delete_many(files, "documents")
             for doctype in ("PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Project Member",
                             "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline Task",
-                            "PM Baseline Curve", "PM Baseline"):
+                            "PM Baseline Curve", "PM Baseline", "PM Media", "PM Follow", "PM Document Version",
+                            "PM Document"):
                 frappe.db.delete(doctype, {"project": project})
             frappe.db.delete("Task", {"project": project})
             frappe.delete_doc("Project", project, force=True, ignore_permissions=True)

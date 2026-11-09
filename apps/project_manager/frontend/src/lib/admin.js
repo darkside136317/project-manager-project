@@ -199,6 +199,6 @@ export function diskTone(disk) {
   return disk.used_percent >= 90 ? "danger" : disk.used_percent >= 75 ? "warning" : "success";
 }
 
-export const SERVICE_LABELS = { meilisearch: "Tìm kiếm (Meilisearch)", overdue_job: "Job Overdue của ERPNext" };
+export const SERVICE_LABELS = { meilisearch: "Tìm kiếm (Meilisearch)", overdue_job: "Job Overdue của ERPNext", minio: "Kho tệp (MinIO)" };
 
 export const queueText = (queues) => (queues || []).map((q) => `${q.name}: ${formatNumber(q.jobs)}`).join(" · ") || "—";

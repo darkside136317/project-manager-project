@@ -67,6 +67,22 @@ Dọn dự án tạm (trong `docker/`):
 docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - reset < ../scripts/perf/gantt_seed.py
 ```
 
+Kịch bản trao đổi, ảnh, tài liệu, offline (chạy từ gốc repo; tạo dự án "Dự án thử trao đổi ..."):
+
+```bash
+cd scripts/e2e/ui && node discussion_flow.mjs
+```
+
+Đo dòng thời gian 50.000 mục, rồi dọn (trong `docker/`):
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - seed < ../scripts/perf/timeline_check.py
+```
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - reset < ../scripts/perf/timeline_check.py
+```
+
 ## Lưu ý
 
 - **Git Bash trên Windows** đổi đường dẫn dạng `/home/...` trong tham số lệnh: đặt `MSYS_NO_PATHCONV=1` khi gọi `docker exec -w /home/...` hoặc truyền đường dẫn container. `scripts/bootstrap.sh` đã đặt sẵn.
@@ -77,6 +93,10 @@ docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/si
 - **MariaDB 11.8** cần `innodb_snapshot_isolation=OFF` (đã đặt trong `docker/mariadb/my_custom.cnf`), nếu không sẽ gặp lỗi 1020 "Record has changed since last read".
 - **Jinja của Frappe v16 không tự escape**: luôn dùng `| e` hoặc `{% autoescape true %}`; dữ liệu JSON nhúng vào `<script>` dùng `services/web.inline_json`.
 - Không ghi secret vào code, tài liệu hay log; chỉ dùng tên biến môi trường.
+- **MinIO:** cấu hình nằm trong `common_site_config.json` (`pm_minio_*`, do `configurator` ghi). Test dùng kho trong bộ nhớ (`tests/helpers.memory_store`) nên không để lại tệp; chỉ test tìm kiếm dùng Meilisearch thật, với chỉ mục riêng.
+- **Service worker:** `/pm/sw.js` đổi theo mỗi bản build nên trình duyệt tự cập nhật. Khi thử offline bằng DevTools, nhớ tải lại một lần khi có mạng để worker giữ trang.
+- **Realtime cần đúng header:** nginx gửi `Origin` và `Host` là `http://<site>:8000` cho `/socket.io`, và backend mang tên site trên mạng Docker (xem `docker/Dockerfile`, `docker-compose.yml`). Thiếu một trong hai thì Socket.IO báo "Invalid origin" hoặc "Unauthorized".
+- **`retry_on_deadlock(fn)` chạy `fn()` ngay:** truyền `lambda: ...`, đừng dùng như decorator.
 - **Chèn hàng loạt vào bảng autoincrement** phải tự xin số: `services/queries.reserve_ids` (Frappe lấy số từ sequence riêng của DocType, bảng không tự tăng).
 - **Xem ảnh chụp của kịch bản trình duyệt** (`scripts/e2e/ui/out/`): nhiều lỗi giao diện test không bắt được, như màu chú giải hay thanh Gantt co lại khi kéo.
 - **Tên lớp CSS trong component có `scoped` vẫn khớp theo tổ tiên:** tránh các tên trùng Tailwind như `.grid`.

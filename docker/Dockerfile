@@ -24,6 +24,18 @@ RUN npm test && npm run build
 # -----------------------------------------------------------------------------
 FROM frappe/erpnext:${ERPNEXT_VERSION}
 
+# Realtime (Socket.IO, the `websocket` service). Frappe's server accepts a connection only when the Origin and Host
+# headers name the same host, then checks the user by calling the backend at that Origin, and the backend picks the
+# site from the host name. The image's nginx sends Origin = the site name and Host = the browser's host: refused when
+# the app is opened under another name (http://localhost:8890), and the site name does not resolve inside the
+# containers. On /socket.io only, send http://<site>:8000 as both; compose gives the backend that name on the network.
+USER root
+RUN sed -i -e '/location \/socket.io/,/proxy_pass/ s|proxy_set_header Origin .*;|proxy_set_header Origin http://${FRAPPE_SITE_NAME_HEADER}:8000;|' \
+           -e '/location \/socket.io/,/proxy_pass/ s|proxy_set_header Host \$host;|proxy_set_header Host ${FRAPPE_SITE_NAME_HEADER}:8000;|' \
+        /templates/nginx/frappe.conf.template \
+    && grep -q 'proxy_set_header Origin http://${FRAPPE_SITE_NAME_HEADER}:8000;' /templates/nginx/frappe.conf.template \
+    && grep -q 'proxy_set_header Host ${FRAPPE_SITE_NAME_HEADER}:8000;' /templates/nginx/frappe.conf.template
+
 USER frappe
 WORKDIR /home/frappe/frappe-bench
 

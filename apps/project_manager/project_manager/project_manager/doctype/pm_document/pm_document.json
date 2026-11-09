@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "autoname": "PMD-.YYYY.-.#####",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "task",
+  "title",
+  "category",
+  "status",
+  "description",
+  "current_version",
+  "approved_version",
+  "file_name",
+  "content_type",
+  "size_bytes",
+  "updated_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "reqd": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Công việc",
+   "options": "Task",
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Tên tài liệu",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Loại",
+   "options": "Bản vẽ\nHợp đồng\nBiên bản\nHồ sơ kỹ thuật\nThuyết minh, báo cáo\nPháp lý\nKhác",
+   "default": "Khác",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Trạng thái",
+   "options": "Nháp\nĐã duyệt",
+   "default": "Nháp",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Mô tả",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_version",
+   "fieldtype": "Int",
+   "label": "Phiên bản mới nhất",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "approved_version",
+   "fieldtype": "Int",
+   "label": "Phiên bản đã duyệt",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "label": "Tệp của phiên bản mới nhất",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_type",
+   "fieldtype": "Data",
+   "label": "Kiểu tệp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "size_bytes",
+   "fieldtype": "Int",
+   "label": "Dung lượng (byte)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "updated_on",
+   "fieldtype": "Datetime",
+   "label": "Cập nhật lúc",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Document",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "search_fields": "title,category",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}

@@ -76,3 +76,18 @@ Dữ liệu: `scripts/perf/gantt_seed.py` tạo dự án tạm 2.000 việc và 
 Mục tiêu của kế hoạch là dưới 2 s: đạt ở cả hai cỡ. Trước khi tối ưu, cuộn trên điện thoại là 39,6 ms mỗi khung: đọc lại màu CSS mỗi khung hình và cập nhật từng dòng danh sách là hai phần tốn nhất.
 
 Thuật toán thuần (`test_cpm`): 20.000 việc, khoảng 12.000 phụ thuộc, dưới 2 s, chạy trên máy chủ.
+
+## M5 — Dòng thời gian 50.000 mục (2026-11-09)
+
+Dữ liệu: `scripts/perf/timeline_check.py` tạo dự án tạm 200 việc và 50.000 mục trao đổi, lịch sử rải đều trên các việc. Mỗi phép đo chạy 5 lần, đo ở máy chủ (gồm điều kiện quyền và tên người, ảnh của từng mục). Docker Desktop trên Windows 11.
+
+| Một trang 50 mục | Quản trị | Kỹ sư (xem mọi việc) | Tổ trưởng (chỉ việc được giao) |
+|---|---|---|---|
+| Một công việc | 37 ms | 53 ms | 39 ms |
+| Cả dự án, trang đầu | 10 ms | 40 ms | 19 ms |
+| Cả dự án, trang thứ hai | 9 ms | 44 ms | 26 ms |
+
+Trung vị; lần chậm nhất 76 ms. Mục tiêu của kế hoạch là dưới 500 ms. Trang sau đi theo mã của mục cuối (keyset), nên trang thứ một trăm nhanh như trang đầu.
+
+Ảnh gửi từ điện thoại được thu nhỏ còn tối đa 1.600 px trước khi vào hàng đợi (kịch bản `discussion_flow.mjs` kiểm trên ảnh 1.170 × 2.532). Bundle SPA: 537 KB, 166 KB sau nén (thêm `socket.io-client`).
+

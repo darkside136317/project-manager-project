@@ -1,13 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { api } from "../lib/api.js";
-import { formatDate, formatDateTime } from "../lib/format.js";
+import { formatDate } from "../lib/format.js";
+import { onSent, reportProgress } from "../lib/sync.js";
 import { toast } from "../lib/toast.js";
 import {
   PERSON_ONLY,
   RACI,
   clampProgress,
-  clientUuid,
   deadlineText,
   deadlineTone,
   needsDelayReason,
@@ -21,6 +21,7 @@ import ReasonDialog from "./ReasonDialog.vue";
 import TaskForms from "./forms/TaskForms.vue";
 import MovePreview from "./gantt/MovePreview.vue";
 import TaskLinks from "./gantt/TaskLinks.vue";
+import Timeline from "./timeline/Timeline.vue";
 
 // One task in full: where it sits, who holds it (and their answers), the progress form, dates, the timeline.
 // Used in a drawer (lists, board, tree) and as the page /pm/cong-viec/:id (links of notifications).
@@ -89,16 +90,40 @@ async function run(action, message) {
   }
 }
 
-function report() {
-  return run(() => api.tasks.report(props.name, {
-    progress_value: clampProgress(form.progress),
-    note: form.note,
-    delay_reason: form.delay_reason,
-    delay_source: form.delay_source,
-    delay_note: form.delay_note,
-    man_days: form.man_days,
-    client_uuid: clientUuid(),
-  }), "Đã cập nhật tiến độ");
+// a report queued offline reached the server: show the new progress
+const stopSent = onSent((item) => {
+  if (item.kind === "progress" && item.payload?.task === props.name) {
+    load();
+    emit("changed", props.name);
+  }
+});
+onBeforeUnmount(stopSent);
+
+/** Sent at once when online; without a connection it waits in the outbox (lib/sync.js) and goes out later. */
+async function report() {
+  busy.value = true;
+  try {
+    const outcome = await reportProgress(props.name, {
+      progress_value: clampProgress(form.progress),
+      note: form.note,
+      delay_reason: form.delay_reason,
+      delay_source: form.delay_source,
+      delay_note: form.delay_note,
+      man_days: form.man_days,
+    }, `${task.value.pm_wbs_code || ""} ${task.value.subject}`.trim());
+    if (outcome.queued) {
+      form.note = "";
+      toast("Chưa có mạng: đã lưu báo cáo, sẽ tự gửi khi có mạng", "warning", 7000);
+      return;
+    }
+    toast("Đã cập nhật tiến độ");
+    await load();
+    emit("changed", props.name);
+  } catch (e) {
+    toast(e.message, "error", 7000);
+  } finally {
+    busy.value = false;
+  }
 }
 
 const approve = () => run(() => api.tasks.review(props.name, true), "Đã duyệt công việc");
@@ -335,17 +360,10 @@ watch(() => props.name, load, { immediate: true });
 
       <TaskForms :task="name" :project="task.project" @changed="load" />
 
-      <!-- timeline -->
-      <section aria-labelledby="timeline-title">
-        <h3 id="timeline-title" class="m-0 text-sm font-semibold">Lịch sử</h3>
-        <ol class="m-0 mt-2 list-none space-y-3 border-l border-line p-0 pl-4">
-          <li v-for="entry in detail.timeline" :key="entry.name" class="text-sm">
-            <p class="m-0"><strong>{{ entry.actor_name }}</strong> <span class="text-ink-muted">· {{ entry.activity_type }} · {{ formatDateTime(entry.creation) }}</span></p>
-            <p class="m-0 whitespace-pre-line text-ink-soft">{{ entry.content }}</p>
-          </li>
-          <li v-if="!detail.timeline.length" class="text-sm text-ink-muted">Chưa có hoạt động nào.</li>
-        </ol>
-      </section>
+      <!-- discussion and history -->
+      <Timeline doctype="Task" :name="name" :label="`${task.pm_wbs_code || ''} ${task.subject}`.trim()">
+        <template #title><h3 class="m-0 text-sm font-semibold">Trao đổi và lịch sử</h3></template>
+      </Timeline>
     </article>
 
     <MovePreview :plan="move.plan" title="Đổi ngày kế hoạch" :busy="busy" @confirm="applyDates" @cancel="move.plan = null" />

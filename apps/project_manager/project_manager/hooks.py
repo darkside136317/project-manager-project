@@ -22,8 +22,10 @@ after_migrate = "project_manager.project_manager.setup.install.after_migrate"
 # Single-page application: /pm and every /pm/... route is served by www/pm.py
 # =============================================================================
 website_route_rules = [
+    {"from_route": "/pm/sw.js", "to_route": "pm-sw"},  # the PWA's service worker (pwa.py)
     {"from_route": "/pm/<path:app_path>", "to_route": "pm"},
 ]
+page_renderer = ["project_manager.project_manager.pwa.ServiceWorkerPage"]
 
 # =============================================================================
 # ERPNext's Task, adapted (see overrides/task.py)
@@ -51,6 +53,10 @@ permission_query_conditions = {
     "PM Baseline": _P + "baseline_query",
     "PM Baseline Task": _P + "baseline_task_query",
     "PM Baseline Curve": _P + "baseline_curve_query",
+    "PM Media": _P + "media_query",
+    "PM Follow": _P + "follow_query",
+    "PM Document": _P + "document_query",
+    "PM Document Version": _P + "document_version_query",
 }
 has_permission = {
     "Project": _P + "has_project_permission",
@@ -66,6 +72,10 @@ has_permission = {
     "PM Baseline": _P + "has_baseline_permission",
     "PM Baseline Task": _P + "has_baseline_task_permission",
     "PM Baseline Curve": _P + "has_baseline_curve_permission",
+    "PM Media": _P + "has_media_permission",
+    "PM Follow": _P + "has_follow_permission",
+    "PM Document": _P + "has_document_permission",
+    "PM Document Version": _P + "has_document_version_permission",
 }
 
 # =============================================================================
@@ -90,9 +100,10 @@ on_logout = "project_manager.project_manager.services.audit.on_logout"
 
 _ROLLUP = "project_manager.project_manager.services.rollup."
 _SCHEDULE = "project_manager.project_manager.services.schedule."
+_SERVICES = "project_manager.project_manager.services."
 scheduler_events = {
     "cron": {
-        "*/5 * * * *": [_ROLLUP + "sweep", _SCHEDULE + "sweep"],
+        "*/5 * * * *": [_ROLLUP + "sweep", _SCHEDULE + "sweep", _SERVICES + "media.sweep_thumbnails"],
         "0 7 * * *": ["project_manager.project_manager.services.reminders.send_daily"],
     },
     "daily": [
@@ -103,5 +114,7 @@ scheduler_events = {
     "daily_long": [
         _ROLLUP + "reconcile_all",
         _SCHEDULE + "refresh_all",
+        _SERVICES + "object_storage.sweep_orphans",
+        _SERVICES + "search_index.reconcile",
     ],
 }

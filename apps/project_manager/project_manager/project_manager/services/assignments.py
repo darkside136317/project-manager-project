@@ -97,7 +97,10 @@ def assign(task: str, raci: str, user: str | None = None, team: str | None = Non
     _sync_mirrors(task)
     activity.record("Task", task, "Giao việc", _("Giao {0} vai trò {1}").format(_label(user, team), raci) +
                     (f": {note}" if note else ""), data={"assignment": row.name, "raci": raci, "user": user, "team": team})
+    from project_manager.project_manager.services.timeline import follow
+
     for person in ([user] if user else _team_people(team)):
+        follow("Task", task, True, user=person, project=info.project)  # the task's discussion reaches them
         if person != frappe.session.user:
             notify_user(person, _("Bạn được giao {0}: {1}").format(raci.lower(), info.subject), SPA_TASK.format(task),
                         "Task", task)

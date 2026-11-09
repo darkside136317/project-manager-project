@@ -110,9 +110,13 @@ DOCTYPE_LABELS.update({
     "PM Task Dependency": "Phụ thuộc giữa các việc", "PM Baseline": "Baseline", "PM Baseline Task": "Dòng của baseline",
     "PM Baseline Curve": "Đường cong của baseline",
 })
+DOCTYPE_LABELS.update({
+    "PM Media": "Ảnh hiện trường", "PM Follow": "Theo dõi trao đổi", "PM Document": "Tài liệu dự án",
+    "PM Document Version": "Phiên bản tài liệu",
+})
 ROLE_MATRIX = (
     ("Dự án", ("Project", "Task", "PM Project Member", "PM Task Assignment", "PM Progress Entry", "PM Form Submission",
-               "PM Gate Requirement", "PM Task Dependency", "PM Baseline")),
+               "PM Gate Requirement", "PM Task Dependency", "PM Baseline", "PM Document")),
     ("Danh mục", ("PM Node Type", "PM Project Role", "PM Team", "PM Delay Reason", "PM Delay Source", "PM Form Template")),
     ("Quản trị", ("PM Group", "PM Access", "PM Settings", "PM Audit Log")),
 )
@@ -122,7 +126,7 @@ ROLE_MATRIX = (
 # too (a member who sees only their assigned tasks sees only those tasks' rows).
 PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot",
                   "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline", "PM Baseline Task",
-                  "PM Baseline Curve")
+                  "PM Baseline Curve", "PM Media", "PM Follow", "PM Document", "PM Document Version")
 TASK_SCOPED = ("Task", "PM Task Assignment", "PM Progress Entry", "PM Form Submission", "PM Gate Requirement",
                "PM Task Dependency", "PM Baseline Task")
 

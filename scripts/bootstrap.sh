@@ -24,7 +24,7 @@ done
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root/docker"
 export MSYS_NO_PATHCONV=1  # Git Bash: pass container paths through unchanged
-ONE_SHOTS='^(configurator|create-site|setup-site)$'
+ONE_SHOTS='^(configurator|create-site|setup-site|minio-init)$'
 
 step() { printf '\n==> %s\n' "$*"; }
 die() { printf 'LỖI: %s\n' "$*" >&2; exit 1; }
@@ -55,7 +55,7 @@ if [ ! -f .env ]; then
   echo "Đã tạo docker/.env từ docker/.env.example"
 fi
 chmod 600 .env 2>/dev/null || true
-for key in ADMIN_PASSWORD MARIADB_ROOT_PASSWORD MEILISEARCH_MASTER_KEY; do
+for key in ADMIN_PASSWORD MARIADB_ROOT_PASSWORD MEILISEARCH_MASTER_KEY MINIO_ROOT_PASSWORD MINIO_APP_SECRET_KEY; do
   if [ -z "$(get_value "$key")" ]; then
     set_value "$key" "$(random_secret)"
     echo "Đã sinh $key"
@@ -70,8 +70,9 @@ echo "Overlay: $(get_value COMPOSE_FILE)"
 step "Build image (lần đầu mất vài phút)"
 docker compose build
 
-step "Khởi động cơ sở dữ liệu, Redis, Meilisearch"
-docker compose up -d db redis-cache redis-queue meilisearch
+step "Khởi động cơ sở dữ liệu, Redis, Meilisearch, MinIO"
+docker compose up -d db redis-cache redis-queue meilisearch minio
+docker compose run --rm minio-init
 
 step "Cấu hình, tạo site (nếu chưa có), setup wizard, migrate"
 docker compose run --rm --no-deps configurator

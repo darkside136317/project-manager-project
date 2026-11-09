@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref } from "vue";
 import { call } from "../lib/api.js";
 import { boot, initials } from "../lib/boot.js";
 import Icon from "./Icon.vue";
+import { clearOfflineData } from "../lib/pwa.js";
 
 const emit = defineEmits(["change-password"]);
 const open = ref(false);
@@ -16,6 +17,7 @@ onBeforeUnmount(() => document.removeEventListener("click", onDocumentClick));
 
 async function logout() {
   try {
+    await clearOfflineData();
     await call("logout", {}, { post: true });
   } finally {
     window.location.assign("/dang-nhap");

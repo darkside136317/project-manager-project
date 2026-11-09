@@ -21,6 +21,11 @@ export const boot = readBoot();
 
 export const csrfToken = () => boot.csrf_token;
 
+/** A page served from the offline cache may carry the token of an earlier session: api.js renews it. */
+export function setCsrfToken(token) {
+  boot.csrf_token = token || "";
+}
+
 export const hasCapability = (code) => (boot.user.capabilities || []).includes(code);
 
 export function masterBySlug(slug, source = "masters") {

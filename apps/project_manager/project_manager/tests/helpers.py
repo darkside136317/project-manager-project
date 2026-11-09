@@ -39,6 +39,44 @@ class PMTestCase(IntegrationTestCase):
         forget_caches()
 
 
+class MemoryStore:
+    """In-memory stand-in for MinIO (services/object_storage.backend), so tests leave nothing in the bucket."""
+
+    def __init__(self):
+        self.objects = {}
+
+    def put(self, path, data, content_type, metadata):
+        self.objects[path] = (bytes(data), content_type)
+
+    def get(self, path):
+        return self.objects[path][0]
+
+    def open(self, path):
+        data, content_type = self.objects[path]
+        return iter([data]), content_type, len(data)
+
+    def delete(self, path):
+        self.objects.pop(path, None)
+
+    def keys(self, prefix):
+        from datetime import datetime, timezone
+
+        return [(path, datetime(2000, 1, 1, tzinfo=timezone.utc)) for path in self.objects if path.startswith(prefix)]
+
+    def ping(self):
+        return True
+
+
+def memory_store(case) -> MemoryStore:
+    from project_manager.project_manager.services import object_storage
+
+    store = MemoryStore()
+    replaced = patch.object(object_storage, "backend", lambda: store)
+    replaced.start()
+    case.addCleanup(replaced.stop)
+    return store
+
+
 def make_user(email: str, roles=(), user_type: str = "System User") -> str:
     if frappe.db.exists("User", email):
         frappe.delete_doc("User", email, force=True, ignore_permissions=True)
@@ -70,7 +108,8 @@ def drop_project(project: str):
     frappe.db.delete("PM Activity", {"project": project})
     # history: never deleted by the app
     for doctype in ("PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Form Submission", "PM Gate Requirement",
-                    "PM Task Dependency", "PM Baseline Task", "PM Baseline Curve", "PM Baseline"):
+                    "PM Task Dependency", "PM Baseline Task", "PM Baseline Curve", "PM Baseline", "PM Media",
+                    "PM Follow", "PM Document Version", "PM Document"):
         frappe.db.delete(doctype, {"project": project})
     for name in frappe.get_all("Task", filters={"project": project}, pluck="name", order_by="pm_level desc"):
         frappe.delete_doc("Task", name, force=True, ignore_permissions=True)

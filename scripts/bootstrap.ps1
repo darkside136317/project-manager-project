@@ -18,7 +18,7 @@ param(
 # output is captured. Every docker call checks $LASTEXITCODE instead.
 $ErrorActionPreference = 'Continue'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OneShots = @('configurator', 'create-site', 'setup-site')
+$OneShots = @('configurator', 'create-site', 'setup-site', 'minio-init')
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 function Step([string]$Text) { Write-Host ""; Write-Host "==> $Text" }
@@ -78,7 +78,7 @@ if (-not (Test-Path $EnvPath)) {
     [System.IO.File]::WriteAllText($EnvPath, [System.IO.File]::ReadAllText((Join-Path $DockerDir '.env.example'), $Utf8NoBom), $Utf8NoBom)
     Write-Host 'Đã tạo docker/.env từ docker/.env.example'
 }
-foreach ($key in @('ADMIN_PASSWORD', 'MARIADB_ROOT_PASSWORD', 'MEILISEARCH_MASTER_KEY')) {
+foreach ($key in @('ADMIN_PASSWORD', 'MARIADB_ROOT_PASSWORD', 'MEILISEARCH_MASTER_KEY', 'MINIO_ROOT_PASSWORD', 'MINIO_APP_SECRET_KEY')) {
     if (-not (Get-EnvValue $key)) {
         Set-EnvValue $key (New-Secret)
         Write-Host "Đã sinh $key"
@@ -91,8 +91,9 @@ Write-Host ("Overlay: " + (Get-EnvValue 'COMPOSE_FILE'))
 Step 'Build image (lần đầu mất vài phút)'
 Invoke-Docker compose build
 
-Step 'Khởi động cơ sở dữ liệu, Redis, Meilisearch'
-Invoke-Docker compose up -d db redis-cache redis-queue meilisearch
+Step 'Khởi động cơ sở dữ liệu, Redis, Meilisearch, MinIO'
+Invoke-Docker compose up -d db redis-cache redis-queue meilisearch minio
+Invoke-Docker compose run --rm minio-init
 
 Step 'Cấu hình, tạo site (nếu chưa có), setup wizard, migrate'
 Invoke-Docker compose run --rm --no-deps configurator

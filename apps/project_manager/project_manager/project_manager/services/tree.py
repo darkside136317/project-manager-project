@@ -240,7 +240,8 @@ def delete(task: str) -> dict:
         frappe.throw(_("Hãy xóa hoặc chuyển các việc con trước"))
     for doctype, what in (("PM Task Assignment", _("đã giao việc")), ("PM Progress Entry", _("đã báo cáo tiến độ")),
                           ("PM Form Submission", _("đã có biểu mẫu")), ("PM Baseline Task", _("đã có trong baseline")),
-                          ("PM Activity", _("đã có trao đổi, lịch sử"))):
+                          ("PM Activity", _("đã có trao đổi, lịch sử")), ("PM Media", _("đã có ảnh")),
+                          ("PM Document", _("đã có tài liệu"))):
         if frappe.db.exists(doctype, {"task": task}):
             frappe.throw(_("Công việc {0}: hãy hủy thay vì xóa để giữ lịch sử").format(what), title=_("Không xóa được"))
     frappe.db.delete("PM Gate Requirement", {"task": task})

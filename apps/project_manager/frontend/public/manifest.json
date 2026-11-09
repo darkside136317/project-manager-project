@@ -1,0 +1,16 @@
+{
+  "name": "Quản lý dự án",
+  "short_name": "Dự án",
+  "description": "Giao việc, tiến độ, trao đổi và ảnh hiện trường theo từng công việc",
+  "lang": "vi",
+  "start_url": "/pm/",
+  "scope": "/pm",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0a1f35",
+  "icons": [
+    { "src": "/assets/project_manager/spa/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/project_manager/spa/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/assets/project_manager/spa/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

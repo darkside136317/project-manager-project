@@ -61,6 +61,7 @@ def build_boot() -> dict:
                  "capabilities": sorted(capabilities_of(user)), "is_admin": is_admin(user),
                  "all_projects": access.read is None},
         "company": frappe.defaults.get_user_default("company") or frappe.defaults.get_global_default("company"),
+        "site": frappe.local.site,  # the realtime namespace (lib/realtime.js)
         "version": __version__,
         "home": SPA_HOME,
         "nav": nav,
@@ -74,3 +75,11 @@ def get_boot():
     if not is_staff():
         frappe.throw("Bạn không có quyền truy cập", frappe.PermissionError)
     return build_boot()
+
+
+@frappe.whitelist(methods=["GET"])
+def csrf_token():
+    """A fresh CSRF token: a page that came from the offline cache may hold one of an earlier session."""
+    if not is_staff():
+        frappe.throw("Bạn không có quyền truy cập", frappe.PermissionError)
+    return frappe.sessions.get_csrf_token()

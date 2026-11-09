@@ -1,0 +1,185 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "reference_doctype",
+  "reference_name",
+  "task",
+  "activity_id",
+  "file_name",
+  "content_type",
+  "size_bytes",
+  "width",
+  "height",
+  "taken_at",
+  "lat",
+  "lng",
+  "uploaded_by",
+  "object_key",
+  "thumb_key",
+  "client_uuid",
+  "is_deleted"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Loại tài liệu gốc",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Tài liệu gốc",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Công việc",
+   "options": "Task",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "activity_id",
+   "fieldtype": "Int",
+   "label": "Mục trao đổi",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "label": "Tên tệp",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "content_type",
+   "fieldtype": "Data",
+   "label": "Kiểu tệp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "size_bytes",
+   "fieldtype": "Int",
+   "label": "Dung lượng (byte)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "width",
+   "fieldtype": "Int",
+   "label": "Rộng (px)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "height",
+   "fieldtype": "Int",
+   "label": "Cao (px)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "taken_at",
+   "fieldtype": "Datetime",
+   "label": "Lúc chụp",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "lat",
+   "fieldtype": "Float",
+   "label": "Vĩ độ",
+   "read_only": 1,
+   "precision": "7"
+  },
+  {
+   "fieldname": "lng",
+   "fieldtype": "Float",
+   "label": "Kinh độ",
+   "read_only": 1,
+   "precision": "7"
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Link",
+   "label": "Người gửi",
+   "options": "User",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "object_key",
+   "fieldtype": "Data",
+   "label": "Khóa tệp",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "thumb_key",
+   "fieldtype": "Data",
+   "label": "Khóa ảnh thu nhỏ",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "client_uuid",
+   "fieldtype": "Data",
+   "label": "Mã gửi từ máy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_deleted",
+   "fieldtype": "Check",
+   "label": "Đã ẩn",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Media",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

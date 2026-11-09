@@ -47,3 +47,13 @@ Không sao chép thêm từ `document_manager`. Biểu mẫu động, bản in, 
 ## M4
 
 Không sao chép thêm từ `document_manager`. `GanttChart.vue` phát triển từ `spikes/gantt/src/CanvasView.vue` của chính repo này (spike ở M1). Đường găng, dự báo, baseline, lịch và các tab đều viết mới.
+
+## M5
+
+| File | Nguồn | Xử lý |
+|---|---|---|
+| `services/object_storage.py` | `document_manager/services/object_storage.py` | Sao chép rồi sửa: cấu hình từ `common_site_config`, ba loại đối tượng (ảnh, ảnh nhỏ, tài liệu), đọc từng khúc, dọn đối tượng mồ côi, kho trong bộ nhớ cho test |
+| `services/search_index.py` | `document_manager/services/search_index.py` | Sao chép cách tạo client và cấu hình chỉ mục; phần dữ liệu, lọc quyền, đối soát viết mới |
+| `docker/minio/Dockerfile.server`, `Dockerfile.mc` | `document_manager/docker/minio/` | Sao chép (cùng bản phát hành); thêm `curl` để healthcheck. Chính sách quyền của ứng dụng sinh trong `minio-init` theo tên bucket |
+
+Phần còn lại (dòng thời gian, ảnh, tài liệu, hàng đợi gửi lại, service worker, realtime) viết mới.

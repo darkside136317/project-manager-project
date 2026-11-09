@@ -8,6 +8,8 @@ import { pageTitle } from "../lib/page.js";
 import { PROJECT_TABS } from "../lib/work.js";
 import BaselineTab from "./project/BaselineTab.vue";
 import CalendarTab from "./project/CalendarTab.vue";
+import DiscussionTab from "./project/DiscussionTab.vue";
+import DocumentsTab from "./project/DocumentsTab.vue";
 import FormsTab from "./project/FormsTab.vue";
 import GanttTab from "./project/GanttTab.vue";
 import KanbanTab from "./project/KanbanTab.vue";
@@ -21,7 +23,7 @@ import WbsTab from "./project/WbsTab.vue";
 const route = useRoute();
 const router = useRouter();
 const TABS = { "tong-quan": OverviewTab, "cong-viec": WbsTab, gantt: GanttTab, kanban: KanbanTab, lich: CalendarTab, "ai-lam-gi": PeopleTab,
-  "bieu-mau": FormsTab, baseline: BaselineTab, "thanh-vien": MembersTab };
+  "bieu-mau": FormsTab, baseline: BaselineTab, "thanh-vien": MembersTab, "trao-doi": DiscussionTab, "tai-lieu": DocumentsTab };
 
 const project = computed(() => String(route.params.id || ""));
 const tab = computed(() => (TABS[route.params.tab] ? String(route.params.tab) : "tong-quan"));

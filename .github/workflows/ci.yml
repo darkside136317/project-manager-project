@@ -52,7 +52,8 @@ jobs:
         working-directory: docker
         run: |
           sed -e 's/^ADMIN_PASSWORD=$/ADMIN_PASSWORD=ci/' -e 's/^MARIADB_ROOT_PASSWORD=$/MARIADB_ROOT_PASSWORD=ci/' \
-              -e 's/^MEILISEARCH_MASTER_KEY=$/MEILISEARCH_MASTER_KEY=ci/' .env.example > .env
+              -e 's/^MEILISEARCH_MASTER_KEY=$/MEILISEARCH_MASTER_KEY=ci/' -e 's/^MINIO_ROOT_PASSWORD=$/MINIO_ROOT_PASSWORD=ci/' \
+              -e 's/^MINIO_APP_SECRET_KEY=$/MINIO_APP_SECRET_KEY=ci/' .env.example > .env
           docker compose config -q
           COMPOSE_FILE=docker-compose.yml,docker-compose.dev.yml docker compose config -q
 
