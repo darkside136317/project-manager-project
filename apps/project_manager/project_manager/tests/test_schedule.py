@@ -397,7 +397,8 @@ class TestForecast(ScheduleBase):
 class TestBackground(ScheduleBase):
     def test_a_saved_task_marks_its_project(self):
         frappe.cache.srem(schedule.DIRTY, self.project)
-        with patch("frappe.enqueue") as enqueue:
+        # no job of this project running: a real one (from setting the test up) may still be on a slow machine
+        with patch("frappe.enqueue") as enqueue, patch("frappe.utils.background_jobs.get_job_status", return_value=None):
             doc = frappe.get_doc("Task", self.a)
             doc.exp_end_date = day(10)
             doc.save(ignore_permissions=True)

@@ -108,6 +108,7 @@ Loại nút mới: "Hạng mục" (nhóm), "Công tác" (lá).
 Lỗi tìm ra khi chạy test và kịch bản, đã sửa:
 - hàm API `boq_import` trùng tên module `boq_import` (ruff bắt được, tải mẫu BOQ sẽ hỏng);
 - job trùng bị bỏ qua (mục 5);
+- **CI lần đầu (2c2f6e1) hỏng ở job `core-alone`:** `test_rollup.test_saving_a_task_marks_its_parent` đòi đúng tên job `pm-rollup:<dự án>`. Trên máy CI chậm hơn, job thật của dự án thử vẫn đang chạy, nên mã mới xếp job tiếp theo `…:next` (đúng ý đồ), còn bài test thì không nhận. Bài này và bài tương tự của đường găng giờ cố định trạng thái "không có job đang chạy".
 - sau một lần migrate dở, index của bảng mới không được tạo trên site dev. Nguyên nhân: dev-watcher migrate ngay lúc controller còn rỗng. Site cài mới không bị, đã kiểm trên clone sạch.
 
 **Clone sạch** (xuất bằng `git checkout-index` sang thư mục mới, cổng 8891, stack `pmclone` chạy song song với stack dev):

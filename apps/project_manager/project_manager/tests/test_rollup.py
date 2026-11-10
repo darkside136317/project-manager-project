@@ -109,7 +109,8 @@ class TestRollup(PMTestCase):
     def test_saving_a_task_marks_its_parent(self):
         t = self.tree()
         frappe.cache.delete_value(rollup._key(self.project))
-        with patch("frappe.enqueue") as enqueue:
+        # no job of this project running: a real one (from setting the test up) may still be on a slow machine
+        with patch("frappe.enqueue") as enqueue, patch("frappe.utils.background_jobs.get_job_status", return_value=None):
             set_progress(t.c, 40)
             frappe.db.after_commit.run()
         self.assertIn(t.sub, {m.decode() if isinstance(m, bytes) else m
