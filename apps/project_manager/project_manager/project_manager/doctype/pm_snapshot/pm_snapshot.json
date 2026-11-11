@@ -15,7 +15,8 @@
   "completed_tasks",
   "overdue_tasks",
   "spi",
-  "forecast_end"
+  "forecast_end",
+  "health"
  ],
  "fields": [
   {
@@ -77,12 +78,18 @@
    "fieldtype": "Date",
    "label": "Dự báo kết thúc",
    "read_only": 1
+  },
+  {
+   "fieldname": "health",
+   "fieldtype": "Data",
+   "label": "Sức khỏe",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-06 09:00:00.000000",
+ "modified": "2026-11-11 08:00:00.000000",
  "modified_by": "Administrator",
  "module": "Project Manager",
  "name": "PM Snapshot",

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { boot } from "./lib/boot.js";
 import { pageTitle } from "./lib/page.js";
+import AlertsPage from "./pages/AlertsPage.vue";
 import DashboardHome from "./pages/DashboardHome.vue";
 import ForbiddenPage from "./pages/ForbiddenPage.vue";
 import FormSubmissionPage from "./pages/FormSubmissionPage.vue";
@@ -12,6 +13,7 @@ import MonitorPage from "./pages/MonitorPage.vue";
 import MyTasksPage from "./pages/MyTasksPage.vue";
 import NotFound from "./pages/NotFound.vue";
 import OutboxPage from "./pages/OutboxPage.vue";
+import PortfolioPage from "./pages/PortfolioPage.vue";
 import ProjectPage from "./pages/ProjectPage.vue";
 import ProjectsPage from "./pages/ProjectsPage.vue";
 import RolesPage from "./pages/RolesPage.vue";
@@ -23,6 +25,8 @@ import { moduleRoutes } from "./modules.js";
 export const routes = [
   { path: "/", name: "home", component: DashboardHome, meta: { title: "Tổng quan" } },
   { path: "/viec-cua-toi", name: "my-tasks", component: MyTasksPage, meta: { title: "Việc của tôi" } },
+  { path: "/canh-bao", name: "alerts", component: AlertsPage, meta: { title: "Cảnh báo" } },
+  { path: "/danh-muc-du-an", name: "portfolio", component: PortfolioPage, meta: { title: "Danh mục dự án" } },
   { path: "/du-an", name: "projects", component: ProjectsPage, meta: { title: "Dự án" } },
   { path: "/du-an/:id/:tab?", name: "project", component: ProjectPage, meta: { title: "Dự án" } },
   { path: "/cong-viec/:id", name: "task", component: TaskPage, meta: { title: "Công việc" } },

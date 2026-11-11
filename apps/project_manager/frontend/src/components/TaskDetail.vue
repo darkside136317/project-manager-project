@@ -15,6 +15,7 @@ import {
   statusBadge,
   statusLabel,
 } from "../lib/work.js";
+import HealthBadge from "./HealthBadge.vue";
 import Icon from "./Icon.vue";
 import LinkSelect from "./LinkSelect.vue";
 import ReasonDialog from "./ReasonDialog.vue";
@@ -210,7 +211,10 @@ watch(() => props.name, load, { immediate: true });
           <span v-if="deadline" :class="deadlineTone(deadline)" class="font-medium">{{ deadline }}</span>
           <span v-if="task.pm_delay_reason" class="badge badge-danger">{{ task.pm_delay_source }} · {{ task.pm_delay_reason }}</span>
           <span v-if="detail.mine" class="badge badge-info">Việc của tôi</span>
+          <HealthBadge v-if="task.pm_health && !['Completed', 'Cancelled'].includes(task.status)" :level="task.pm_health" :reason="task.pm_health_reason" />
+          <span v-if="task.pm_is_critical" class="badge badge-warning" title="Trên đường găng: chậm việc này là chậm cả dự án">Đường găng</span>
         </div>
+        <p v-if="task.pm_health_reason && task.pm_health && task.pm_health !== 'Xanh'" class="m-0 mt-1 text-sm text-ink-soft">Vì sao: {{ task.pm_health_reason }}</p>
         <p v-if="task.pm_delay_note" class="m-0 mt-1 text-sm text-ink-soft">Giải thích chậm: {{ task.pm_delay_note }}</p>
       </header>
 
@@ -235,6 +239,10 @@ watch(() => props.name, load, { immediate: true });
         <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
           <dt class="text-ink-muted">Kế hoạch</dt><dd class="m-0">{{ formatDate(task.exp_start_date) || "—" }} → {{ formatDate(task.exp_end_date) || "—" }}</dd>
           <dt class="text-ink-muted">Thực tế</dt><dd class="m-0">{{ formatDate(task.act_start_date) || "—" }} → {{ formatDate(task.act_end_date) || "—" }}</dd>
+          <template v-if="task.pm_forecast_end && !['Completed', 'Cancelled'].includes(task.status)">
+            <dt class="text-ink-muted">Dự báo xong</dt>
+            <dd class="m-0" :class="task.pm_forecast_slip > 0 ? 'font-medium text-danger' : ''">{{ formatDate(task.pm_forecast_end) }}<span v-if="task.pm_forecast_slip > 0"> (trễ {{ task.pm_forecast_slip }} ngày làm việc)</span></dd>
+          </template>
           <dt class="text-ink-muted">Chịu trách nhiệm</dt><dd class="m-0">{{ task.accountable_name || "Chưa giao" }}</dd>
           <dt v-if="task.reviewer_name" class="text-ink-muted">Người duyệt</dt><dd v-if="task.reviewer_name" class="m-0">{{ task.reviewer_name }}</dd>
         </dl>

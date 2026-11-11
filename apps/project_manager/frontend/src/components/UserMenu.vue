@@ -5,7 +5,7 @@ import { boot, initials } from "../lib/boot.js";
 import Icon from "./Icon.vue";
 import { clearOfflineData } from "../lib/pwa.js";
 
-const emit = defineEmits(["change-password"]);
+const emit = defineEmits(["change-password", "preferences"]);
 const open = ref(false);
 const root = ref(null);
 
@@ -27,7 +27,7 @@ async function logout() {
 
 <template>
   <div ref="root" class="relative">
-    <button class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-surface-muted" type="button" :aria-expanded="open" aria-haspopup="menu" @click="open = !open">
+    <button class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-surface-muted" type="button" :aria-label="`Tài khoản: ${boot.user.full_name}`" :aria-expanded="open" aria-haspopup="menu" @click="open = !open">
       <span class="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-semibold text-white">{{ initials(boot.user.full_name) }}</span>
       <span class="hidden max-w-[160px] truncate text-sm font-medium sm:block">{{ boot.user.full_name }}</span>
       <Icon name="chevron-down" :size="14" class="text-ink-muted" />
@@ -39,6 +39,9 @@ async function logout() {
       </div>
       <button class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-surface-muted" type="button" role="menuitem" @click="open = false; emit('change-password')">
         <Icon name="key-round" :size="16" /> Đổi mật khẩu
+      </button>
+      <button class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-surface-muted" type="button" role="menuitem" @click="open = false; emit('preferences')">
+        <Icon name="bell" :size="16" /> Tùy chọn thông báo
       </button>
       <a class="flex items-center gap-2 px-4 py-2 text-sm text-ink no-underline hover:bg-surface-muted" href="/desk" role="menuitem">
         <Icon name="external-link" :size="16" /> ERPNext Desk

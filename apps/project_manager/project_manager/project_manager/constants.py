@@ -111,6 +111,9 @@ DOCTYPE_LABELS.update({
     "PM Baseline Curve": "Đường cong của baseline",
 })
 DOCTYPE_LABELS.update({
+    "PM Alert Rule": "Quy tắc cảnh báo", "PM Alert": "Cảnh báo", "PM Notification Preference": "Tùy chọn thông báo",
+})
+DOCTYPE_LABELS.update({
     "PM Media": "Ảnh hiện trường", "PM Follow": "Theo dõi trao đổi", "PM Document": "Tài liệu dự án",
     "PM Document Version": "Phiên bản tài liệu",
 })
@@ -118,7 +121,7 @@ ROLE_MATRIX = (
     ("Dự án", ("Project", "Task", "PM Project Member", "PM Task Assignment", "PM Progress Entry", "PM Form Submission",
                "PM Gate Requirement", "PM Task Dependency", "PM Baseline", "PM Document")),
     ("Danh mục", ("PM Node Type", "PM Project Role", "PM Team", "PM Delay Reason", "PM Delay Source", "PM Form Template")),
-    ("Quản trị", ("PM Group", "PM Access", "PM Settings", "PM Audit Log")),
+    ("Quản trị", ("PM Group", "PM Access", "PM Settings", "PM Audit Log", "PM Alert Rule")),
 )
 
 # DocTypes whose rows belong to one project (field `project`): each one must have the project-scope hooks
@@ -126,7 +129,7 @@ ROLE_MATRIX = (
 # too (a member who sees only their assigned tasks sees only those tasks' rows).
 PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot",
                   "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline", "PM Baseline Task",
-                  "PM Baseline Curve", "PM Media", "PM Follow", "PM Document", "PM Document Version")
+                  "PM Baseline Curve", "PM Media", "PM Follow", "PM Document", "PM Document Version", "PM Alert")
 TASK_SCOPED = ("Task", "PM Task Assignment", "PM Progress Entry", "PM Form Submission", "PM Gate Requirement",
                "PM Task Dependency", "PM Baseline Task")
 
@@ -186,5 +189,29 @@ ADMIN_SCREENS = [
     {"doctype": "PM Group", "slug": "nhom-nhan-vien", "label": "Nhóm nhân viên", "icon": "users",
      "list_fields": ["group_name", "apply_scope", "description"]},
     {"doctype": "PM Settings", "slug": "thiet-lap-he-thong", "label": "Thiết lập hệ thống", "icon": "settings"},
+    {"doctype": "PM Alert Rule", "slug": "quy-tac-canh-bao", "label": "Quy tắc cảnh báo", "icon": "bell",
+     "list_fields": ["rule_name", "rule_type", "is_active", "days"]},
 ]
 REGISTRY = {entry["doctype"]: entry for entry in [*MASTERS, *ADMIN_SCREENS]}
+
+
+# --- alert rules installed once (setup/install.ensure_alert_rules); the escalation roles are DEFAULT_PROJECT_ROLES ----
+DEFAULT_ALERT_RULES = [
+    {"rule_name": "Sắp đến hạn", "rule_type": "Sắp đến hạn", "days": 2, "to_accountable": 1, "to_responsible": 1},
+    {"rule_name": "Quá hạn", "rule_type": "Quá hạn", "to_accountable": 1, "to_responsible": 1,
+     "escalations": [{"after_days": 2, "to_role": "Chỉ huy trưởng"}, {"after_days": 5, "to_manager": 1}]},
+    {"rule_name": "Nguy cơ trễ", "rule_type": "Nguy cơ trễ", "to_accountable": 1, "to_manager": 1},
+    {"rule_name": "Chậm trên đường găng", "rule_type": "Chậm trên đường găng", "to_accountable": 1, "to_manager": 1,
+     "to_role": "Chỉ huy trưởng"},
+    {"rule_name": "Sức khỏe dự án xấu đi", "rule_type": "Đổi sức khỏe dự án", "to_manager": 1, "send_email": 1,
+     "escalations": [{"after_days": 3, "to_supervisor": 1}]},
+    {"rule_name": "Chưa nhận việc", "rule_type": "Chưa nhận việc", "days": 2,
+     "escalations": [{"after_days": 2, "to_manager": 1}]},
+    {"rule_name": "Không cập nhật tiến độ", "rule_type": "Không cập nhật", "days": 5, "to_accountable": 1,
+     "to_responsible": 1, "escalations": [{"after_days": 3, "to_role": "Chỉ huy trưởng"}]},
+    {"rule_name": "Biểu mẫu chờ duyệt", "rule_type": "Biểu mẫu chờ duyệt", "days": 2, "to_reviewer": 1,
+     "to_role": "Chỉ huy trưởng", "escalations": [{"after_days": 3, "to_manager": 1}]},
+    {"rule_name": "Chờ duyệt chuyển giai đoạn", "rule_type": "Chờ duyệt chuyển giai đoạn", "to_manager": 1,
+     "escalations": [{"after_days": 2, "to_supervisor": 1}]},
+]
+

@@ -317,6 +317,9 @@ def approve(name, note: str = "") -> dict:
     if doc.task and frappe.db.get_value("Task", doc.task, "is_group"):
         rollup.schedule(doc.project, {doc.task})  # a finished group may have been waiting only for this form
     extensions.form_event("approved", doc.name)
+    from project_manager.project_manager.services import phases
+
+    phases.check(doc.project)  # the form (or an acceptance it records) may have been a phase's last condition
     frappe.enqueue("project_manager.project_manager.services.form_output.make_pdf_job", queue="default",
                    submission=doc.name, enqueue_after_commit=True, job_id=f"pm-form-pdf:{doc.name}", deduplicate=True)
     return detail(doc.name)

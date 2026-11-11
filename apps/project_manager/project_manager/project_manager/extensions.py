@@ -11,6 +11,12 @@ Hooks a layer may declare (pm_construction's hooks.py is the example):
 * `pm_form_packs = ["dotted.path"]` — ready-made form templates (M3, setup/install.ensure_form_packs).
 * `pm_form_events = {"approved": ["dotted.path"]}` — called with the PM Form Submission's name after a form is
   approved (an acceptance record updates the accepted quantity of its task).
+* `pm_alert_types = {"Label": "dotted.path"}` — alert types of the layer (M7, services/alerts.py): the function gets
+  (rule, today) and returns hits made with services.alerts._hit. The label becomes a choice of PM Alert Rule.rule_type.
+* `pm_alert_rules = ["dotted.path"]` — functions returning the layer's default rules (dicts like
+  constants.DEFAULT_ALERT_RULES), created once (setup/install.ensure_alert_rules).
+* `pm_gate_checks = ["dotted.path"]` — conditions of passing a phase (M7, services/phases.py): the function gets the
+  phase (a Task row) and returns the conditions still missing, as short sentences (empty: nothing missing).
 """
 
 import frappe

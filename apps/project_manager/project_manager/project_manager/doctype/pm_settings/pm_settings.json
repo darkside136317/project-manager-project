@@ -10,7 +10,15 @@
   "work_section",
   "default_rollup_method",
   "daily_reminders",
-  "due_soon_days"
+  "due_soon_days",
+  "health_section",
+  "red_slip_days",
+  "stalled_days",
+  "health_hold_days",
+  "health_column",
+  "quiet_start",
+  "quiet_end",
+  "digest_weekly"
  ],
  "fields": [
   {
@@ -47,7 +55,7 @@
   {
    "fieldname": "daily_reminders",
    "fieldtype": "Check",
-   "label": "Nhắc việc sắp đến hạn và quá hạn lúc 7 giờ sáng",
+   "label": "Tóm tắt hằng ngày (7 giờ sáng)",
    "default": "1"
   },
   {
@@ -57,12 +65,59 @@
    "default": "2",
    "non_negative": 1,
    "depends_on": "eval:doc.daily_reminders"
+  },
+  {
+   "fieldname": "health_section",
+   "fieldtype": "Section Break",
+   "label": "Sức khỏe và cảnh báo"
+  },
+  {
+   "fieldname": "red_slip_days",
+   "fieldtype": "Int",
+   "label": "Trễ quá bao nhiêu ngày làm việc thì Đỏ",
+   "default": "3",
+   "description": "Một việc là Đỏ khi dự báo trễ hơn số ngày này (hoặc hơn 10% thời lượng của nó, lấy số lớn hơn)."
+  },
+  {
+   "fieldname": "stalled_days",
+   "fieldtype": "Int",
+   "label": "Không cập nhật bao nhiêu ngày thì là đình trệ",
+   "default": "5"
+  },
+  {
+   "fieldname": "health_hold_days",
+   "fieldtype": "Int",
+   "label": "Tốt lên phải giữ bao nhiêu ngày mới đổi",
+   "default": "3"
+  },
+  {
+   "fieldname": "health_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "quiet_start",
+   "fieldtype": "Time",
+   "label": "Giờ yên lặng từ",
+   "default": "21:00:00",
+   "description": "Trong giờ yên lặng không gửi email; thông báo trong ứng dụng vẫn hiện."
+  },
+  {
+   "fieldname": "quiet_end",
+   "fieldtype": "Time",
+   "label": "Giờ yên lặng đến",
+   "default": "07:00:00"
+  },
+  {
+   "fieldname": "digest_weekly",
+   "fieldtype": "Check",
+   "label": "Tóm tắt tuần (sáng thứ Hai)",
+   "default": "1"
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-04 09:00:00.000000",
+ "modified": "2026-11-11 08:00:00.000000",
  "modified_by": "Administrator",
  "module": "Project Manager",
  "name": "PM Settings",

@@ -279,15 +279,15 @@ def _sql_value(value) -> str:
     return frappe.db.escape(str(value))
 
 
-def refresh(project: str) -> int:
-    """Recompute a project's plan and forecast. Returns the number of tasks whose figures changed."""
+def refresh(project: str, today=None) -> int:
+    """Recompute a project's plan, forecast and health. Returns the number of tasks whose figures changed."""
     net = Network(project)
     if not net.rows:
         frappe.db.set_value("Project", project, {"pm_plan_end": None, "pm_forecast_end": None, "pm_spi": 0}, update_modified=False)
         return 0
     try:
         plan = compute_plan(net)
-        forecast = compute_forecast(net)
+        forecast = compute_forecast(net, today=today)
     except CycleError as error:  # refused when links are added: only a direct database change can get here
         frappe.log_error(title=f"Circular dependency in {project}", message=str(error))
         return 0
@@ -303,6 +303,12 @@ def refresh(project: str) -> int:
     _write_columns(updates)
     frappe.db.set_value("Project", project, {
         "pm_plan_end": plan["end"], "pm_forecast_end": forecast["end"], "pm_spi": forecast["spi"]}, update_modified=False)
+    from project_manager.project_manager.services import risk
+
+    try:
+        risk.evaluate(project, net, plan, forecast, today)  # health follows the forecast it reads
+    except Exception:
+        frappe.log_error(f"Sức khỏe dự án {project}", frappe.get_traceback())
     return len(updates)
 
 

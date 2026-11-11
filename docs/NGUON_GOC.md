@@ -61,3 +61,7 @@ Phần còn lại (dòng thời gian, ảnh, tài liệu, hàng đợi gửi l�
 ## M6
 
 Không sao chép thêm từ `document_manager`. Lớp thi công (`apps/pm_construction`) và các điểm mở rộng của lõi (`extensions.py`, `frontend/src/modules.js`, `services/jobs.py`) đều viết mới. BOQ mẫu (`services/boq_import.SAMPLE`) là số liệu minh họa, mã hiệu theo cách đánh mã định mức thông dụng, đơn giá không lấy từ bộ đơn giá nào.
+
+## M7
+
+Không sao chép thêm từ `document_manager`. Cảnh báo, sức khỏe, chuyển giai đoạn, tóm tắt, danh mục dự án (`services/alerts.py`, `risk.py`, `phases.py`, `digest.py`, `portfolio.py`) và các màn hình của chúng đều viết mới. Thông báo trong ứng dụng vẫn đi qua `services/notify.py` (sao chép từ M1).

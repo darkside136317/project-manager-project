@@ -99,6 +99,28 @@ docker compose exec backend bench --site pm.localhost execute pm_construction.pm
 docker compose exec backend bench --site pm.localhost execute pm_construction.pm_construction.setup.demo.down
 ```
 
+Kịch bản thí điểm M7 trên dữ liệu mẫu nhà xưởng (chạy từ gốc repo). Kịch bản duyệt biên bản nghiệm thu cuối nên làm đổi dữ liệu mẫu: muốn chạy lại thì gỡ rồi dựng lại dữ liệu mẫu thi công như trên.
+
+```bash
+cd scripts/e2e/ui && node pilot_flow.mjs
+```
+
+Đo cảnh báo, sức khỏe, danh mục trên 50 dự án tạm (trong `docker/`; script tự dọn khi xong, `reset` để dọn nếu bị ngắt):
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -e PERF_PROJECTS=50 -e PERF_TASKS=200 -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - seed < ../scripts/perf/alerts_check.py
+```
+
+Chạy ngay các việc theo lịch của M7 (bình thường chạy lúc 06:00, mỗi giờ, 07:00, thứ Hai 07:00):
+
+```bash
+docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.services.alerts.run_daily
+```
+
+```bash
+docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.services.digest.daily
+```
+
 ## Lưu ý
 
 - **Git Bash trên Windows** đổi đường dẫn dạng `/home/...` trong tham số lệnh: đặt `MSYS_NO_PATHCONV=1` khi gọi `docker exec -w /home/...` hoặc truyền đường dẫn container. `scripts/bootstrap.sh` đã đặt sẵn.
@@ -122,3 +144,6 @@ docker compose exec backend bench --site pm.localhost execute pm_construction.pm
 - **Heredoc dài có dấu nháy làm hỏng công cụ Bash của Claude:** ghi tệp bằng Write rồi chạy.
 - **Ngày của Task trong ERPNext v16 là Datetime** (`exp_start_date`, `exp_end_date`): so sánh bằng `getdate`, ô `type="date"` lấy 10 ký tự đầu.
 - **Test có `frappe.db.rollback()` toàn phần** (ví dụ job xử lý lỗi) phải mock `frappe.db.rollback`, nếu không savepoint của `PMTestCase` mất và test sau lỗi.
+- **Cảnh báo trên site dev:** khóa "đã báo" nằm trong Redis một ngày (`pm_alert_sent|site|cảnh báo|bậc|người`), không lùi lại theo transaction. Test chạy trên site dev có thể đánh dấu đã báo cho cảnh báo thật của site; site mới cài không bị.
+- **`frappe.get_list` của v16 không nhận `order_by` có hàm** (ví dụ `field(state, ...)`): sắp xếp trong Python.
+- **Vào vai người dùng mẫu không cần mật khẩu:** quản trị gọi `frappe.core.doctype.user.user.impersonate` (kịch bản `pilot_flow.mjs` làm vậy). Người đó nhận một thông báo "đã có người vào vai".

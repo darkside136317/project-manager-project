@@ -115,6 +115,11 @@ def process(project: str) -> int:
             frappe.db.rollback()
             frappe.cache.sadd(_key(project), *dirty)  # the sweeper tries again
             raise
+    if written:
+        from project_manager.project_manager.services import phases
+
+        phases.check(project)  # a phase may just have finished
+        frappe.db.commit()
     return written
 
 
@@ -343,7 +348,7 @@ def take_snapshots(day=None) -> int:
     written = 0
     projects = frappe.get_all("Project", filters={"pm_state": ["not in", ["Đóng", "Hủy"]], "pm_is_template": 0},
                               fields=["name", "percent_complete", "expected_start_date", "expected_end_date", "pm_spi",
-                                      "pm_forecast_end"])
+                                      "pm_forecast_end", "pm_health"])
     for project in projects:
         counts = frappe.db.sql(
             f"""select count(*) as total, sum(status = '{C.COMPLETED}') as done, sum(pm_is_overdue = 1) as late
@@ -352,7 +357,7 @@ def take_snapshots(day=None) -> int:
 
         planned = baseline.planned_on(project.name, day, planned_progress(project.expected_start_date, project.expected_end_date, day))
         written += _snapshot(project.name, None, day, project.percent_complete, planned, counts,
-                             {"spi": project.pm_spi, "forecast_end": project.pm_forecast_end})
+                             {"spi": project.pm_spi, "forecast_end": project.pm_forecast_end, "health": project.pm_health})
         for phase in frappe.get_all("Task", filters={"project": project.name, "pm_level": 1},
                                     fields=["name", "progress", "exp_start_date", "exp_end_date"]):
             written += _snapshot(project.name, phase.name, day, phase.progress,

@@ -19,10 +19,12 @@ from project_manager.project_manager.policy import (
     has_project_capability,
 )
 from project_manager.project_manager.services import activity, baseline, gates, rollup, schedule, tree
+from project_manager.project_manager.services import phases as phase_gates
 
 MANAGER_ROLE = "Quản lý dự án"
 LIST_FIELDS = ["name", "project_name", "pm_code", "pm_state", "percent_complete", "expected_start_date",
-               "expected_end_date", "pm_manager", "pm_is_template", "pm_rollup_method", "company", "pm_forecast_end", "pm_spi"]
+               "expected_end_date", "pm_manager", "pm_is_template", "pm_rollup_method", "company", "pm_forecast_end", "pm_spi",
+               "pm_health", "pm_health_reason", "pm_current_phase"]
 EDITABLE = ("project_name", "pm_code", "pm_state", "expected_start_date", "expected_end_date", "pm_manager",
             "pm_rollup_method", "pm_is_template", "notes", "pm_holiday_list")
 MAX_PAGE = 200
@@ -87,10 +89,12 @@ def overview(project: str) -> dict:
         {"project": project, "today": nowdate(), "soon": add_days(nowdate(), 7)}, as_dict=True)[0]
     phases = frappe.get_list("Task", filters={"project": project, "pm_level": 1},
                              fields=["name", "subject", "progress", "status", "exp_start_date", "exp_end_date",
-                                     "pm_wbs_code", "pm_is_overdue", "is_group"],
+                                     "pm_wbs_code", "pm_is_overdue", "is_group", "pm_health", "pm_gate_state",
+                                     "pm_gate_mode", "pm_node_type"],
                              order_by="pm_sort asc", limit_page_length=50) if sees_all else []
     for phase in phases:
         phase["planned_progress"] = rollup.planned_progress(phase.exp_start_date, phase.exp_end_date)
+        phase["pm_gate_mode"] = phase_gates.mode_of(phase) if phase.is_group else None  # with the node type's default
     curve = frappe.get_all("PM Snapshot", filters={"project": project, "task": ("is", "not set"),
                                                    "snapshot_date": [">=", add_days(nowdate(), -180)]},
                            fields=["snapshot_date", "progress", "planned_progress"], order_by="snapshot_date asc",
@@ -118,6 +122,10 @@ def overview(project: str) -> dict:
         "tasks": {k: cint(v) for k, v in leaf.items()},
         "phases": phases, "curve": baseline.curve_for_chart(project, curve), "delays": delays, "pending_acceptance": pending, "forms_waiting": forms_waiting,
         "recent": recent,
+        "health": {"level": doc.get("pm_health"), "reason": doc.get("pm_health_reason")},
+        "gate": phase_gates.state(project) if sees_all else None,
+        "alerts_open": len(frappe.get_list("PM Alert", filters={"project": project, "state": "Đang mở"}, pluck="name",
+                                           limit_page_length=500)),
         "sees_all_tasks": sees_all,
         "can": {cap: has_project_capability(project, cap) for cap in
                 ("project.edit", "project.members", "plan.edit", "task.assign", "task.update", "task.approve")},

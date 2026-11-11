@@ -65,3 +65,12 @@ def overview(project: str) -> dict:
                                fields=["code", "title"], order_by="code asc")
     return {"works": works, "records": records, "templates": templates, "summary": boq.summary(project),
             "can": {"fill": has_project_capability(project, "task.update", "plan.edit", "task.approve")}}
+
+
+def gate_check(phase) -> list[str]:
+    """Core hook pm_gate_checks: a phase passes once every work item under it is accepted in full."""
+    left = frappe.db.sql("""select count(*) from `tabTask` where project = %s and is_group = 0 and pm_path like %s
+                            and status != 'Cancelled' and ifnull(pmc_planned_qty, 0) > 0
+                            and ifnull(pmc_accepted_qty, 0) < pmc_planned_qty - 0.000001""",
+                         (phase.project, f"{phase.pm_path}.%"))[0][0]
+    return [_("còn {0} công tác chưa nghiệm thu đủ khối lượng").format(left)] if left else []

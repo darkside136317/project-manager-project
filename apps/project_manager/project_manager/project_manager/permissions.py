@@ -281,3 +281,20 @@ def entry_scoped(doc, ptype="read", user=None) -> bool:
 
 read_only = _read_only
 
+
+def alert_query(user):
+    return _entry_query(user, "tabPM Alert")
+
+
+def preference_query(user):
+    """Each person sees their own notification choices."""
+    access = get_access(user)
+    if access.kind == "admin":
+        return ""
+    return f"`tabPM Notification Preference`.`user` = {frappe.db.escape(access.user)}"
+
+
+has_alert_permission = _read_only(lambda doc, ptype, user: _entry_scoped(doc, user, ptype))
+has_preference_permission = _read_only(lambda doc, ptype, user: get_access(user).kind == "admin"
+                                       or doc.user == (user or frappe.session.user))
+

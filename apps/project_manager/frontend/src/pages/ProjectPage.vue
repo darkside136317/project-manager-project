@@ -1,6 +1,7 @@
 <script setup>
 import { computed, provide, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import HealthBadge from "../components/HealthBadge.vue";
 import Icon from "../components/Icon.vue";
 import TaskDrawer from "../components/TaskDrawer.vue";
 import { api } from "../lib/api.js";
@@ -68,7 +69,8 @@ watch(project, () => {
     <header class="mb-4">
       <RouterLink to="/du-an" class="inline-flex items-center gap-1 text-xs text-ink-muted hover:underline"><Icon name="chevron-left" :size="14" /> Dự án</RouterLink>
       <h1 class="m-0 mt-1 text-xl font-semibold tracking-tight">{{ overview?.project.project_name || project }}</h1>
-      <p v-if="overview" class="m-0 text-sm text-ink-muted">{{ overview.project.pm_code || overview.project.name }} · {{ overview.project.pm_state }}</p>
+      <p v-if="overview" class="m-0 flex flex-wrap items-center gap-2 text-sm text-ink-muted">{{ overview.project.pm_code || overview.project.name }} · {{ overview.project.pm_state }}
+        <HealthBadge v-if="overview.project.pm_health" :level="overview.project.pm_health" :reason="overview.project.pm_health_reason" short /></p>
     </header>
     <nav class="-mx-1 mb-5 flex gap-1 overflow-x-auto border-b border-line px-1" aria-label="Các mục của dự án">
       <RouterLink v-for="item in tabs" :key="item.slug" :to="`/du-an/${encodeURIComponent(project)}/${item.slug}`"

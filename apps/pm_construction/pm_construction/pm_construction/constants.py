@@ -38,3 +38,12 @@ TASK_FIELDS = [
     {"fieldname": "pmc_boq_key", "fieldtype": "Data", "label": "Khóa BOQ", "read_only": 1, "hidden": 1,
      "insert_after": "pmc_boq_item", "no_copy": 1},
 ]
+
+# Alerts (core hooks pm_alert_types / pm_alert_rules): yesterday's site diary is missing on a project under way.
+MISSING_DIARY = "Thiếu nhật ký thi công"
+ALERT_RULES = (
+    {"rule_name": MISSING_DIARY, "rule_type": MISSING_DIARY, "to_accountable": 0, "to_manager": 1,
+     "to_role": "Chỉ huy trưởng",
+     "description": "Ngày làm việc gần nhất chưa có nhật ký thi công đã nộp, ở dự án có bảng khối lượng đã duyệt."},
+)
+

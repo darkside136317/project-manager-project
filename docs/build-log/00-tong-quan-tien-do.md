@@ -10,8 +10,8 @@ Kế hoạch: [../KE_HOACH.md](../KE_HOACH.md). Mỗi phase dừng lại để n
 | M3 | Biểu mẫu động | ✅ Xong (fa9e73b, CI xanh) | [04-m3-bieu-mau.md](04-m3-bieu-mau.md) |
 | M4 | Lịch trình, Gantt, baseline | ✅ Xong (9825c4d, CI xanh) | [05-m4-lich-trinh-gantt.md](05-m4-lich-trinh-gantt.md) |
 | M5 | Trao đổi theo đầu việc, tài liệu, offline | ✅ Xong (63faf2b, CI xanh) | [06-m5-trao-doi-tai-lieu-offline.md](06-m5-trao-doi-tai-lieu-offline.md) |
-| M6 | Lớp thi công cơ bản | 🟡 Xong, chờ CI | [07-m6-lop-thi-cong.md](07-m6-lop-thi-cong.md) |
-| M7 | Cảnh báo, chuyển giai đoạn → **thí điểm** | ⚪ Chưa bắt đầu | — |
+| M6 | Lớp thi công cơ bản | ✅ Xong (2c2f6e1 + sửa test 3d596f2, CI xanh) | [07-m6-lop-thi-cong.md](07-m6-lop-thi-cong.md) |
+| M7 | Cảnh báo, chuyển giai đoạn → **thí điểm** | 🟡 Xong, chờ CI | [08-m7-canh-bao-giai-doan.md](08-m7-canh-bao-giai-doan.md) |
 | M8 | Vật tư, máy, nhân công | ⚪ Chưa bắt đầu | — |
 | M9 | Hiệu suất, workload | ⚪ Chưa bắt đầu | — |
 | M10 | Báo cáo, nhập/xuất, ngân sách, rủi ro | ⚪ Chưa bắt đầu | — |

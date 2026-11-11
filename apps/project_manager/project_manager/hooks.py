@@ -57,6 +57,8 @@ permission_query_conditions = {
     "PM Follow": _P + "follow_query",
     "PM Document": _P + "document_query",
     "PM Document Version": _P + "document_version_query",
+    "PM Alert": _P + "alert_query",
+    "PM Notification Preference": _P + "preference_query",
 }
 has_permission = {
     "Project": _P + "has_project_permission",
@@ -76,6 +78,8 @@ has_permission = {
     "PM Follow": _P + "has_follow_permission",
     "PM Document": _P + "has_document_permission",
     "PM Document Version": _P + "has_document_version_permission",
+    "PM Alert": _P + "has_alert_permission",
+    "PM Notification Preference": _P + "has_preference_permission",
 }
 
 # =============================================================================
@@ -104,12 +108,16 @@ _SERVICES = "project_manager.project_manager.services."
 scheduler_events = {
     "cron": {
         "*/5 * * * *": [_ROLLUP + "sweep", _SCHEDULE + "sweep", _SERVICES + "media.sweep_thumbnails"],
-        "0 7 * * *": ["project_manager.project_manager.services.reminders.send_daily"],
+        "0 6 * * *": [_SERVICES + "alerts.queue_daily"],
+        "0 * * * *": [_SERVICES + "alerts.queue_hourly"],
+        "0 7 * * *": [_SERVICES + "digest.daily"],
+        "0 7 * * 1": [_SERVICES + "digest.weekly"],
     },
     "daily": [
         "project_manager.project_manager.services.audit.purge_expired",
         _ROLLUP + "refresh_overdue_flags",
         _ROLLUP + "take_snapshots",
+        _SERVICES + "phases.check_all",
     ],
     "daily_long": [
         _ROLLUP + "reconcile_all",

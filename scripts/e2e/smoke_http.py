@@ -93,6 +93,11 @@ def main() -> int:
     check("project list", status == 200 and isinstance(listed, dict) and "rows" in listed, f"{status} {listed}")
     status, mine = message("tasks.my_tasks")
     check("my tasks", status == 200 and isinstance(mine, dict) and "counts" in mine, f"{status} {mine}")
+    # M7: alerts, portfolio, notification settings
+    for name, path, key in (("my alerts", "alerts.mine", "alerts"), ("portfolio", "alerts.portfolio", "totals"),
+                            ("notification settings", "alerts.preference", "types")):
+        status, value = message(path)
+        check(name, status == 200 and isinstance(value, dict) and key in value, f"{status} {value}")
     projects = (listed or {}).get("rows") if isinstance(listed, dict) else None
     if projects:
         project = urllib.parse.quote(projects[0]["name"])

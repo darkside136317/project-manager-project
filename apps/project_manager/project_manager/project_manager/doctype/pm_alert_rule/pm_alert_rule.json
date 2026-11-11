@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "autoname": "field:rule_name",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_name",
+  "rule_type",
+  "is_active",
+  "days",
+  "only_critical",
+  "node_types",
+  "description",
+  "recipients_section",
+  "to_accountable",
+  "to_responsible",
+  "to_reviewer",
+  "to_followers",
+  "recipients_column",
+  "to_manager",
+  "to_role",
+  "to_supervisor",
+  "send_email",
+  "escalation_section",
+  "escalations",
+  "is_builtin"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "label": "Tên quy tắc",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rule_type",
+   "fieldtype": "Select",
+   "label": "Loại",
+   "options": "Sắp đến hạn\nQuá hạn\nNguy cơ trễ\nChậm trên đường găng\nĐổi sức khỏe dự án\nChưa nhận việc\nKhông cập nhật\nBiểu mẫu chờ duyệt\nChờ duyệt chuyển giai đoạn",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Đang dùng",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "days",
+   "fieldtype": "Int",
+   "label": "Số ngày",
+   "in_list_view": 1,
+   "description": "Sắp đến hạn: trước hạn bao nhiêu ngày. Chưa nhận việc, Không cập nhật, Biểu mẫu chờ duyệt: sau bao nhiêu ngày. Các loại khác không dùng."
+  },
+  {
+   "fieldname": "only_critical",
+   "fieldtype": "Check",
+   "label": "Chỉ việc trên đường găng"
+  },
+  {
+   "fieldname": "node_types",
+   "fieldtype": "Small Text",
+   "label": "Chỉ cho các loại nút",
+   "description": "Mỗi dòng một loại; để trống là mọi loại."
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú"
+  },
+  {
+   "fieldname": "recipients_section",
+   "fieldtype": "Section Break",
+   "label": "Báo cho ai"
+  },
+  {
+   "fieldname": "to_accountable",
+   "fieldtype": "Check",
+   "label": "Người chịu trách nhiệm chính",
+   "default": "1"
+  },
+  {
+   "fieldname": "to_responsible",
+   "fieldtype": "Check",
+   "label": "Người thực hiện"
+  },
+  {
+   "fieldname": "to_reviewer",
+   "fieldtype": "Check",
+   "label": "Người duyệt"
+  },
+  {
+   "fieldname": "to_followers",
+   "fieldtype": "Check",
+   "label": "Người theo dõi công việc"
+  },
+  {
+   "fieldname": "recipients_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_manager",
+   "fieldtype": "Check",
+   "label": "Quản lý dự án"
+  },
+  {
+   "fieldname": "to_role",
+   "fieldtype": "Link",
+   "label": "Vai trò trong dự án",
+   "options": "PM Project Role"
+  },
+  {
+   "fieldname": "to_supervisor",
+   "fieldtype": "Check",
+   "label": "Cấp trên trực tiếp (theo hồ sơ nhân viên)"
+  },
+  {
+   "fieldname": "send_email",
+   "fieldtype": "Check",
+   "label": "Gửi cả email",
+   "description": "Khi có tài khoản email gửi đi; không gửi trong giờ yên lặng."
+  },
+  {
+   "fieldname": "escalation_section",
+   "fieldtype": "Section Break",
+   "label": "Leo thang"
+  },
+  {
+   "fieldname": "escalations",
+   "fieldtype": "Table",
+   "label": "Các bậc leo thang",
+   "options": "PM Alert Escalation"
+  },
+  {
+   "fieldname": "is_builtin",
+   "fieldtype": "Check",
+   "label": "Có sẵn",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Alert Rule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "rule_name"
+}

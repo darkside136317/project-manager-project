@@ -30,6 +30,7 @@ def seed_all():
     ensure_delay_masters()
     ensure_form_packs()
     ensure_single_defaults("PM Settings")
+    ensure_alert_rules()
     ensure_custom_fields()
     ensure_erpnext_permissions()
     ensure_task_indexes()
@@ -85,6 +86,24 @@ def ensure_delay_masters():
                     ignore_permissions=True)
 
 
+def ensure_alert_rules():
+    """The rule types of the core and of the installed layers (a choice of PM Alert Rule.rule_type), and the default
+    rules, created once by name: administrators change them afterwards."""
+    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+    from project_manager.project_manager.services import alerts
+
+    options = "\n".join(alerts.types())
+    field = frappe.get_meta("PM Alert Rule").get_field("rule_type")
+    if field and field.options != options:
+        make_property_setter("PM Alert Rule", "rule_type", "options", options, "Text", validate_fields_for_doctype=False)
+    for rule in C.DEFAULT_ALERT_RULES + [r for path in frappe.get_hooks("pm_alert_rules") or []
+                                          for r in frappe.get_attr(path)()]:
+        if frappe.db.exists("PM Alert Rule", rule["rule_name"]):
+            continue
+        frappe.get_doc({"doctype": "PM Alert Rule", "is_active": 1, "is_builtin": 1, **rule}).insert(ignore_permissions=True)
+
+
 def ensure_form_packs():
     """The ready-made forms: the core's general ones, and those of any installed layer (hook `pm_form_packs`)."""
     from project_manager.project_manager.services import form_templates
@@ -134,6 +153,16 @@ CUSTOM_FIELDS = {
         {"fieldname": "pm_forecast_end", "fieldtype": "Date", "label": "Dự báo kết thúc", "read_only": 1,
          "insert_after": "pm_plan_end", "no_copy": 1},
         {"fieldname": "pm_spi", "fieldtype": "Float", "label": "SPI", "read_only": 1, "insert_after": "pm_forecast_end", "no_copy": 1},
+        {"fieldname": "pm_health", "fieldtype": "Select", "options": "\nXanh\nVàng\nĐỏ", "label": "Sức khỏe",
+         "read_only": 1, "insert_after": "pm_spi", "no_copy": 1, "in_list_view": 1, "in_standard_filter": 1},
+        {"fieldname": "pm_health_reason", "fieldtype": "Small Text", "label": "Vì sao", "read_only": 1,
+         "insert_after": "pm_health", "no_copy": 1},
+        {"fieldname": "pm_health_candidate", "fieldtype": "Data", "label": "Sức khỏe đang chờ ổn định", "read_only": 1,
+         "hidden": 1, "insert_after": "pm_health_reason", "no_copy": 1},
+        {"fieldname": "pm_health_since", "fieldtype": "Date", "label": "Ổn định từ", "read_only": 1, "hidden": 1,
+         "insert_after": "pm_health_candidate", "no_copy": 1},
+        {"fieldname": "pm_current_phase", "fieldtype": "Link", "options": "Task", "label": "Giai đoạn hiện tại",
+         "read_only": 1, "insert_after": "pm_health_since", "no_copy": 1},
     ],
     "Task": [
         {"fieldname": "pm_node_type", "fieldtype": "Link", "options": "PM Node Type", "label": "Loại nút",
@@ -177,6 +206,23 @@ CUSTOM_FIELDS = {
         {"fieldname": "pm_forecast_end", "fieldtype": "Date", "label": "Dự báo kết thúc", "read_only": 1,
          "insert_after": "pm_conflict_days", "no_copy": 1},
         {"fieldname": "pm_spi", "fieldtype": "Float", "label": "SPI", "read_only": 1, "insert_after": "pm_forecast_end", "no_copy": 1},
+        {"fieldname": "pm_health", "fieldtype": "Select", "options": "\nXanh\nVàng\nĐỏ", "label": "Sức khỏe",
+         "read_only": 1, "insert_after": "pm_spi", "no_copy": 1, "in_standard_filter": 1},
+        {"fieldname": "pm_health_reason", "fieldtype": "Small Text", "label": "Vì sao", "read_only": 1,
+         "insert_after": "pm_health", "no_copy": 1},
+        {"fieldname": "pm_forecast_slip", "fieldtype": "Int", "label": "Dự báo trễ (ngày làm việc)", "read_only": 1,
+         "insert_after": "pm_health_reason", "no_copy": 1},
+        {"fieldname": "pm_stalled", "fieldtype": "Check", "label": "Đình trệ", "read_only": 1,
+         "insert_after": "pm_forecast_slip", "no_copy": 1},
+        {"fieldname": "pm_health_candidate", "fieldtype": "Data", "label": "Sức khỏe đang chờ ổn định", "read_only": 1,
+         "hidden": 1, "insert_after": "pm_stalled", "no_copy": 1},
+        {"fieldname": "pm_health_since", "fieldtype": "Date", "label": "Ổn định từ", "read_only": 1, "hidden": 1,
+         "insert_after": "pm_health_candidate", "no_copy": 1},
+        {"fieldname": "pm_gate_mode", "fieldtype": "Select", "options": "Thủ công\nCần duyệt\nTự động",
+         "label": "Chuyển giai đoạn", "insert_after": "pm_health_since",
+         "description": "Với nhóm cấp cao nhất (giai đoạn): xong việc và đủ điều kiện thì chuyển sang giai đoạn sau."},
+        {"fieldname": "pm_gate_state", "fieldtype": "Select", "options": "\nChờ duyệt\nĐã chuyển", "label": "Trạng thái chuyển",
+         "read_only": 1, "insert_after": "pm_gate_mode", "no_copy": 1},
     ],
 }
 

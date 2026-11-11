@@ -25,7 +25,8 @@ MAX_LEVEL_ROWS = 500
 TREE_FIELDS = ["name", "subject", "is_group", "status", "progress", "exp_start_date", "exp_end_date", "pm_wbs_code",
                "pm_level", "pm_sort", "pm_node_type", "pm_accountable", "pm_reviewer", "pm_is_overdue", "pm_delay_days",
                "parent_task", "priority", "task_weight", "pm_is_critical", "pm_conflict_days"]
-EDITABLE = ("subject", "description", "pm_node_type", "task_weight", "priority", "exp_start_date", "exp_end_date")
+EDITABLE = ("subject", "description", "pm_node_type", "task_weight", "priority", "exp_start_date", "exp_end_date",
+            "pm_gate_mode")
 DATE_FIELDS = ("exp_start_date", "exp_end_date")
 
 
@@ -128,6 +129,10 @@ def update(task: str, values: dict, reason: str = "") -> dict:
         doc.set(field, (value or None) if field in DATE_FIELDS else value)
     doc.flags.pm_reason = (reason or "").strip()
     doc.save(ignore_permissions=True)
+    if "pm_gate_mode" in values and doc.project:
+        from project_manager.project_manager.services import phases
+
+        phases.check(doc.project)  # made automatic while its conditions are met: it passes now
     rows = frappe.get_list("Task", filters={"name": task}, fields=TREE_FIELDS)
     _decorate(rows)
     return rows[0]

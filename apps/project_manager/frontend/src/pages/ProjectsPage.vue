@@ -3,6 +3,7 @@ import { onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import Drawer from "../components/Drawer.vue";
 import EmptyState from "../components/EmptyState.vue";
+import HealthBadge from "../components/HealthBadge.vue";
 import Icon from "../components/Icon.vue";
 import PageHeader from "../components/PageHeader.vue";
 import ProgressBar from "../components/ProgressBar.vue";
@@ -96,7 +97,10 @@ onMounted(load);
             <p class="m-0 truncate font-semibold">{{ row.project_name }}</p>
             <p class="m-0 text-xs text-ink-muted">{{ row.pm_code || row.name }} · {{ row.manager_name || "Chưa có quản lý" }}</p>
           </div>
-          <span class="badge badge-muted shrink-0">{{ row.pm_is_template ? "Mẫu" : row.pm_state }}</span>
+          <span class="flex shrink-0 items-center gap-1">
+            <HealthBadge v-if="row.pm_health && !row.pm_is_template" :level="row.pm_health" :reason="row.pm_health_reason" short />
+            <span class="badge badge-muted">{{ row.pm_is_template ? "Mẫu" : row.pm_state }}</span>
+          </span>
         </div>
         <div class="mt-3 flex items-center gap-3">
           <ProgressBar class="flex-1" :value="row.percent_complete" :planned="row.planned_progress" />

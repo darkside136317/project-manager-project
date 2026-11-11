@@ -5,6 +5,7 @@ import { boot } from "../lib/boot.js";
 import { pageTitle } from "../lib/page.js";
 import { theme, toggleTheme } from "../lib/theme.js";
 import ChangePasswordDialog from "./ChangePasswordDialog.vue";
+import NotificationPrefsDialog from "./NotificationPrefsDialog.vue";
 import CommandPalette from "./CommandPalette.vue";
 import Icon from "./Icon.vue";
 import NetworkStatus from "./NetworkStatus.vue";
@@ -16,6 +17,7 @@ import UserMenu from "./UserMenu.vue";
 const route = useRoute();
 const menuOpen = ref(false);
 const passwordOpen = ref(false);
+const prefsOpen = ref(false);
 const paletteOpen = ref(false);
 const canSearch = computed(() => boot.nav.length > 0);
 
@@ -66,7 +68,7 @@ watch(title, (value) => { document.title = value ? `${value} — ${product}` : p
         <button class="btn btn-ghost btn-icon" type="button" :aria-label="theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'" @click="toggleTheme">
           <Icon :name="theme === 'dark' ? 'sun' : 'moon'" />
         </button>
-        <UserMenu @change-password="passwordOpen = true" />
+        <UserMenu @change-password="passwordOpen = true" @preferences="prefsOpen = true" />
       </header>
       <main class="mx-auto w-full max-w-[1280px] flex-1 px-4 py-6 sm:px-6">
         <slot />
@@ -75,6 +77,7 @@ watch(title, (value) => { document.title = value ? `${value} — ${product}` : p
 
     <CommandPalette :open="paletteOpen" @close="paletteOpen = false" />
     <ChangePasswordDialog :open="passwordOpen" @close="passwordOpen = false" />
+    <NotificationPrefsDialog :open="prefsOpen" @close="prefsOpen = false" />
     <ToastHost />
   </div>
 </template>

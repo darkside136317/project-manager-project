@@ -2,7 +2,8 @@
 
 This app extends project_manager; the core never imports it. It plugs in through the core's `pm_*` hooks
 (project_manager/extensions.py): a roll-up method by estimate value, the site diary as a discussion target, the
-acceptance forms, and its screens (frontend/pm-module.js).
+acceptance forms, an alert for missing site diaries, a phase condition (every work item accepted in full), and its
+screens (frontend/pm-module.js).
 """
 
 app_name = "pm_construction"
@@ -25,6 +26,9 @@ pm_discussion_targets = {"PMC Site Diary": _K + "services.diary.target"}
 pm_form_packs = [_K + "setup.form_pack.acceptance_forms"]
 pm_form_events = {"approved": [_K + "services.acceptance.on_form_approved"]}
 pm_spa_modules = ["construction"]
+pm_alert_types = {"Thiếu nhật ký thi công": _K + "services.alerts.missing_diary"}
+pm_alert_rules = [_K + "setup.install.alert_rules"]
+pm_gate_checks = [_K + "services.acceptance.gate_check"]
 
 # --- project scope of the layer's DocTypes (constants.PROJECT_SCOPED; tests/test_hook_coverage.py) -------------------
 _P = _K + "permissions."

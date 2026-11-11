@@ -42,12 +42,23 @@ def _admin_nav() -> list:
     return [{"group": GROUP_ADMIN, "items": items}] if items else []
 
 
+def _open_alerts(user) -> int:
+    """Open alerts the user was told of (the sidebar's badge)."""
+    try:
+        return frappe.db.count("PM Alert", {"state": "Đang mở", "recipients": ["like", f'%"{user}"%']})
+    except Exception:  # before the first migrate of M7
+        return 0
+
+
 def build_boot() -> dict:
     """Sidebar sections filtered by the user's permissions (the server still enforces every call)."""
     user = frappe.session.user
-    nav = [{"group": GROUP_OVERVIEW, "items": [{"label": "Tổng quan", "route": SPA_HOME, "icon": "layout-dashboard"}]},
+    nav = [{"group": GROUP_OVERVIEW, "items": [
+               {"label": "Tổng quan", "route": SPA_HOME, "icon": "layout-dashboard"},
+               {"label": "Danh mục dự án", "route": f"{SPA_HOME}/danh-muc-du-an", "icon": "chart-bar"}]},
            {"group": GROUP_WORK, "items": [
                {"label": "Việc của tôi", "route": f"{SPA_HOME}/viec-cua-toi", "icon": "clipboard-check"},
+               {"label": "Cảnh báo", "route": f"{SPA_HOME}/canh-bao", "icon": "bell", "badge": _open_alerts(user)},
                {"label": "Dự án", "route": f"{SPA_HOME}/du-an", "icon": "folder-kanban"}]}]
     if has_capability("forms.manage"):
         nav[-1]["items"].append({"label": "Mẫu biểu mẫu", "route": f"{SPA_HOME}/bieu-mau-mau", "icon": "clipboard-list"})

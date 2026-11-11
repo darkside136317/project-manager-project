@@ -104,3 +104,30 @@ Trung vị; lần chậm nhất 76 ms. Mục tiêu của kế hoạch là dướ
 
 Trước khi tối ưu, mỗi dòng ghi riêng 2–3 lệnh, và lần duyệt sau nạp lại mọi công tác để tính tiến độ dù không đổi. Nay ghi theo lô (một lệnh UPDATE cho vài trăm dòng), và chỉ tính lại tiến độ của công tác đổi khối lượng thiết kế.
 
+## M7 — Cảnh báo, sức khỏe, danh mục trên 50 dự án (2026-11-11)
+
+`scripts/perf/alerts_check.py` tạo 50 dự án tạm, mỗi dự án 4 giai đoạn, 200 công việc rải trong hai tháng quanh hôm nay (tổng 10.200 việc). Một phần ba số việc đáng lẽ đã bắt đầu thì đang trễ và chậm, một số không cập nhật đã một tuần. Một người quản lý tất cả. Đo ở máy chủ, Docker Desktop trên Windows 11. Script tự dọn dữ liệu khi xong.
+
+| Thao tác | Thời gian |
+|---|---|
+| Dự báo và sức khỏe một dự án 200 việc: lần đầu / không đổi | 173 ms / 28 ms |
+| Dự báo và sức khỏe 49 dự án còn lại | 2.454 ms |
+| Kiểm tra chuyển giai đoạn, 50 dự án | 310 ms |
+| Quy tắc hằng ngày, lần đầu: mở 4.400 cảnh báo, báo người nhận | 1.837 ms (trước khi tối ưu: 42.889 ms) |
+| Quy tắc hằng ngày, các lần sau (không có gì mới) | 226 ms (trước: 6.727 ms) |
+| Leo thang 3.600 cảnh báo mở 3 ngày | 314 ms (trước: 15.091 ms) |
+| Danh mục dự án, 50 dự án (quản trị / người quản lý) | 236 ms / 224 ms |
+| Cảnh báo của tôi | 12 ms |
+| Tóm tắt hằng ngày / tuần | 64 ms / 153 ms |
+
+Trước khi tối ưu, mỗi kết quả của quy tắc tra cảnh báo bằng một lệnh riêng. Người nhận của từng việc cũng được đọc riêng, và mỗi người nhận được ghi bằng một lệnh. Nay một lượt chạy làm theo lô:
+- đọc cảnh báo đang mở của quy tắc bằng một lệnh;
+- chèn cảnh báo mới cùng lúc;
+- đọc người phụ trách của mọi việc liên quan trong vài lệnh;
+- nhớ tạm người quản lý, vai trò, tùy chọn của từng người trong lượt chạy;
+- ghi người nhận và bậc leo thang bằng một lệnh UPDATE cho 500 cảnh báo.
+
+Một người có hơn 3 cảnh báo mới trong cùng một lượt nhận một thông báo gộp ("12 cảnh báo mới: Quá hạn 8, Sắp đến hạn 4") thay vì 12 thông báo lẻ.
+
+Lịch chạy chỉ xếp lượt chạy vào hàng đợi `long` (giới hạn 1 giờ), vì nhiều dự án có thể làm lượt chạy dài hơn thời gian cho phép của một job theo lịch.
+

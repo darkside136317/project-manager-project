@@ -1,22 +1,114 @@
 <script setup>
-import { computed, inject } from "vue";
+import { computed, inject, ref, watch } from "vue";
+import HealthBadge from "../../components/HealthBadge.vue";
 import Icon from "../../components/Icon.vue";
 import ProgressBar from "../../components/ProgressBar.vue";
+import ReasonDialog from "../../components/ReasonDialog.vue";
 import SCurve from "../../components/SCurve.vue";
+import { api } from "../../lib/api.js";
 import { formatDate, formatDateTime } from "../../lib/format.js";
 import { slipText, slipTone } from "../../lib/gantt.js";
+import { ALERT_OPEN, GATE_MODES, GATE_PASSED, GATE_WAITING, alertBadge, canPassPhase, gateSummary, levelText, spaPath } from "../../lib/health.js";
+import { toast } from "../../lib/toast.js";
 import { statusBadge, statusLabel, variance } from "../../lib/work.js";
 
-// Tổng quan: actual against plan, the state of the work, where it is late and why, what happened lately.
-const { overview, openTask, name } = inject("project");
+// Tổng quan: health and the current phase, actual against plan, the state of the work, where it is late and why,
+// the open alerts, what happened lately.
+const { overview, openTask, name, reload } = inject("project");
 const data = computed(() => overview.value);
 const gap = computed(() => variance(data.value.project.percent_complete, data.value.planned_progress));
 const base = computed(() => `/du-an/${encodeURIComponent(name.value)}`);
 const schedule = computed(() => data.value.schedule || {});
+const gate = computed(() => data.value.gate);
+const current = computed(() => gate.value?.current || null);
+const alerts = ref([]);
+const passing = ref(false);
+const busy = ref(false);
+const passError = ref("");
+const mayAcknowledge = computed(() => Boolean(data.value.can?.["plan.edit"] || data.value.can?.["task.approve"]));
+
+async function loadAlerts() {
+  try {
+    alerts.value = data.value.alerts_open ? await api.alerts.ofProject(name.value) : [];
+  } catch {
+    alerts.value = [];  // the rest of the overview matters more
+  }
+}
+
+async function passPhase(note) {
+  busy.value = true;
+  passError.value = "";
+  try {
+    await api.alerts.passPhase(current.value.name, note);
+    passing.value = false;
+    toast("Đã chuyển giai đoạn");
+    reload();
+  } catch (e) {
+    passError.value = e.message;
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function setMode(phase, mode) {
+  try {
+    await api.wbs.setGateMode(phase.name, mode);
+    toast(`${phase.subject}: chuyển giai đoạn ${mode.toLowerCase()}`);
+    reload();
+  } catch (e) {
+    toast(e.message, "error", 7000);
+  }
+}
+
+async function acknowledge(alert) {
+  try {
+    const updated = await api.alerts.acknowledge(alert.name);
+    alerts.value = alerts.value.map((row) => (row.name === updated.name ? { ...row, ...updated } : row));
+    toast("Đã xác nhận cảnh báo");
+  } catch (e) {
+    toast(e.message, "error", 7000);
+  }
+}
+
+watch(() => [name.value, data.value?.alerts_open], loadAlerts, { immediate: true });
 </script>
 
 <template>
   <div class="grid gap-4 lg:grid-cols-3">
+    <section class="card p-4 lg:col-span-3" aria-labelledby="ov-health" data-health-card>
+      <div class="grid gap-4 sm:grid-cols-[minmax(160px,auto)_minmax(0,1fr)_auto] sm:gap-x-8">
+        <div>
+          <h2 id="ov-health" class="m-0 text-sm font-semibold">Sức khỏe dự án</h2>
+          <div class="mt-2"><HealthBadge :level="data.health?.level" :reason="data.health?.reason" detailed /></div>
+        </div>
+        <div v-if="gate" class="min-w-0" data-gate>
+          <h2 class="m-0 text-sm font-semibold">
+            <template v-if="current">Giai đoạn {{ gate.done + 1 }}/{{ gate.phases }}: {{ current.label }}</template>
+            <template v-else>Đã qua cả {{ gate.phases }} giai đoạn</template>
+          </h2>
+          <p v-if="current" class="m-0 mt-1 text-xs text-ink-muted">Chuyển giai đoạn: {{ current.mode }}<template v-if="current.next"> · tiếp theo: {{ current.next }}</template></p>
+          <p class="m-0 mt-1 text-sm" :class="{ 'font-medium': !current?.missing?.length }">{{ gateSummary(current) }}</p>
+          <button v-if="canPassPhase(current)" class="btn btn-primary mt-2" type="button" @click="passing = true">
+            <Icon name="arrow-left-right" :size="16" /> {{ current.state === GATE_WAITING ? "Duyệt chuyển giai đoạn" : "Chuyển sang giai đoạn sau" }}
+          </button>
+        </div>
+        <div>
+          <h2 class="m-0 text-sm font-semibold">Cảnh báo</h2>
+          <p class="m-0 mt-2 text-sm"><strong :class="{ 'text-danger': data.alerts_open }">{{ data.alerts_open }}</strong> đang mở</p>
+        </div>
+      </div>
+      <ul v-if="alerts.length" class="m-0 mt-3 list-none divide-y divide-line border-t border-line p-0" aria-label="Cảnh báo đang mở của dự án">
+        <li v-for="alert in alerts.slice(0, 8)" :key="alert.name" class="flex flex-wrap items-center gap-2 py-2 text-sm sm:flex-nowrap" data-project-alert>
+          <span class="flex shrink-0 gap-1">
+            <span :class="alertBadge(alert.state)">{{ alert.state }}</span>
+            <span v-if="levelText(alert.level)" class="badge badge-warning">{{ levelText(alert.level) }}</span>
+          </span>
+          <RouterLink :to="spaPath(alert.link)" class="min-w-0 basis-full text-ink sm:basis-auto sm:flex-1">{{ alert.message }}</RouterLink>
+          <button v-if="alert.state === ALERT_OPEN && mayAcknowledge" class="btn btn-ghost ml-auto shrink-0" type="button" @click="acknowledge(alert)">Đã biết</button>
+        </li>
+      </ul>
+    </section>
+
     <section class="card p-4 lg:col-span-2" aria-labelledby="ov-progress">
       <div class="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="ov-progress" class="m-0 text-sm font-semibold">Tiến độ dự án</h2>
@@ -72,6 +164,9 @@ const schedule = computed(() => data.value.schedule || {});
               <span class="font-medium">{{ phase.subject }}</span>
               <span :class="statusBadge(phase.status)">{{ statusLabel(phase.status) }}</span>
               <span v-if="phase.pm_is_overdue" class="badge badge-danger">Quá hạn</span>
+              <span v-if="phase.pm_gate_state === GATE_PASSED" class="badge badge-success">Đã chuyển giai đoạn</span>
+              <span v-else-if="phase.pm_gate_state === GATE_WAITING" class="badge badge-warning">Chờ duyệt chuyển</span>
+              <HealthBadge v-if="phase.pm_health && phase.pm_health !== 'Xanh'" :level="phase.pm_health" short />
               <span class="ml-auto text-xs text-ink-muted">{{ formatDate(phase.exp_start_date) }} → {{ formatDate(phase.exp_end_date) }}</span>
             </div>
             <div class="mt-1 flex items-center gap-3">
@@ -79,6 +174,13 @@ const schedule = computed(() => data.value.schedule || {});
               <span class="w-24 text-right text-xs">{{ Math.round(phase.progress || 0) }}% / {{ Math.round(phase.planned_progress) }}%</span>
             </div>
           </button>
+          <label v-if="data.can['plan.edit'] && phase.is_group && phase.pm_gate_state !== GATE_PASSED" class="mt-1 flex items-center justify-end gap-2 text-xs text-ink-muted">
+            Chuyển giai đoạn
+            <select class="input w-auto py-1 text-xs" :value="phase.pm_gate_mode || GATE_MODES[0]" :aria-label="`Chuyển giai đoạn ${phase.subject}`"
+                    @change="setMode(phase, $event.target.value)">
+              <option v-for="mode in GATE_MODES" :key="mode" :value="mode">{{ mode }}</option>
+            </select>
+          </label>
         </li>
       </ul>
     </section>
@@ -111,4 +213,9 @@ const schedule = computed(() => data.value.schedule || {});
       </ul>
     </section>
   </div>
+
+  <ReasonDialog :open="passing" :title="current?.state === GATE_WAITING ? 'Duyệt chuyển giai đoạn' : 'Chuyển giai đoạn'"
+                :message="current ? `Chuyển từ ${current.label} sang ${current.next || 'hoàn thành dự án'}.` : ''"
+                label="Ghi chú (không bắt buộc)" confirm-text="Chuyển giai đoạn" :required="false" :busy="busy" :error="passError"
+                @confirm="passPhase" @cancel="passing = false" />
 </template>

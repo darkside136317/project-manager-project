@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "after_days",
+  "to_manager",
+  "to_role",
+  "to_supervisor"
+ ],
+ "fields": [
+  {
+   "fieldname": "after_days",
+   "fieldtype": "Int",
+   "label": "Sau bao nhiêu ngày",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Tính từ lúc cảnh báo mở mà chưa ai xác nhận, điều kiện vẫn còn."
+  },
+  {
+   "fieldname": "to_manager",
+   "fieldtype": "Check",
+   "label": "Báo quản lý dự án",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_role",
+   "fieldtype": "Link",
+   "label": "Báo vai trò trong dự án",
+   "options": "PM Project Role",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_supervisor",
+   "fieldtype": "Check",
+   "label": "Báo cấp trên trực tiếp",
+   "in_list_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Alert Escalation",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

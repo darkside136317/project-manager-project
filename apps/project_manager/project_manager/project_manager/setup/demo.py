@@ -269,12 +269,13 @@ def down():
             for doctype in ("PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Project Member",
                             "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline Task",
                             "PM Baseline Curve", "PM Baseline", "PM Media", "PM Follow", "PM Document Version",
-                            "PM Document"):
+                            "PM Document", "PM Alert"):
                 frappe.db.delete(doctype, {"project": project})
             frappe.db.delete("Task", {"project": project})
             frappe.delete_doc("Project", project, force=True, ignore_permissions=True)
     for email, *_ in PEOPLE:
         frappe.db.delete("Notification Log", {"for_user": email})
+        frappe.db.delete("PM Notification Preference", {"user": email})
         frappe.delete_doc("User", email, force=True, ignore_permissions=True, ignore_missing=True)
     frappe.db.commit()
     print("Demo removed")

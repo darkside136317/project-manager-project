@@ -22,3 +22,11 @@ def seed_all():
         if not frappe.db.exists("PM Node Type", values["node_type"]):
             frappe.get_doc({"doctype": "PM Node Type", **values}).insert(ignore_permissions=True)
     frappe.clear_cache(doctype="Task")
+    from project_manager.project_manager.setup import install as core
+
+    core.ensure_alert_rules()  # this layer's alert type and rule (installed after the core)
+
+
+def alert_rules() -> list[dict]:
+    """Core hook pm_alert_rules: the layer's default rules."""
+    return [dict(rule) for rule in K.ALERT_RULES]
