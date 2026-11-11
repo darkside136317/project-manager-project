@@ -17,7 +17,7 @@ export default defineConfig({
   base: "/assets/project_manager/spa/",
   plugins: [vue()],
   // a layer's files sit outside this folder: their bare imports resolve from here, as one copy
-  resolve: { alias: { "@pm": core }, dedupe: ["vue", "vue-router", "lucide-vue-next", "socket.io-client"] },
+  resolve: { alias: { "@pm": core }, dedupe: ["vue", "vue-router", "lucide-vue-next", "socket.io-client", "@vue/test-utils"] },
   server: { fs: { allow: [".", apps || "/"] } },  // the layers' files (and tests) live beside this folder
   build: {
     outDir,

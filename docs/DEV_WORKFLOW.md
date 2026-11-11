@@ -105,6 +105,18 @@ Kịch bản thí điểm M7 trên dữ liệu mẫu nhà xưởng (chạy từ 
 cd scripts/e2e/ui && node pilot_flow.mjs
 ```
 
+Kịch bản vật tư, máy, chấm công M8 trên dữ liệu mẫu nhà xưởng (chạy từ gốc repo; đổi dữ liệu mẫu, muốn chạy lại thì dựng lại dữ liệu mẫu thi công):
+
+```bash
+cd scripts/e2e/ui && node site_flow.mjs
+```
+
+Đo vật tư trên BOQ 3.000 công tác (trong `docker/`; tự dọn khi xong):
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - seed < ../scripts/perf/materials_check.py
+```
+
 Đo cảnh báo, sức khỏe, danh mục trên 50 dự án tạm (trong `docker/`; script tự dọn khi xong, `reset` để dọn nếu bị ngắt):
 
 ```bash
@@ -145,5 +157,8 @@ docker compose exec backend bench --site pm.localhost execute project_manager.pr
 - **Ngày của Task trong ERPNext v16 là Datetime** (`exp_start_date`, `exp_end_date`): so sánh bằng `getdate`, ô `type="date"` lấy 10 ký tự đầu.
 - **Test có `frappe.db.rollback()` toàn phần** (ví dụ job xử lý lỗi) phải mock `frappe.db.rollback`, nếu không savepoint của `PMTestCase` mất và test sau lỗi.
 - **Cảnh báo trên site dev:** khóa "đã báo" nằm trong Redis một ngày (`pm_alert_sent|site|cảnh báo|bậc|người`), không lùi lại theo transaction. Test chạy trên site dev có thể đánh dấu đã báo cho cảnh báo thật của site; site mới cài không bị.
+- **Lỗi quyền có câu cụ thể:** dùng `frappe.throw(_("..."), frappe.PermissionError)`. `raise frappe.PermissionError(...)` không gửi câu về giao diện, nên người dùng chỉ thấy câu chung "Bạn không có quyền…".
+- **Test của lớp ngành dùng thư viện của lõi** (`@vue/test-utils`, `vue`): chúng phải có trong `resolve.dedupe` của `vite.config.js`.
+- **Kho, đề xuất, phiếu kho của ERPNext bị thu hẹp theo dự án cho nhân viên của hệ thống** (`constants.STOCK_SCOPED`). Thủ kho cần vai trò "Stock User" (được gán khi thêm vào dự án với vai trò Thủ kho) mới mở được Desk kho.
 - **`frappe.get_list` của v16 không nhận `order_by` có hàm** (ví dụ `field(state, ...)`): sắp xếp trong Python.
 - **Vào vai người dùng mẫu không cần mật khẩu:** quản trị gọi `frappe.core.doctype.user.user.impersonate` (kịch bản `pilot_flow.mjs` làm vậy). Người đó nhận một thông báo "đã có người vào vai".

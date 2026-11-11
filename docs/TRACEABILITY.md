@@ -76,3 +76,12 @@ Mục yêu cầu theo `prompt-project-manager-plan.md` (prompt gốc) và [KE_HO
 | 4.3 Chuyển giai đoạn theo điều kiện: Tự động / Cần duyệt / Thủ công; lớp ngành thêm điều kiện | M7 | `services/phases.py`, hook `pm_gate_checks`, `Project.pm_current_phase`, ô giai đoạn ở Tổng quan | `test_alerts.TestPhases`, `pm_construction.tests.test_alerts.TestPhaseByAcceptance`, `pilot_flow.mjs` |
 | 4.6 Dashboard nhiều dự án v1 | M7 | `services/portfolio.py`, `PortfolioPage.vue` | `test_alerts.TestScreens.test_portfolio`, vitest `alerts.test.js`, `pilot_flow.mjs` |
 | 4.3 Lớp thi công: cảnh báo thiếu nhật ký; giai đoạn qua khi mọi công tác đã nghiệm thu đủ | M7 | hook `pm_alert_types`, `pm_alert_rules`, `pm_gate_checks` của `pm_construction` | `pm_construction.tests.test_alerts`, `pilot_flow.mjs` |
+| 4.5 Kho công trường theo dự án | M8 | Warehouse `pm_project`, `materials.create_store` | `test_materials.TestPlanAndStore` |
+| 4.5 Đề xuất vật tư theo công tác (cả khi mất mạng) | M8 | Material Request + `pmc_task`, `materials.request`, hàng đợi `material-request` | `test_materials.TestFlow`, vitest `site.layer.test.js`, `site_flow.mjs` |
+| 4.5 Nhập kho, cấp phát theo công tác, hoàn trả, hao hụt, điều chuyển | M8 | Stock Entry + `pmc_kind`, `pmc_task`; `materials.receive/issue/give_back/write_off/transfer` | `test_materials.TestFlow`, `site_flow.mjs` |
+| 4.5 Định mức vật tư, so định mức với thực tế, cảnh báo vượt định mức | M8 | PMC Material Norm, PMC Material Plan, `materials.usage`, loại cảnh báo "Vượt định mức vật tư" | `test_materials.TestNorm`, `site_flow.mjs` |
+| D16 Máy: sở hữu gắn Asset (điều chuyển tạo Asset Movement), máy thuê; ca máy; bảo dưỡng | M8 | PMC Machine (+Transfer, Shift), `services/machines.py` | `test_machines_labour.TestMachines`, `site_flow.mjs` |
+| 4.5 Tổ đội, công nhân, chấm công theo công tác | M8 | PMC Worker, PMC Crew Attendance, `services/labour.py` | `test_machines_labour.TestLabour`, `site_flow.mjs` |
+| 4.5 Chi phí thực tế so với dự toán | M8 | Task `pmc_*_cost`, `services/costs.py`, tab Chi phí | `test_machines_labour.TestCosts`, `test_materials`, `site_flow.mjs` |
+| 5.x Phân quyền theo dự án trên kho và mua hàng của ERPNext | M8 | `permissions.stock_query`, `has_stock_permission`, `constants.STOCK_SCOPED` | `test_stock_scope` |
+

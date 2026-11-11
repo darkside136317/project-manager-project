@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "machine",
+  "from_project",
+  "project",
+  "transfer_date",
+  "asset_movement",
+  "moved_by",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "machine",
+   "fieldtype": "Link",
+   "label": "Máy",
+   "options": "PMC Machine",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "from_project",
+   "fieldtype": "Link",
+   "label": "Từ dự án",
+   "options": "Project",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Đến dự án (trống: về công ty)",
+   "options": "Project",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "transfer_date",
+   "fieldtype": "Date",
+   "label": "Ngày điều chuyển",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "asset_movement",
+   "fieldtype": "Link",
+   "label": "Phiếu điều chuyển tài sản",
+   "options": "Asset Movement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "moved_by",
+   "fieldtype": "Link",
+   "label": "Người điều chuyển",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Construction",
+ "name": "PMC Machine Transfer",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

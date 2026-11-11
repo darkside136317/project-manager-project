@@ -14,7 +14,8 @@ import { boqRows, diaryRows, moneyText, percentText, qtyText, share, today } fro
 describe("construction module", () => {
   it("adds its tabs and its kind of queued item", () => {
     expect(module.name).toBe("construction");
-    expect(module.projectTabs.map((tab) => [tab.slug, tab.after])).toEqual([["boq", "cong-viec"], ["nhat-ky", "trao-doi"], ["nghiem-thu", "tai-lieu"]]);
+    expect(module.projectTabs.map((tab) => [tab.slug, tab.after])).toEqual([["boq", "cong-viec"], ["nhat-ky", "trao-doi"],
+      ["vat-tu", "nhat-ky"], ["may", "vat-tu"], ["cham-cong", "may"], ["nghiem-thu", "tai-lieu"], ["chi-phi", "nghiem-thu"]]);
     expect(KINDS.diary.label).toBe("Nhật ký thi công");
     expect(KINDS.diary.summary({ payload: { rows: [{}, {}] }, photos: [{}] })).toBe("2 công tác · 1 ảnh");
   });

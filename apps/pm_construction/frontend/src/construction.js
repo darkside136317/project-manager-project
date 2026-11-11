@@ -85,3 +85,91 @@ export function today(date = new Date()) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
+
+// --- materials, machines, labour, costs (M8) --------------------------------------------------------------------------
+const S = "pm_construction.pm_construction.api.site";
+
+// What the store keeper does, the method of each and what its rows need.
+export const STOCK_ACTIONS = {
+  receive: { label: "Nhập kho", method: "stock_receive", task: false, rate: true, icon: "download" },
+  issue: { label: "Cấp phát", method: "stock_issue", task: true, icon: "send" },
+  return: { label: "Hoàn trả", method: "stock_return", task: true, icon: "undo" },
+  write_off: { label: "Hao hụt", method: "stock_write_off", task: false, note: true, icon: "trash-2" },
+  transfer: { label: "Điều chuyển", method: "stock_transfer", task: false, target: true, icon: "arrow-left-right" },
+};
+
+export const site = {
+  materials: (project) => call(`${S}.materials_overview`, { project }),
+  createStore: (project) => call(`${S}.create_store`, { project }, { post: true }),
+  recomputePlan: (project) => call(`${S}.recompute_plan`, { project }, { post: true }),
+  request: (project, rows, note = "", neededBy = null, clientUuid = null) =>
+    call(`${S}.material_request`, { project, rows, note, needed_by: neededBy, client_uuid: clientUuid }, { post: true }),
+  stopRequest: (name, note = "") => call(`${S}.stop_request`, { name, note }, { post: true }),
+  stock: (action, project, rows, values = {}) =>
+    call(`${S}.${STOCK_ACTIONS[action].method}`, { project, rows, ...values }, { post: true }),
+  machines: (project) => call(`${S}.machines_overview`, { project }),
+  moveMachine: (machine, toProject = null, transferDate = null, note = "") =>
+    call(`${S}.machine_transfer`, { machine, to_project: toProject, transfer_date: transferDate, note }, { post: true }),
+  shift: (values, clientUuid = null) => call(`${S}.machine_shift`, { ...values, client_uuid: clientUuid }, { post: true }),
+  deleteShift: (name) => call(`${S}.delete_shift`, { name }, { post: true }),
+  labour: (project) => call(`${S}.labour_overview`, { project }),
+  sheet: (project, team, day) => call(`${S}.attendance_sheet`, { project, team, day }),
+  attendanceSave: (project, team, day, lines, note = "") => call(`${S}.attendance_save`, { project, team, day, lines, note }, { post: true }),
+  attendanceRecord: (project, team, day, lines, note = "", clientUuid = null) =>
+    call(`${S}.attendance_record`, { project, team, day, lines, note, client_uuid: clientUuid }, { post: true }),
+  attendanceConfirm: (name) => call(`${S}.attendance_confirm`, { name }, { post: true }),
+  attendanceSendBack: (name, note) => call(`${S}.attendance_send_back`, { name, note }, { post: true }),
+  costs: (project) => call(`${S}.cost_summary`, { project }),
+};
+
+const number = (value) => Number(String(value ?? "").replace(",", "."));
+
+/** Rows of a stock or request form as typed: empty lines dropped, numbers read with a decimal comma. */
+export function materialRows(lines, { task = false, rate = false } = {}) {
+  const rows = [];
+  const errors = [];
+  for (const line of lines) {
+    if (!line.item && !line.qty) continue;
+    const qty = number(line.qty);
+    if (!line.item) errors.push("Chọn vật tư cho mỗi dòng có số lượng");
+    else if (!(qty > 0)) errors.push(`${line.item_name || line.item}: số lượng phải lớn hơn 0`);
+    else if (task && !line.task) errors.push(`${line.item_name || line.item}: chọn công tác`);
+    else if (rate && !(number(line.rate) > 0)) errors.push(`${line.item_name || line.item}: nhập đơn giá`);
+    else {
+      const row = { item: line.item, qty, task: line.task || null };
+      if (rate) row.rate = number(line.rate);
+      if (line.material_request_item) row.material_request_item = line.material_request_item;
+      rows.push(row);
+    }
+  }
+  return { rows, errors: [...new Set(errors)] };
+}
+
+/** Usage rows grouped by work item, in tree order; a work item is over the norm when one of its materials is. */
+export function byWork(rows) {
+  const groups = new Map();
+  for (const row of rows) {
+    if (!groups.has(row.task)) groups.set(row.task, { task: row.task, label: row.task_label, path: row.path, rows: [], over: false, ahead: false });
+    const group = groups.get(row.task);
+    group.rows.push(row);
+    group.over = group.over || row.over_norm;
+    group.ahead = group.ahead || Boolean(row.ahead);
+  }
+  return [...groups.values()];
+}
+
+/** Lines of an attendance sheet as typed: workers with no man-days dropped. Returns { lines, errors, total }. */
+export function attendanceLines(lines) {
+  const out = [];
+  const errors = [];
+  for (const line of lines) {
+    const days = number(line.man_days);
+    if (!(days > 0)) continue;
+    if (days > 2) errors.push(`${line.worker_name}: số công tối đa 2`);
+    else out.push({ worker: line.worker, task: line.task || null, man_days: days, overtime_hours: number(line.overtime_hours) || 0, note: (line.note || "").trim() });
+  }
+  return { lines: out, errors, total: out.reduce((sum, line) => sum + line.man_days, 0) };
+}
+
+export const SHEET_TONE = { "Nháp": "badge-muted", "Đã nộp": "badge-warning", "Đã xác nhận": "badge-success" };
+export const REQUEST_STATUS = { Pending: "Chờ cấp", "Partially Ordered": "Cấp một phần", Issued: "Đã cấp", Stopped: "Đã dừng", Ordered: "Đã cấp" };

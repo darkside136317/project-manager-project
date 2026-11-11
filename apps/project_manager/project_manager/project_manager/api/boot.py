@@ -4,7 +4,7 @@ import frappe
 
 from project_manager import __version__
 from project_manager.project_manager import extensions
-from project_manager.project_manager.constants import ADMIN_SCREENS, MASTERS, SPA_HOME
+from project_manager.project_manager.constants import ADMIN_SCREENS, SPA_HOME
 from project_manager.project_manager.policy import capabilities_of, get_access, has_capability, is_admin, is_staff
 
 GROUP_OVERVIEW = "Tổng quan"
@@ -62,7 +62,7 @@ def build_boot() -> dict:
                {"label": "Dự án", "route": f"{SPA_HOME}/du-an", "icon": "folder-kanban"}]}]
     if has_capability("forms.manage"):
         nav[-1]["items"].append({"label": "Mẫu biểu mẫu", "route": f"{SPA_HOME}/bieu-mau-mau", "icon": "clipboard-list"})
-    masters = [m for m in MASTERS if _can_read(m["doctype"])]
+    masters = [m for m in extensions.masters() if _can_read(m["doctype"])]
     if masters:
         nav.append({"group": GROUP_CATALOGUES, "items": [
             {"label": m["label"], "route": f"{SPA_HOME}/danh-muc/{m['slug']}", "icon": m["icon"]} for m in masters]})

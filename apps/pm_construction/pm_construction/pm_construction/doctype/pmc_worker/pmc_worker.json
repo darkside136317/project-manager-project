@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "autoname": "CN-.#####",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "full_name",
+  "team",
+  "trade",
+  "daily_rate",
+  "is_active",
+  "column_contact",
+  "phone",
+  "birth_year",
+  "id_number",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Họ tên",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "team",
+   "fieldtype": "Link",
+   "label": "Tổ đội",
+   "options": "PM Team",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "trade",
+   "fieldtype": "Data",
+   "label": "Nghề",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "daily_rate",
+   "fieldtype": "Currency",
+   "label": "Đơn giá một công",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Đang làm",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_contact",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Điện thoại"
+  },
+  {
+   "fieldname": "birth_year",
+   "fieldtype": "Int",
+   "label": "Năm sinh"
+  },
+  {
+   "fieldname": "id_number",
+   "fieldtype": "Data",
+   "label": "Số CCCD",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Construction",
+ "name": "PMC Worker",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  },
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "permlevel": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "full_name,team,trade",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "full_name"
+}

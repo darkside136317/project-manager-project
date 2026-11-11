@@ -17,6 +17,8 @@ def after_migrate():
 
 def seed_all():
     create_custom_fields({"Task": K.TASK_FIELDS}, ignore_validate=True, update=True)
+    create_custom_fields(K.STOCK_FIELDS, ignore_validate=True, update=True)
+    ensure_stock_masters()
     frappe.db.add_index("Task", ["project", "pmc_boq_key"])
     for values in K.NODE_TYPES:
         if not frappe.db.exists("PM Node Type", values["node_type"]):
@@ -25,6 +27,29 @@ def seed_all():
     from project_manager.project_manager.setup import install as core
 
     core.ensure_alert_rules()  # this layer's alert type and rule (installed after the core)
+
+
+def ensure_stock_masters():
+    """The item group of construction materials and the units of the norms (m3, tấn, viên...). On a new site the
+    layer is installed before ERPNext's setup wizard has made the root item group: the group comes at the migrate
+    that follows the wizard. The root is found by its place in the tree, its name follows the site's language."""
+    root = root_item_group()
+    if not frappe.db.exists("Item Group", K.ITEM_GROUP) and root:
+        frappe.get_doc({"doctype": "Item Group", "item_group_name": K.ITEM_GROUP, "parent_item_group": root,
+                        "is_group": 0}).insert(ignore_permissions=True)
+    for uom, whole in K.UOMS:
+        if not frappe.db.exists("UOM", uom):
+            frappe.get_doc({"doctype": "UOM", "uom_name": uom, "must_be_whole_number": whole}).insert(ignore_permissions=True)
+
+
+def root_item_group() -> str | None:
+    """The top of the item group tree ("All Item Groups" in English, translated on a Vietnamese site)."""
+    return frappe.db.get_value("Item Group", {"is_group": 1, "parent_item_group": ["is", "not set"]}, "name")
+
+
+def masters() -> list[dict]:
+    """Core hook pm_masters."""
+    return [dict(entry) for entry in K.MASTERS]
 
 
 def alert_rules() -> list[dict]:

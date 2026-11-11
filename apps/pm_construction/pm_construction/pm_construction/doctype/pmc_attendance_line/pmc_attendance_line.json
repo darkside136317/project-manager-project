@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "worker",
+  "worker_name",
+  "task",
+  "man_days",
+  "overtime_hours",
+  "rate",
+  "amount",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "worker",
+   "fieldtype": "Link",
+   "label": "Công nhân",
+   "options": "PMC Worker",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "worker_name",
+   "fieldtype": "Data",
+   "label": "Họ tên",
+   "fetch_from": "worker.full_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Công tác",
+   "options": "Task",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "man_days",
+   "fieldtype": "Float",
+   "label": "Số công",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "overtime_hours",
+   "fieldtype": "Float",
+   "label": "Giờ tăng ca"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Float",
+   "label": "Đơn giá công",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "label": "Thành tiền",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "label": "Ghi chú"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Construction",
+ "name": "PMC Attendance Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

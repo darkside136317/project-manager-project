@@ -35,6 +35,7 @@ CAPABILITIES = (
     ("forms.manage", "Thiết kế mẫu biểu mẫu", "Biểu mẫu"),
     ("perf.view_all", "Xem hiệu suất của mọi người", "Hiệu suất"),
     ("finance.view_all", "Xem chi phí, ngân sách của mọi dự án", "Tài chính"),
+    ("stock.cross_project", "Xem, ghi kho và mua hàng của mọi dự án (kho tổng)", "Kho"),
     ("logs.view", "Xem, tìm và tải nhật ký hệ thống", "Quản trị"),
     ("logs.purge", "Dọn dẹp nhật ký hệ thống", "Quản trị"),
     ("monitor.view", "Giám sát hệ thống", "Quản trị"),
@@ -58,10 +59,12 @@ PROJECT_CAPABILITIES = (
     ("task.approve", "Duyệt, nghiệm thu công việc"),
     ("perf.view_project", "Xem hiệu suất trong dự án"),
     ("finance.view", "Xem chi phí của dự án"),
+    ("material.request", "Đề xuất vật tư"),
+    ("stock.manage", "Nhập, xuất, chuyển kho của dự án"),
 )
 PROJECT_CAPABILITY_CODES = frozenset(code for code, _label in PROJECT_CAPABILITIES)
 WRITE_PROJECT_CAPABILITIES = frozenset({"project.edit", "project.members", "plan.edit", "task.assign", "task.update",
-                                        "task.approve"})
+                                        "task.approve", "material.request", "stock.manage"})
 
 VISIBILITY_ALL, VISIBILITY_ASSIGNED = "Tất cả công việc", "Chỉ việc được giao"
 
@@ -69,13 +72,16 @@ VISIBILITY_ALL, VISIBILITY_ASSIGNED = "Tất cả công việc", "Chỉ việc �
 DEFAULT_PROJECT_ROLES = (
     {"role_name": "Quản lý dự án", "task_visibility": VISIBILITY_ALL,
      "capabilities": ("project.edit", "project.members", "plan.edit", "task.assign", "task.update", "task.approve",
-                      "perf.view_project", "finance.view")},
+                      "perf.view_project", "finance.view", "material.request", "stock.manage")},
     {"role_name": "Chỉ huy trưởng", "task_visibility": VISIBILITY_ALL,
-     "capabilities": ("plan.edit", "task.assign", "task.update", "task.approve", "perf.view_project")},
-    {"role_name": "Kỹ sư", "task_visibility": VISIBILITY_ALL, "capabilities": ("task.update",)},
+     "capabilities": ("plan.edit", "task.assign", "task.update", "task.approve", "perf.view_project", "material.request",
+                      "stock.manage")},
+    {"role_name": "Kỹ sư", "task_visibility": VISIBILITY_ALL, "capabilities": ("task.update", "material.request")},
     {"role_name": "Tổ trưởng", "task_visibility": VISIBILITY_ASSIGNED, "capabilities": ("task.update",)},
-    {"role_name": "Thủ kho", "task_visibility": VISIBILITY_ALL, "capabilities": ()},
-    {"role_name": "Kế toán dự án", "task_visibility": VISIBILITY_ALL, "capabilities": ("finance.view",)},
+    {"role_name": "Thủ kho", "task_visibility": VISIBILITY_ALL, "capabilities": ("stock.manage", "material.request"),
+     "required_roles": ("Stock User",)},
+    {"role_name": "Kế toán dự án", "task_visibility": VISIBILITY_ALL, "capabilities": ("finance.view",),
+     "required_roles": ("Accounts User", "Purchase User")},
     {"role_name": "Khách", "task_visibility": VISIBILITY_ASSIGNED, "capabilities": ()},
 )
 
@@ -130,6 +136,12 @@ ROLE_MATRIX = (
 PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot",
                   "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline", "PM Baseline Task",
                   "PM Baseline Curve", "PM Media", "PM Follow", "PM Document", "PM Document Version", "PM Alert")
+# ERPNext's stock and buying documents, narrowed to the projects of the app's staff (permissions.stock_query).
+# {DocType: the column naming its project}. People outside the app keep ERPNext's own permissions.
+STOCK_SCOPED = {"Warehouse": "pm_project", "Location": "pm_project", "Material Request": "pm_project",
+                "Stock Entry": "project", "Asset Movement": "pm_project", "Purchase Order": "project",
+                "Purchase Receipt": "project", "Purchase Invoice": "project"}
+BUYING_SCOPED = ("Purchase Order", "Purchase Receipt", "Purchase Invoice")  # finance.view_all reads them all
 TASK_SCOPED = ("Task", "PM Task Assignment", "PM Progress Entry", "PM Form Submission", "PM Gate Requirement",
                "PM Task Dependency", "PM Baseline Task")
 

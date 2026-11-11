@@ -26,7 +26,10 @@ pm_discussion_targets = {"PMC Site Diary": _K + "services.diary.target"}
 pm_form_packs = [_K + "setup.form_pack.acceptance_forms"]
 pm_form_events = {"approved": [_K + "services.acceptance.on_form_approved"]}
 pm_spa_modules = ["construction"]
-pm_alert_types = {"Thiếu nhật ký thi công": _K + "services.alerts.missing_diary"}
+pm_alert_types = {"Thiếu nhật ký thi công": _K + "services.alerts.missing_diary",
+                  "Vượt định mức vật tư": _K + "services.materials.over_norm",
+                  "Máy đến hạn bảo dưỡng": _K + "services.machines.maintenance_due"}
+pm_masters = [_K + "setup.install.masters"]
 pm_alert_rules = [_K + "setup.install.alert_rules"]
 pm_gate_checks = [_K + "services.acceptance.gate_check"]
 
@@ -37,13 +40,25 @@ permission_query_conditions = {
     "PMC BOQ Item": _P + "boq_item_query",
     "PMC Site Diary": _P + "diary_query",
     "PMC Diary Quantity": _P + "diary_quantity_query",
+    "PMC Material Plan": _P + "material_plan_query",
+    "PMC Machine Transfer": _P + "machine_transfer_query",
+    "PMC Machine Shift": _P + "machine_shift_query",
+    "PMC Crew Attendance": _P + "attendance_query",
 }
 has_permission = {
     "PMC BOQ": _P + "has_boq_permission",
     "PMC BOQ Item": _P + "has_boq_item_permission",
     "PMC Site Diary": _P + "has_diary_permission",
     "PMC Diary Quantity": _P + "has_diary_quantity_permission",
+    "PMC Material Plan": _P + "has_material_plan_permission",
+    "PMC Machine Transfer": _P + "has_machine_transfer_permission",
+    "PMC Machine Shift": _P + "has_machine_shift_permission",
+    "PMC Crew Attendance": _P + "has_attendance_permission",
 }
 
 # a work item with quantities in a diary keeps its history: it is cancelled, never deleted
-doc_events = {"Task": {"on_trash": _K + "services.quantities.guard_task_delete"}}
+doc_events = {
+    "Task": {"on_trash": _K + "services.quantities.guard_task_delete"},
+    # the cost of the work items follows the stock entries made on them (desk ones included)
+    "Stock Entry": {"on_submit": _K + "services.costs.on_stock_entry", "on_cancel": _K + "services.costs.on_stock_entry"},
+}

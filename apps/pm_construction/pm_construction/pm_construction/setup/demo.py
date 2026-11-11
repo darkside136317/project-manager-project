@@ -34,6 +34,8 @@ from project_manager.project_manager.services import (
 )
 from project_manager.project_manager.setup import demo as core_demo
 
+from pm_construction.pm_construction.setup import demo_site
+
 PROJECT_CODE = "DEMO-XD01"
 # planned window of each work item, in days from today, in the order of the BOQ (pm_path)
 WINDOWS = [(-18, -15), (-14, -13), (-13, -10), (-11, -9), (-9, -7),  # PHẦN MÓNG
@@ -58,6 +60,7 @@ def up():
                                "expected_end_date": add_days(today, WINDOWS[-1][1]), "pm_manager": manager})["name"]
     for email, _name, role in core_demo.PEOPLE[1:]:
         projects.add_member(project, email, role)
+    demo_site.masters()  # materials and norms first: approving the BOQ builds the material plan from them
     frappe.set_user(manager)
     version = boq.import_version(project, boq_import.template_file(), "du-toan-nha-xuong.xlsx", "Dự toán được duyệt")
     boq.approve(version.name)
@@ -79,6 +82,8 @@ def up():
             frappe.db.set_value("Task", group, "pm_gate_mode", mode, update_modified=False)
     _diaries(project, works, today, engineer, commander)
     _acceptances(project, works[:FOUNDATION], engineer, commander)
+    demo_site.build(project, works, today, {"manager": manager, "commander": commander, "engineer": engineer,
+                                            "lead": lead}, WINDOWS)
     rollup.reconcile(project)
     schedule.refresh(project)
     phases.check(project)
@@ -180,7 +185,10 @@ def _alerts(columns) -> None:
 
 def down():
     frappe.set_user("Administrator")
-    for project in frappe.get_all("Project", filters={"pm_code": PROJECT_CODE}, pluck="name"):
+    found = frappe.get_all("Project", filters={"pm_code": PROJECT_CODE}, pluck="name")
+    for project in found or [None]:
+        demo_site.remove(project)  # stock, machines, crews (and the demo's own masters)
+    for project in found:
         photos = frappe.get_all("PM Media", filters={"project": project}, fields=["object_key", "thumb_key"])
         files = frappe.get_all("PM Document Version", filters={"project": project}, pluck="object_key")
         if object_storage.configured():

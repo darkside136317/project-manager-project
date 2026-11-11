@@ -98,6 +98,34 @@ Nhật ký có đến hôm kia; hôm qua chưa có.
 
 Kịch bản trình duyệt `scripts/e2e/ui/pilot_flow.mjs` chạy đúng các bước trên và chụp ảnh từng bước vào `scripts/e2e/ui/out/pilot/`.
 
+### Vật tư, máy, chấm công (khoảng 10 phút)
+
+Cũng trên nhà xưởng. Thủ kho mẫu là `demo.thukho@pm.localhost` (Đỗ Thủ Kho).
+
+1. **Tab "Vật tư"** (thủ kho hoặc quản lý dự án):
+   - kho công trường "Kho DEMO-XD01" có tồn kho, phiếu nhập và các phiếu cấp phát cho phần móng;
+   - bảng "định mức so với thực tế" theo từng công tác có các cột: kế hoạch, đã cấp, trả lại, đã dùng, định mức của khối lượng đã làm, chênh lệch;
+   - xi măng của bê tông móng đỏ và có cảnh báo "Vượt định mức vật tư": móng đã xong, đã dùng 14.450 kg trong khi định mức của khối lượng đã làm là 13.610 kg;
+   - công tác chưa xong mà đã nhận nhiều hơn phần khối lượng đã làm cần thì có nhãn vàng "Cấp trước khối lượng" (vật tư đang chờ ở mặt bằng), không có cảnh báo.
+2. **Kỹ sư, trên điện thoại** (tab Vật tư → "Đề xuất vật tư"):
+   - chọn vật tư, công tác, số lượng rồi gửi;
+   - tắt mạng vẫn gửi được: đề xuất nằm ở hàng đợi và tự gửi khi có mạng.
+3. **Thủ kho cấp phát:**
+   - ở mục "Đề xuất chờ cấp phát", bấm "Cấp phát" (các dòng đã điền sẵn) rồi xác nhận;
+   - đề xuất chuyển sang đã cấp, số đã dùng và chênh lệch của công tác đổi ngay;
+   - thiếu hàng thì báo "Không đủ tồn kho".
+4. **Tab "Máy":**
+   - máy đào (là tài sản trong ERPNext, đang ở công trường, sắp đến hạn bảo dưỡng), máy trộn, cần trục thuê;
+   - kỹ sư ghi ca máy cho công tác trên điện thoại; nhiên liệu được so với định mức lít/ca.
+5. **Tab "Chấm công":**
+   - tổ trưởng chấm công tổ mình theo ngày, mỗi người một công tác;
+   - chỉ huy trưởng xác nhận bảng đang chờ hoặc trả lại.
+6. **Tab "Chi phí"** (quản lý dự án, kế toán dự án):
+   - mỗi hạng mục, công tác có giá trị dự toán, giá trị đã thi công, chi phí vật tư, máy, nhân công, tổng thực tế và chênh lệch;
+   - kỹ sư và tổ trưởng không xem được chi phí.
+
+Kịch bản `scripts/e2e/ui/site_flow.mjs` chạy các bước 2, 3, 4 (ghi ca), 5 (xác nhận) và 6.
+
 **Dựng lại dữ liệu mẫu nhà xưởng** sau khi demo (trong `docker/`):
 
 ```bash
@@ -127,8 +155,18 @@ docker compose exec backend bench --site pm.localhost execute pm_construction.pm
    - mặc định là Thủ công: quản lý dự án bấm chuyển khi sẵn sàng;
    - Tự động: chuyển ngay khi việc xong và mọi công tác đã nghiệm thu đủ; đổi sang Tự động lúc giai đoạn đã đủ điều kiện thì nó chuyển luôn;
    - Cần duyệt: đủ điều kiện thì quản lý dự án được báo và bấm "Duyệt chuyển giai đoạn".
-8. **Hằng ngày:**
+8. **Vật tư:**
+   - thêm thủ kho vào dự án với vai trò "Thủ kho" (được gán vai trò Stock User của ERPNext); bấm "Lập kho công trường" ở tab Vật tư;
+   - vật tư (Item) tạo trong Desk của ERPNext, nhóm "Vật tư xây dựng";
+   - định mức ở Danh mục → Định mức vật tư: mỗi mã hiệu của BOQ một định mức, gồm vật tư, hao phí cho một đơn vị và % hao hụt;
+   - bấm "Tính lại kế hoạch" ở tab Vật tư sau khi nhập hoặc sửa định mức (duyệt BOQ cũng tự tính);
+   - hàng về: thủ kho "Nhập kho" kèm đơn giá, hoặc phòng mua hàng lập PO, PR trong Desk về kho công trường.
+9. **Máy và tổ đội:**
+   - máy ở Danh mục → Máy thi công: máy sở hữu chọn tài sản ERPNext tương ứng, máy thuê chọn đơn vị cho thuê; đơn giá ca, định mức nhiên liệu;
+   - tổ đội ở Danh mục → Đội, tổ (loại "Tổ đội", tổ trưởng); công nhân ở Danh mục → Công nhân (tổ, nghề, đơn giá công).
+10. **Hằng ngày:**
    - kỹ sư ghi nhật ký kèm khối lượng (được cả khi mất mạng); chỉ huy trưởng xác nhận;
+   - kỹ sư đề xuất vật tư, ghi ca máy; tổ trưởng chấm công; thủ kho cấp phát; chỉ huy trưởng xác nhận chấm công;
    - khi công tác xong, lập biên bản nghiệm thu công việc, rồi duyệt.
 
 ## 4. Quan sát và thu thập trong thí điểm
@@ -141,12 +179,15 @@ docker compose exec backend bench --site pm.localhost execute pm_construction.pm
 | Nhật ký có được ghi đều không? | Cảnh báo "Thiếu nhật ký thi công"; tab Nhật ký |
 | Người ở công trường có dùng được trên điện thoại không? | Hàng đợi gửi (khi mất mạng); góp ý trực tiếp |
 | Chuyển giai đoạn có đúng quy trình không? | Ô giai đoạn ở Tổng quan; Hoạt động gần đây |
+| Định mức có sát thực tế không? Hao hụt thật là bao nhiêu? | Tab Vật tư: chênh lệch theo công tác; cảnh báo "Vượt định mức vật tư" |
+| Chi phí thực tế có khớp sổ kế toán không? | Tab Chi phí so với báo cáo của ERPNext (theo dự án) |
 
 Ghi lại mỗi tuần: số cảnh báo theo loại, số cảnh báo được xác nhận, số cảnh báo phải leo thang, những cảnh báo người dùng thấy thừa.
 
 ## 5. Giới hạn hiện tại (sẽ làm ở các phase sau)
 
-- **Vật tư, máy, nhân công theo tổ** chưa có (M8). Nhật ký mới ghi số nhân công tổng.
+- **Mua hàng** (PO, PR, hóa đơn) làm trong Desk của ERPNext; chưa có màn hình riêng. Danh mục vật tư (Item) cũng tạo trong Desk.
+- **Giờ tăng ca** được ghi trong chấm công nhưng chưa tính tiền.
 - **Hiệu suất nhân sự, workload, xung đột nguồn lực** chưa có (M9). Danh mục dự án là bản v1: sức khỏe, tiến độ, cảnh báo.
 - **Báo cáo xuất theo lịch, ngân sách, rủi ro, phát sinh** chưa có (M10).
 - **Kênh nhận:** cảnh báo chỉ đi qua thông báo trong ứng dụng và email; chưa có Zalo, SMS.

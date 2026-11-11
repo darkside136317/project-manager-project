@@ -4,6 +4,7 @@ The core is industry neutral: it never imports an industry layer such as pm_cons
 Layers extend it through their own hooks (the `pm_extensions` contract).
 """
 
+from project_manager.project_manager.constants import STOCK_SCOPED
 from project_manager.project_manager.services.audit import AUDITED_DOCTYPES
 
 app_name = "project_manager"
@@ -59,6 +60,7 @@ permission_query_conditions = {
     "PM Document Version": _P + "document_version_query",
     "PM Alert": _P + "alert_query",
     "PM Notification Preference": _P + "preference_query",
+    **{doctype: _P + "stock_query" for doctype in STOCK_SCOPED},
 }
 has_permission = {
     "Project": _P + "has_project_permission",
@@ -80,6 +82,7 @@ has_permission = {
     "PM Document Version": _P + "has_document_version_permission",
     "PM Alert": _P + "has_alert_permission",
     "PM Notification Preference": _P + "has_preference_permission",
+    **{doctype: _P + "has_stock_permission" for doctype in STOCK_SCOPED},
 }
 
 # =============================================================================
@@ -92,6 +95,7 @@ doc_events = {
     for doctype in AUDITED_DOCTYPES
 }
 doc_events["Task"] = {"on_update": "project_manager.project_manager.services.progress.record_activity"}
+doc_events["Material Request"] = {"validate": "project_manager.project_manager.services.stock.copy_project"}
 doc_events["Timesheet"] = {
     "before_submit": _TASK + "timesheet_started",
     "before_cancel": _TASK + "timesheet_started",

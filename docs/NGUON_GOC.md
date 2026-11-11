@@ -65,3 +65,7 @@ Không sao chép thêm từ `document_manager`. Lớp thi công (`apps/pm_constr
 ## M7
 
 Không sao chép thêm từ `document_manager`. Cảnh báo, sức khỏe, chuyển giai đoạn, tóm tắt, danh mục dự án (`services/alerts.py`, `risk.py`, `phases.py`, `digest.py`, `portfolio.py`) và các màn hình của chúng đều viết mới. Thông báo trong ứng dụng vẫn đi qua `services/notify.py` (sao chép từ M1).
+
+## M8
+
+Không sao chép thêm từ `document_manager`. Vật tư, máy, nhân công, chi phí (`pm_construction/services/materials.py`, `machines.py`, `labour.py`, `costs.py`) và phạm vi kho của lõi (`permissions.stock_query`) đều viết mới, trên các DocType kho, mua hàng, tài sản của ERPNext. Định mức và đơn giá của dữ liệu mẫu (`setup/demo_site.py`) là số minh họa, không lấy từ bộ định mức hay bảng giá nào.

@@ -65,6 +65,7 @@ def ensure_project_roles():
         frappe.get_doc({
             "doctype": "PM Project Role", "role_name": spec["role_name"], "task_visibility": spec["task_visibility"],
             "is_builtin": 1, "capabilities": [{"capability": code} for code in spec["capabilities"]],
+            "required_roles": [{"role": role} for role in spec.get("required_roles", ()) if frappe.db.exists("Role", role)],
         }).insert(ignore_permissions=True)
 
 
@@ -227,6 +228,22 @@ CUSTOM_FIELDS = {
 }
 
 
+# The project of a site store, a site location, a material request, an asset movement (STOCK_SCOPED). Stock Entry and
+# the buying documents have ERPNext's own `project`.
+STOCK_FIELDS = {
+    "Warehouse": [{"fieldname": "pm_project", "fieldtype": "Link", "options": "Project", "label": "Dự án (kho công trường)",
+                   "insert_after": "company"}],
+    "Location": [{"fieldname": "pm_project", "fieldtype": "Link", "options": "Project", "label": "Dự án",
+                  "insert_after": "location_name"}],
+    "Material Request": [{"fieldname": "pm_project", "fieldtype": "Link", "options": "Project", "label": "Dự án",
+                          "insert_after": "material_request_type", "in_standard_filter": 1},
+                         {"fieldname": "pm_client_uuid", "fieldtype": "Data", "label": "Mã gửi từ máy", "read_only": 1,
+                          "hidden": 1, "unique": 1, "no_copy": 1, "insert_after": "pm_project"}],
+    "Asset Movement": [{"fieldname": "pm_project", "fieldtype": "Link", "options": "Project", "label": "Dự án",
+                        "insert_after": "purpose"}],
+}
+
+
 def ensure_custom_fields():
     from project_manager.project_manager.services.projects import rollup_choices
 
@@ -234,6 +251,7 @@ def ensure_custom_fields():
         if field["fieldname"] == "pm_rollup_method":  # the core's methods and those of the installed layers
             field["options"] = "\n".join(rollup_choices())
     create_custom_fields(CUSTOM_FIELDS, ignore_validate=True, update=True)
+    create_custom_fields(STOCK_FIELDS, ignore_validate=True, update=True)
     # Progress roll-up is the app's (incremental, M2): ERPNext's own recount on every task save stays off.
     make_property_setter("Project", "percent_complete_method", "default", "Manual", "Text", validate_fields_for_doctype=False)
 

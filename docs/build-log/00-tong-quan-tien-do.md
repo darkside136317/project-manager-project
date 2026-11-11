@@ -12,7 +12,7 @@ Kế hoạch: [../KE_HOACH.md](../KE_HOACH.md). Mỗi phase dừng lại để n
 | M5 | Trao đổi theo đầu việc, tài liệu, offline | ✅ Xong (63faf2b, CI xanh) | [06-m5-trao-doi-tai-lieu-offline.md](06-m5-trao-doi-tai-lieu-offline.md) |
 | M6 | Lớp thi công cơ bản | ✅ Xong (2c2f6e1 + sửa test 3d596f2, CI xanh) | [07-m6-lop-thi-cong.md](07-m6-lop-thi-cong.md) |
 | M7 | Cảnh báo, chuyển giai đoạn → **thí điểm** | ✅ Xong (100f54b, CI xanh) | [08-m7-canh-bao-giai-doan.md](08-m7-canh-bao-giai-doan.md) |
-| M8 | Vật tư, máy, nhân công | ⚪ Chưa bắt đầu | — |
+| M8 | Vật tư, máy, nhân công | 🟡 Xong, chờ CI | [09-m8-vat-tu-may-nhan-cong.md](09-m8-vat-tu-may-nhan-cong.md) |
 | M9 | Hiệu suất, workload | ⚪ Chưa bắt đầu | — |
 | M10 | Báo cáo, nhập/xuất, ngân sách, rủi ro | ⚪ Chưa bắt đầu | — |
 | M11 | Hardening, triển khai | ⚪ Chưa bắt đầu | — |

@@ -46,7 +46,7 @@ Tài khoản `Administrator`, mật khẩu là `ADMIN_PASSWORD` trong `docker/.e
 
 Chạy lại script bất cứ lúc nào: dữ liệu và mật khẩu được giữ nguyên, site được migrate. Muốn đổi tên công ty, viết tắt, năm tài chính… thì sửa `docker/.env` **trước** lần bootstrap đầu tiên.
 
-**Dữ liệu mẫu:** `cd docker && docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.setup.demo.up` (nhà phố: kế hoạch, giao việc, biểu mẫu, baseline, trao đổi), rồi `... execute pm_construction.pm_construction.setup.demo.up` (nhà xưởng: BOQ, nhật ký thi công, nghiệm thu, cảnh báo đã leo thang, giai đoạn móng chờ biên bản cuối). Kịch bản demo và cách đưa công trình thật vào: [docs/HUONG_DAN_THI_DIEM.md](docs/HUONG_DAN_THI_DIEM.md).
+**Dữ liệu mẫu:** `cd docker && docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.setup.demo.up` (nhà phố: kế hoạch, giao việc, biểu mẫu, baseline, trao đổi), rồi `... execute pm_construction.pm_construction.setup.demo.up` (nhà xưởng: BOQ, nhật ký thi công, nghiệm thu, cảnh báo đã leo thang, giai đoạn móng chờ biên bản cuối, kho công trường và vật tư theo định mức, máy, chấm công, chi phí). Kịch bản demo và cách đưa công trình thật vào: [docs/HUONG_DAN_THI_DIEM.md](docs/HUONG_DAN_THI_DIEM.md).
 
 **Cài lên điện thoại:** mở `/pm` bằng Chrome (Android) hoặc Safari (iPhone), chọn "Thêm vào màn hình chính". Khi mất mạng, ứng dụng vẫn mở được; trao đổi, ảnh và báo cáo tiến độ viết lúc đó nằm ở màn **Hàng đợi gửi** và tự gửi khi có mạng (iPhone: khi mở lại ứng dụng). Ngoài `localhost`, trình duyệt chỉ cho chạy offline khi trang được phục vụ qua HTTPS.
 

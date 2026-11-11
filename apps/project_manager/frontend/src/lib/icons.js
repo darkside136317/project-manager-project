@@ -10,7 +10,7 @@ import {
   Kanban, UserCheck, CalendarClock, Flag, ArrowUp, ArrowDown, Hourglass, ListChecks, Ellipsis, CornerDownRight, UserX,
   ThumbsUp, ThumbsDown, ChartLine, Camera,
   BellOff, EyeOff, CloudUpload, Image, Images, MapPin, WifiOff, Paperclip, FileUp, BadgeCheck, Sheet, NotebookPen,
-  CloudSun,
+  CloudSun, Truck, HardHat, Package, Coins,
 } from "lucide-vue-next";
 
 export const icons = {
@@ -125,6 +125,10 @@ export const icons = {
   sheet: Sheet,
   "notebook-pen": NotebookPen,
   "cloud-sun": CloudSun,
+  truck: Truck,
+  "hard-hat": HardHat,
+  package: Package,
+  coins: Coins,
 };
 
 export const iconFor = (name) => icons[name] || FileText;

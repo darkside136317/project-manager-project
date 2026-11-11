@@ -10,7 +10,7 @@ from frappe import _
 from frappe.model import no_value_fields
 from frappe.utils import cint
 
-from project_manager.project_manager.constants import REGISTRY
+from project_manager.project_manager.extensions import registry
 from project_manager.project_manager.policy import is_staff
 
 BREAKS = ("Section Break", "Column Break", "Tab Break")
@@ -36,7 +36,7 @@ def assert_staff() -> None:
 def assert_master(doctype: str) -> None:
     """Only registered DocTypes are reachable through the generic API, and only by the staff."""
     assert_staff()
-    if doctype not in REGISTRY:
+    if doctype not in registry():
         frappe.throw(_("Loại dữ liệu {0} không được quản lý ở màn hình này").format(doctype), frappe.PermissionError)
 
 
@@ -66,8 +66,9 @@ def title_field_of(meta) -> str:
 
 def link_targets() -> set:
     """DocTypes a Link field of a registered screen points to (what `api.crud.link_search` may search)."""
-    targets = set(REGISTRY)
-    for entry in REGISTRY.values():
+    screens = registry()
+    targets = set(screens)
+    for entry in screens.values():
         for df in frappe.get_meta(entry["doctype"]).fields:
             if df.fieldtype == "Link" and df.options:
                 targets.add(df.options)
@@ -111,7 +112,7 @@ def _layout(fields) -> list:
 
 def describe(doctype: str) -> dict:
     assert_master(doctype)
-    entry = REGISTRY[doctype]
+    entry = registry()[doctype]
     meta = frappe.get_meta(doctype)
     perms = permissions_of(doctype)
     if not perms["read"]:

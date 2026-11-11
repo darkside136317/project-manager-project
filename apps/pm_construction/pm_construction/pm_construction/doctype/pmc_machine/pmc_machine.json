@@ -1,0 +1,170 @@
+{
+ "actions": [],
+ "autoname": "field:machine_code",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "machine_code",
+  "machine_name",
+  "machine_type",
+  "ownership",
+  "asset",
+  "supplier",
+  "column_rate",
+  "shift_rate",
+  "fuel_norm",
+  "status",
+  "current_project",
+  "since",
+  "next_maintenance",
+  "maintenance_section",
+  "maintenance",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "machine_code",
+   "fieldtype": "Data",
+   "label": "Mã máy",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "machine_name",
+   "fieldtype": "Data",
+   "label": "Tên máy",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "machine_type",
+   "fieldtype": "Data",
+   "label": "Loại máy",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ownership",
+   "fieldtype": "Select",
+   "label": "Hình thức",
+   "options": "Sở hữu\nThuê",
+   "default": "Sở hữu",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "asset",
+   "fieldtype": "Link",
+   "label": "Tài sản (ERPNext)",
+   "options": "Asset",
+   "depends_on": "eval:doc.ownership=='Sở hữu'"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Đơn vị cho thuê",
+   "options": "Supplier",
+   "depends_on": "eval:doc.ownership=='Thuê'"
+  },
+  {
+   "fieldname": "column_rate",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shift_rate",
+   "fieldtype": "Currency",
+   "label": "Đơn giá ca máy",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "fuel_norm",
+   "fieldtype": "Float",
+   "label": "Định mức nhiên liệu (lít/ca)"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Tình trạng",
+   "options": "Sẵn sàng\nĐang dùng\nBảo dưỡng\nHỏng\nĐã trả",
+   "default": "Sẵn sàng",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "current_project",
+   "fieldtype": "Link",
+   "label": "Đang ở dự án",
+   "options": "Project",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "since",
+   "fieldtype": "Date",
+   "label": "Ở đó từ ngày",
+   "read_only": 1
+  },
+  {
+   "fieldname": "next_maintenance",
+   "fieldtype": "Date",
+   "label": "Bảo dưỡng tiếp theo"
+  },
+  {
+   "fieldname": "maintenance_section",
+   "fieldtype": "Section Break",
+   "label": "Bảo dưỡng, sửa chữa"
+  },
+  {
+   "fieldname": "maintenance",
+   "fieldtype": "Table",
+   "label": "Lịch sử bảo dưỡng",
+   "options": "PMC Machine Maintenance"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Construction",
+ "name": "PMC Machine",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "search_fields": "machine_name,machine_type",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "machine_name"
+}

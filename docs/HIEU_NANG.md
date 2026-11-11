@@ -131,3 +131,22 @@ Một người có hơn 3 cảnh báo mới trong cùng một lượt nhận m�
 
 Lịch chạy chỉ xếp lượt chạy vào hàng đợi `long` (giới hạn 1 giờ), vì nhiều dự án có thể làm lượt chạy dài hơn thời gian cho phép của một job theo lịch.
 
+## M8 — Vật tư trên BOQ 3.000 công tác (2026-11-11)
+
+`scripts/perf/materials_check.py` tạo dự án tạm với BOQ 100 hạng mục × 30 công tác. Mỗi mã hiệu có một định mức 3 vật tư, nên có 9.000 dòng kế hoạch vật tư. Script nhập kho, cấp phát cho 1.000 công tác (3.000 dòng, 31 phiếu), rồi đo các màn hình. Đo ở máy chủ, Docker Desktop trên Windows 11; script tự dọn dữ liệu.
+
+| Thao tác | Thời gian |
+|---|---|
+| Duyệt BOQ 3.000 công tác, gồm cả lập 9.000 dòng kế hoạch vật tư | 5,7–9,6 s |
+| Tính lại kế hoạch vật tư (9.000 dòng, chèn hàng loạt) | 2,4–3,9 s |
+| Một phiếu cấp phát 99 dòng | 3,9–4,0 s |
+| Tổng quan vật tư: định mức so với thực tế, 9.000 dòng | 0,55–0,88 s |
+| Tính lại chi phí cả dự án | 61–70 ms |
+| Bảng chi phí | 115–124 ms |
+| Quét cảnh báo vượt định mức (mọi dự án) | 0,51–0,62 s |
+
+Số đầu là lần chạy thứ nhất, số sau là lần thứ hai, khi máy đang bận hơn.
+
+Một phiếu cấp phát 99 dòng tốn gần hết thời gian ở ERPNext: lập và submit Stock Entry, ghi sổ kho, tính giá, ghi bút toán. Phần của hệ thống (kiểm từng dòng, tính lại chi phí) khoảng 0,3 s (đo bằng cProfile). Phiếu thực tế thường vài dòng, nên mất dưới 1 giây.
+
+Bảng định mức so với thực tế trả về mọi dòng của dự án. Với 9.000 dòng, trang tải chậm trên điện thoại. Cần lọc theo hạng mục hoặc chỉ hiện công tác đang làm (để sau).

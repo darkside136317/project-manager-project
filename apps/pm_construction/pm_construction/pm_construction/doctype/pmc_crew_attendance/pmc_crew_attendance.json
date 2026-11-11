@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "attendance_date",
+  "team",
+  "status",
+  "lines",
+  "total_man_days",
+  "total_amount",
+  "author",
+  "submitted_on",
+  "confirmed_by",
+  "confirmed_on",
+  "return_note",
+  "note",
+  "client_uuid"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "reqd": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "attendance_date",
+   "fieldtype": "Date",
+   "label": "Ngày",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "team",
+   "fieldtype": "Link",
+   "label": "Tổ đội",
+   "options": "PM Team",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Trạng thái",
+   "options": "Nháp\nĐã nộp\nĐã xác nhận",
+   "default": "Nháp",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Chấm công",
+   "options": "PMC Attendance Line",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_man_days",
+   "fieldtype": "Float",
+   "label": "Tổng số công",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Thành tiền",
+   "read_only": 1
+  },
+  {
+   "fieldname": "author",
+   "fieldtype": "Link",
+   "label": "Người chấm",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_on",
+   "fieldtype": "Datetime",
+   "label": "Nộp lúc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmed_by",
+   "fieldtype": "Link",
+   "label": "Người xác nhận",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmed_on",
+   "fieldtype": "Datetime",
+   "label": "Xác nhận lúc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_note",
+   "fieldtype": "Small Text",
+   "label": "Lý do trả lại",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú",
+   "read_only": 1
+  },
+  {
+   "fieldname": "client_uuid",
+   "fieldtype": "Data",
+   "label": "Mã gửi từ máy",
+   "read_only": 1,
+   "hidden": 1,
+   "unique": 1,
+   "no_copy": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Construction",
+ "name": "PMC Crew Attendance",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "attendance_date"
+}

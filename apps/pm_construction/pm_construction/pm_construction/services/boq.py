@@ -152,6 +152,9 @@ def approve(name: str) -> dict:
         doc.version_no, result["created"], result["updated"],
         _(", {0} dòng không còn trong BOQ").format(len(result["missing"])) if result["missing"] else ""),
         data={"boq": name, **{k: v for k, v in result.items() if k != "missing"}})
+    from pm_construction.pm_construction.services import materials
+
+    result["material_plan"] = materials.plan_from_norms(doc.project)  # the work items' materials by their norms
     return {**detail(name), "sync": result}
 
 

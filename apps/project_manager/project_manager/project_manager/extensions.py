@@ -15,6 +15,8 @@ Hooks a layer may declare (pm_construction's hooks.py is the example):
   (rule, today) and returns hits made with services.alerts._hit. The label becomes a choice of PM Alert Rule.rule_type.
 * `pm_alert_rules = ["dotted.path"]` — functions returning the layer's default rules (dicts like
   constants.DEFAULT_ALERT_RULES), created once (setup/install.ensure_alert_rules).
+* `pm_masters = ["dotted.path"]` — functions returning the layer's catalogues ([{"doctype", "slug", "label", "icon",
+  "list_fields"}], like constants.MASTERS), shown by the generic master screens (/pm/danh-muc/<slug>).
 * `pm_gate_checks = ["dotted.path"]` — conditions of passing a phase (M7, services/phases.py): the function gets the
   phase (a Task row) and returns the conditions still missing, as short sentences (empty: nothing missing).
 """
@@ -40,6 +42,28 @@ def form_event(event: str, submission) -> None:
     """Let the layers react to a form decision (in the same transaction)."""
     for path in (frappe.get_hooks("pm_form_events") or {}).get(event, []):
         frappe.get_attr(path)(submission)
+
+
+def masters() -> list[dict]:
+    """The layers' catalogues, after the core's (constants.MASTERS)."""
+    from project_manager.project_manager import constants as C
+
+    known = {entry["doctype"] for entry in C.MASTERS}
+    out = list(C.MASTERS)
+    for value in frappe.get_hooks("pm_masters") or []:
+        entries = frappe.get_attr(value)() if isinstance(value, str) else [value]  # a dotted path or the entry itself
+        for entry in entries:
+            if isinstance(entry, dict) and entry.get("doctype") not in known:
+                out.append(entry)
+                known.add(entry["doctype"])
+    return out
+
+
+def registry() -> dict:
+    """{DocType: entry} of every screen the generic API serves: the catalogues (core and layers) and administration."""
+    from project_manager.project_manager import constants as C
+
+    return {entry["doctype"]: entry for entry in [*masters(), *C.ADMIN_SCREENS]}
 
 
 def spa_modules() -> list[str]:

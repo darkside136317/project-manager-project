@@ -298,3 +298,58 @@ has_alert_permission = _read_only(lambda doc, ptype, user: _entry_scoped(doc, us
 has_preference_permission = _read_only(lambda doc, ptype, user: get_access(user).kind == "admin"
                                        or doc.user == (user or frappe.session.user))
 
+
+# --- ERPNext's stock and buying documents (M8) --------------------------------------------------------------------------------
+# A store keeper of project A works with A's site store, A's requests and stock entries, not B's. Moving stock between
+# two stores needs the right on both. Not narrowed: administrators, people outside the app (ERPNext's own role rules
+# apply), holders of stock.cross_project (and of finance.view_all for the buying documents).
+
+def _stock_free(user, doctype) -> bool:
+    from project_manager.project_manager import constants as C
+    from project_manager.project_manager.policy import is_staff
+
+    if not is_staff(user) or get_access(user).kind == "admin":
+        return True
+    codes = ("stock.cross_project", "finance.view_all") if doctype in C.BUYING_SCOPED else ("stock.cross_project",)
+    return has_capability(*codes, user=user)
+
+
+def stock_query(user, doctype=None):
+    from project_manager.project_manager import constants as C
+
+    user = user or frappe.session.user
+    if not doctype or doctype not in C.STOCK_SCOPED or _stock_free(user, doctype):
+        return ""
+    return project_sql(get_access(user).read, f"`tab{doctype}`.`{C.STOCK_SCOPED[doctype]}`")
+
+
+WAREHOUSE_FIELDS = ("from_warehouse", "to_warehouse", "set_warehouse", "set_from_warehouse", "s_warehouse", "t_warehouse",
+                    "warehouse", "rejected_warehouse")
+
+
+def stores_of(doc) -> set:
+    """Every warehouse a document moves stock in or out of (its header and its rows)."""
+    found = {doc.get(f) for f in WAREHOUSE_FIELDS}
+    for row in doc.get("items") or []:
+        found |= {row.get(f) for f in WAREHOUSE_FIELDS}
+    return {w for w in found if w}
+
+
+def has_stock_permission(doc, ptype="read", user=None):
+    from project_manager.project_manager import constants as C
+
+    user = user or frappe.session.user
+    if doc.doctype not in C.STOCK_SCOPED or _stock_free(user, doc.doctype):
+        return True
+    project = doc.get(C.STOCK_SCOPED[doc.doctype])
+    if ptype in READ_LIKE:
+        return bool(project) and project_in(get_access(user).read, project)
+    needed = ("material.request", "stock.manage") if doc.doctype == "Material Request" else ("stock.manage",)
+    projects = {project}
+    if doc.doctype != "Warehouse":
+        stores = stores_of(doc)
+        owners = dict(frappe.get_all("Warehouse", filters={"name": ["in", list(stores)]}, fields=["name", "pm_project"],
+                                     as_list=True)) if stores else {}
+        projects |= {owners.get(store) for store in stores}  # a store of no project (the main store) is not theirs
+    return all(p and has_project_capability(p, *needed, user=user) for p in projects)
+
