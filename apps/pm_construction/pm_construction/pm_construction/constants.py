@@ -18,7 +18,7 @@ QTY_ACCEPTANCE_CODE = "NT-CONGVIEC"
 QTY_FIELD = "khoi_luong_nghiem_thu"
 
 PROJECT_SCOPED = ("PMC BOQ", "PMC BOQ Item", "PMC Site Diary", "PMC Diary Quantity", "PMC Material Plan",
-                  "PMC Machine Transfer", "PMC Machine Shift", "PMC Crew Attendance")
+                  "PMC Machine Transfer", "PMC Machine Shift", "PMC Crew Attendance", "PMC Machine Booking")
 
 TASK_FIELDS = [
     {"fieldname": "pmc_section", "fieldtype": "Section Break", "label": "Khối lượng (thi công)", "insert_after": "pm_spi",

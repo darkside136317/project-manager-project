@@ -1,4 +1,4 @@
-// M8 screens of the construction layer: materials, machines, labour, costs.
+// M8 screens of the construction layer: materials, machines, labour, costs; M9: machine bookings.
 import { flushPromises, mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import { computed, ref } from "vue";
@@ -11,8 +11,9 @@ vi.mock("@pm/lib/api.js", async (importOriginal) => {
 import { call } from "@pm/lib/api.js";
 import { KINDS, SENDERS } from "@pm/lib/sync.js";
 import "../pm-module.js";
-import { attendanceLines, byWork, materialRows } from "../src/construction.js";
+import { attendanceLines, byWork, clashText, materialRows } from "../src/construction.js";
 import CostTab from "../src/CostTab.vue";
+import MachinesTab from "../src/MachinesTab.vue";
 import MaterialsTab from "../src/MaterialsTab.vue";
 
 const provide = () => ({ project: { name: computed(() => "P-1"), overview: ref({ can: {} }), openTask: vi.fn(), version: ref(0), reload: vi.fn() } });
@@ -121,5 +122,42 @@ describe("cost tab", () => {
     const denied = mount(CostTab, { global: { provide: provide() } });
     await flushPromises();
     expect(denied.text()).toContain("không xem được chi phí");
+  });
+});
+
+describe("machine bookings (M9)", () => {
+  it("names the other projects' bookings of the same days", () => {
+    expect(clashText([{ project: "P-2", project_name: "Nhà phố", from_date: "2030-01-08", to_date: "2030-01-10" },
+      { project: null, project_name: "Dự án khác", from_date: "2030-01-09", to_date: "2030-01-09" }]))
+      .toBe("Nhà phố 08/01–10/01; Dự án khác 09/01–09/01");
+  });
+
+  it("lists the bookings with their clashes and books a machine", async () => {
+    call.mockReset();
+    call.mockImplementation(async (method) => {
+      if (method.endsWith("machines_overview")) {
+        return { machines: [], free: [], shifts: [], transfers: [], can: { move: true, book: true, record: false },
+          bookable: [{ name: "CT-01", machine_name: "Cần trục", machine_type: "Cần trục" }],
+          bookings: [{ name: 7, machine: "CT-01", machine_name: "Cần trục", from_date: "2030-01-08", to_date: "2030-01-14",
+            clashes: [{ project: null, project_name: "Dự án khác", from_date: "2030-01-12", to_date: "2030-01-16" }] }] };
+      }
+      if (method.endsWith("diary_works")) return [];
+      if (method.endsWith("machine_book")) return { name: 8, clashes: [] };
+      return {};
+    });
+    const wrapper = mount(MachinesTab, { global: { provide: provide(), stubs: { teleport: true } } });
+    await flushPromises();
+    expect(wrapper.find("[data-booking-clash]").text()).toContain("Dự án khác 12/01–16/01");
+    await wrapper.findAll("button").find((b) => b.text().includes("Đặt máy")).trigger("click");
+    await wrapper.find("#booking-machine").setValue("CT-01");
+    await wrapper.find("#booking-from").setValue("2030-01-20");
+    await wrapper.find("#booking-to").setValue("2030-01-22");
+    await wrapper.find("#booking-form").trigger("submit");
+    await flushPromises();
+    const sent = call.mock.calls.find(([method]) => method.endsWith("machine_book"));
+    expect(sent[1]).toMatchObject({ project: "P-1", machine: "CT-01", from_date: "2030-01-20", to_date: "2030-01-22" });
+    await wrapper.find("[data-booking] button").trigger("click");
+    await flushPromises();
+    expect(call.mock.calls.some(([method, args]) => method.endsWith("machine_booking_cancel") && args.name === 7)).toBe(true);
   });
 });

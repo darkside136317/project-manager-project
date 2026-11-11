@@ -37,6 +37,7 @@ const members = ref([]);
 const form = reactive({ progress: 0, note: "", delay_reason: "", delay_source: "", delay_note: "", man_days: "" });
 const assignForm = reactive({ open: false, raci: RACI.RESPONSIBLE, kind: "user", user: "", team: "", note: "" });
 const dates = reactive({ open: false, start: "", end: "", reason: "" });
+const share = reactive({ open: false, pct: 100 });
 const dialog = reactive({ open: false, kind: "", target: null, title: "", label: "Lý do", error: "" });
 const move = reactive({ plan: null });
 
@@ -179,6 +180,11 @@ async function saveDates() {
   }
 }
 
+async function saveLoad() {
+  const pct = Math.max(0, Math.min(100, Math.round(Number(share.pct) || 0)));
+  if (await run(() => api.wbs.update(props.name, { pm_load_pct: pct === 100 ? 0 : pct }), "Đã lưu mức chiếm thời gian")) share.open = false;
+}
+
 async function applyDates(reason) {
   const done = await run(() => api.schedule.applyMove(props.name, dates.start, dates.end, reason || dates.reason), "Đã đổi ngày");
   if (done) {
@@ -290,6 +296,16 @@ watch(() => props.name, load, { immediate: true });
 
         <div v-if="can.dates && !task.is_group" class="mt-3">
           <button v-if="!dates.open" class="btn btn-ghost" type="button" @click="dates.open = true"><Icon name="calendar-clock" :size="16" /> Đổi ngày kế hoạch</button>
+          <button v-if="!dates.open && !share.open" class="btn btn-ghost" type="button" data-load-open
+                  @click="Object.assign(share, { open: true, pct: Number(task.pm_load_pct) || 100 })">
+            Chiếm {{ Number(task.pm_load_pct) || 100 }}% thời gian người làm</button>
+          <form v-if="share.open" class="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-line p-3" data-load-form @submit.prevent="saveLoad">
+            <div><label class="label" for="task-load">Mức chiếm thời gian (%)</label>
+              <input id="task-load" v-model.number="share.pct" class="input w-28" type="number" min="1" max="100" /></div>
+            <p class="m-0 flex-1 text-xs text-ink-muted">100%: người thực hiện làm việc này cả ngày. Giám sát, theo dõi: ví dụ 25%. Dùng cho trang Khối lượng công việc.</p>
+            <button class="btn" type="button" @click="share.open = false">Hủy</button>
+            <button class="btn btn-primary" type="submit" :disabled="busy">Lưu</button>
+          </form>
           <form v-else class="grid gap-3 rounded-lg border border-line p-3 sm:grid-cols-2" @submit.prevent="saveDates">
             <div><label class="label" for="date-start">Bắt đầu</label><input id="date-start" v-model="dates.start" class="input" type="date" /></div>
             <div><label class="label" for="date-end">Kết thúc</label><input id="date-end" v-model="dates.end" class="input" type="date" /></div>

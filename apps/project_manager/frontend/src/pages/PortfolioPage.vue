@@ -9,16 +9,20 @@ import { api } from "../lib/api.js";
 import { formatDate } from "../lib/format.js";
 import { slipText, slipTone } from "../lib/gantt.js";
 import { HEALTH, healthColour } from "../lib/health.js";
+import { columnText, extraColumns, percent, sparkline, toneText } from "../lib/people.js";
 import { variance } from "../lib/work.js";
 
 // Danh mục dự án: every running project I may read, the worst first: health and why, progress against plan, SPI,
-// forecast end, current phase, open alerts.
+// forecast end, current phase, open alerts; v2 (M9): work finished on time (4 weeks), members overloaded this week, the
+// trend of the progress (8 weeks), and the columns of the industry layers (cost against the work done...).
 const data = ref({ rows: [], totals: {}, alerts_open: 0 });
 const health = ref("");
 const loading = ref(false);
 const error = ref("");
 const rows = computed(() => (health.value ? data.value.rows.filter((r) => r.pm_health === health.value) : data.value.rows));
 const link = (row, tab = "tong-quan") => `/du-an/${encodeURIComponent(row.name)}/${tab}`;
+const extras = computed(() => extraColumns(data.value.rows));
+const rateTone = (rate) => (rate === null || rate === undefined ? "" : rate < 0.7 ? "text-danger" : rate < 0.9 ? "text-warning" : "text-success");
 
 async function load() {
   loading.value = true;
@@ -59,12 +63,15 @@ onMounted(load);
               :text="health ? 'Không có dự án đang chạy nào ở mức sức khỏe này.' : 'Dự án bạn tham gia hoặc được cấp quyền xem sẽ hiện ở đây.'" />
 
   <div v-else class="card overflow-x-auto">
-    <table class="w-full min-w-[860px] text-sm">
+    <table class="w-full text-sm" :style="{ minWidth: `${980 + extras.length * 90}px` }">
       <thead>
         <tr class="border-b border-line text-left text-xs text-ink-muted">
           <th class="px-4 py-2">Dự án</th><th class="px-2 py-2">Sức khỏe</th><th class="px-2 py-2">Tiến độ / kế hoạch</th>
           <th class="px-2 py-2 text-right">SPI</th><th class="px-2 py-2">Dự báo xong</th><th class="px-2 py-2">Giai đoạn hiện tại</th>
-          <th class="px-2 py-2 text-right">Cảnh báo</th><th class="px-4 py-2 text-right">Quá hạn</th>
+          <th class="px-2 py-2 text-right">Cảnh báo</th><th class="px-2 py-2 text-right">Quá hạn</th>
+          <th class="px-2 py-2 text-right">Đúng hạn (4 tuần)</th><th class="px-2 py-2 text-right">Người quá tải</th>
+          <th class="px-2 py-2">Xu hướng</th>
+          <th v-for="col in extras" :key="col.key" class="px-2 py-2 text-right last:pr-4">{{ col.label }}</th>
         </tr>
       </thead>
       <tbody>
@@ -83,7 +90,18 @@ onMounted(load);
           <td class="px-2 py-2">{{ formatDate(row.pm_forecast_end) || "—" }}<span class="block text-xs" :class="slipTone(row.forecast_slip)">{{ slipText(row.forecast_slip) }}</span></td>
           <td class="px-2 py-2">{{ row.phase || "—" }}<span v-if="row.phase_waiting" class="badge badge-warning ml-1">Chờ duyệt</span></td>
           <td class="px-2 py-2 text-right"><RouterLink v-if="row.alerts_open" :to="link(row)" class="font-semibold text-danger">{{ row.alerts_open }}</RouterLink><span v-else>0</span></td>
-          <td class="px-4 py-2 text-right" :class="row.late ? 'font-semibold text-danger' : ''">{{ row.late }}</td>
+          <td class="px-2 py-2 text-right" :class="row.late ? 'font-semibold text-danger' : ''">{{ row.late }}</td>
+          <td class="px-2 py-2 text-right font-semibold" :class="rateTone(row.on_time_rate)" data-on-time>{{ percent(row.on_time_rate) }}</td>
+          <td class="px-2 py-2 text-right" data-overloaded>
+            <RouterLink v-if="row.overloaded" :to="`/khoi-luong-cong-viec?project=${encodeURIComponent(row.name)}`" class="font-semibold text-danger">{{ row.overloaded }}</RouterLink><span v-else>0</span>
+          </td>
+          <td class="px-2 py-2">
+            <svg v-if="(row.trend || []).length > 1" width="64" height="20" viewBox="0 0 64 20" role="img" :aria-label="`Tiến độ 8 tuần: ${(row.trend || []).join(', ')}%`">
+              <polyline :points="sparkline(row.trend, 64, 20)" fill="none" stroke="currentColor" stroke-width="1.5" class="text-primary" />
+            </svg>
+            <span v-else class="text-xs text-ink-muted">—</span>
+          </td>
+          <td v-for="col in extras" :key="col.key" class="px-2 py-2 text-right last:pr-4" :class="toneText(row.extra?.[col.key]?.tone)" :data-extra="col.key">{{ columnText(row.extra?.[col.key]) }}</td>
         </tr>
       </tbody>
     </table>

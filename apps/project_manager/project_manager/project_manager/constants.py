@@ -135,7 +135,8 @@ ROLE_MATRIX = (
 # too (a member who sees only their assigned tasks sees only those tasks' rows).
 PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot",
                   "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline", "PM Baseline Task",
-                  "PM Baseline Curve", "PM Media", "PM Follow", "PM Document", "PM Document Version", "PM Alert")
+                  "PM Baseline Curve", "PM Media", "PM Follow", "PM Document", "PM Document Version", "PM Alert",
+                  "PM Performance Snapshot")
 # ERPNext's stock and buying documents, narrowed to the projects of the app's staff (permissions.stock_query).
 # {DocType: the column naming its project}. People outside the app keep ERPNext's own permissions.
 STOCK_SCOPED = {"Warehouse": "pm_project", "Location": "pm_project", "Material Request": "pm_project",
@@ -203,6 +204,8 @@ ADMIN_SCREENS = [
     {"doctype": "PM Settings", "slug": "thiet-lap-he-thong", "label": "Thiết lập hệ thống", "icon": "settings"},
     {"doctype": "PM Alert Rule", "slug": "quy-tac-canh-bao", "label": "Quy tắc cảnh báo", "icon": "bell",
      "list_fields": ["rule_name", "rule_type", "is_active", "days"]},
+    {"doctype": "PM Resource Capacity", "slug": "nghi-phep-nang-luc", "label": "Nghỉ phép, năng lực", "icon": "calendar-clock",
+     "list_fields": ["user", "from_date", "to_date", "capacity_pct", "reason"]},
 ]
 REGISTRY = {entry["doctype"]: entry for entry in [*MASTERS, *ADMIN_SCREENS]}
 
@@ -225,5 +228,8 @@ DEFAULT_ALERT_RULES = [
      "to_role": "Chỉ huy trưởng", "escalations": [{"after_days": 3, "to_manager": 1}]},
     {"rule_name": "Chờ duyệt chuyển giai đoạn", "rule_type": "Chờ duyệt chuyển giai đoạn", "to_manager": 1,
      "escalations": [{"after_days": 2, "to_supervisor": 1}]},
+    {"rule_name": "Quá tải công việc", "rule_type": "Quá tải công việc", "to_accountable": 0,
+     "description": "Tuần này hoặc tuần sau, một người cần nhiều hơn 120% số ngày công họ có. Báo người đó và quản lý "
+                    "các dự án có việc của họ."},
 ]
 

@@ -198,6 +198,15 @@ export const api = {
     phaseState: (project) => call(`${BASE}.alerts.phase_state`, { project }),
     passPhase: (phase, note = "") => call(`${BASE}.alerts.pass_phase`, { phase, note }, { post: true }),
   },
+  people: {
+    workload: (params = {}) => call(`${BASE}.people.workload_overview`, params),
+    cell: (user, week) => call(`${BASE}.people.workload_cell`, { user, week }),
+    saveCapacity: (values) => call(`${BASE}.people.save_capacity`, values, { post: true }),
+    deleteCapacity: (name) => call(`${BASE}.people.delete_capacity`, { name }, { post: true }),
+    performance: (params = {}) => call(`${BASE}.people.performance_overview`, params),
+    person: (user, params = {}) => call(`${BASE}.people.performance_person`, { user, ...params }),
+    teams: () => call(`${BASE}.people.teams`),
+  },
   projects: {
     list: (params = {}) => call(`${BASE}.projects.list_projects`, params),
     overview: (project) => call(`${BASE}.projects.overview`, { project }),

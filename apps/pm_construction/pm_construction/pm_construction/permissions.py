@@ -62,3 +62,11 @@ has_machine_shift_permission = core.read_only(lambda doc, ptype, user: core.entr
 has_attendance_permission = core.read_only(lambda doc, ptype, user: core.scoped(doc, ptype, user))
 has_machine_transfer_permission = core.read_only(lambda doc, ptype, user: _transfer_scoped(doc, ptype, user))
 
+
+# --- M9 ---------------------------------------------------------------------------------------------------------------------
+def machine_booking_query(user):
+    return core.scope_condition(user, "PMC Machine Booking")
+
+
+has_machine_booking_permission = core.read_only(lambda doc, ptype, user: core.scoped(doc, ptype, user))
+

@@ -111,6 +111,12 @@ def snapshot_query(user):
     return _query(user, "`tabPM Snapshot`.`project`")
 
 
+def performance_snapshot_query(user):
+    """Kept weeks of performance (M9): read by the administrators, within the projects they read; the screens read
+    them through services/performance.py, which applies who sees whose."""
+    return _query(user, "`tabPM Performance Snapshot`.`project`")
+
+
 def assignment_query(user):
     return _task_query(user, "tabPM Task Assignment", "task")
 
@@ -237,6 +243,7 @@ has_document_permission = _read_only(lambda doc, ptype, user: _entry_scoped(doc,
 has_document_version_permission = _read_only(lambda doc, ptype, user: _entry_scoped(doc, user, ptype))
 has_follow_permission = _read_only(lambda doc, ptype, user: _own_follow(doc, user))
 has_snapshot_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
+has_performance_snapshot_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
 has_assignment_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
 has_progress_entry_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
 has_gate_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))

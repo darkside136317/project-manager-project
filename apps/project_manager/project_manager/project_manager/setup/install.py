@@ -222,6 +222,8 @@ CUSTOM_FIELDS = {
         {"fieldname": "pm_gate_mode", "fieldtype": "Select", "options": "Thủ công\nCần duyệt\nTự động",
          "label": "Chuyển giai đoạn", "insert_after": "pm_health_since",
          "description": "Với nhóm cấp cao nhất (giai đoạn): xong việc và đủ điều kiện thì chuyển sang giai đoạn sau."},
+        {"fieldname": "pm_load_pct", "fieldtype": "Percent", "label": "Mức chiếm thời gian (%)", "insert_after": "pm_gate_state",
+         "description": "Để trống (0) là 100%: người thực hiện làm việc này cả ngày. Việc giám sát, theo dõi: ví dụ 25%."},
         {"fieldname": "pm_gate_state", "fieldtype": "Select", "options": "\nChờ duyệt\nĐã chuyển", "label": "Trạng thái chuyển",
          "read_only": 1, "insert_after": "pm_gate_mode", "no_copy": 1},
     ],

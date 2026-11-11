@@ -26,7 +26,7 @@ TREE_FIELDS = ["name", "subject", "is_group", "status", "progress", "exp_start_d
                "pm_level", "pm_sort", "pm_node_type", "pm_accountable", "pm_reviewer", "pm_is_overdue", "pm_delay_days",
                "parent_task", "priority", "task_weight", "pm_is_critical", "pm_conflict_days"]
 EDITABLE = ("subject", "description", "pm_node_type", "task_weight", "priority", "exp_start_date", "exp_end_date",
-            "pm_gate_mode")
+            "pm_gate_mode", "pm_load_pct")
 DATE_FIELDS = ("exp_start_date", "exp_end_date")
 
 

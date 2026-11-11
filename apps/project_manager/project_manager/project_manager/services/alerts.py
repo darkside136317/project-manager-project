@@ -35,6 +35,7 @@ OPEN, ACKED, OVER = "Đang mở", "Đã xác nhận", "Đã hết"
 DUE_SOON, OVERDUE, AT_RISK, CRITICAL_LATE = "Sắp đến hạn", "Quá hạn", "Nguy cơ trễ", "Chậm trên đường găng"
 HEALTH, NOT_ACCEPTED, STALE, FORM_WAITING, PHASE_WAITING = (
     "Đổi sức khỏe dự án", "Chưa nhận việc", "Không cập nhật", "Biểu mẫu chờ duyệt", "Chờ duyệt chuyển giai đoạn")
+OVERLOADED = "Quá tải công việc"
 CLOSED_STATUSES = (C.COMPLETED, C.CANCELLED)
 LIVE_PROJECTS = ("Chuẩn bị", "Đang thực hiện")
 SPA_TASK, SPA_PROJECT, SPA_FORM = "/pm/cong-viec/{}", "/pm/du-an/{}/tong-quan", "/pm/bieu-mau/{}"
@@ -241,8 +242,15 @@ def phase_waiting(rule, today):
 
 
 # In the order of PM Alert Rule.rule_type (a core-only site needs no Property Setter).
+def overloaded(rule, today):
+    from project_manager.project_manager.services import workload
+
+    return workload.overloaded(rule, today)
+
+
 TYPES = {DUE_SOON: due_soon, OVERDUE: overdue, AT_RISK: at_risk, CRITICAL_LATE: critical_late, HEALTH: None,
-         NOT_ACCEPTED: not_accepted, STALE: stale, FORM_WAITING: form_waiting, PHASE_WAITING: phase_waiting}
+         NOT_ACCEPTED: not_accepted, STALE: stale, FORM_WAITING: form_waiting, PHASE_WAITING: phase_waiting,
+         OVERLOADED: overloaded}
 
 
 def types() -> dict:
@@ -409,6 +417,10 @@ def send_email(user: str, subject: str, link: str, lines=None) -> None:
 
 
 def _link(alert) -> str:
+    if alert.reference_doctype == "User":
+        return "/pm/khoi-luong-cong-viec"
+    if not alert.project and not alert.task:
+        return SPA_ALERTS
     if alert.reference_doctype == "PM Form Submission":
         return SPA_FORM.format(alert.reference_name)
     if alert.task:

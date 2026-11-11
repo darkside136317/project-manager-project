@@ -6,6 +6,7 @@ of history, so every screen of the app has something to show.
 
 Everything it creates is marked (project code DEMO-*, accounts demo.*@pm.localhost) and `down` removes exactly that.
 Forms: the general checklist is approved on 2.1, waits for approval on 2.3, and is required (not yet filled in) on 2.5.
+Workload (M9): the second engineer is on leave three days next week; the weeks before are kept (performance trend).
 The demo accounts get no password: an administrator sets one (Người dùng → Gửi liên kết đặt mật khẩu) to log in as them.
 """
 
@@ -161,8 +162,19 @@ def up():
     schedule.refresh(project)
     _history(project, start, today)
     _discussion(project, tasks, manager, commander, eng1)
+    _people_weeks(today, eng2)
     frappe.db.commit()
     print(f"Demo created: {project} (template {template.name})")
+
+
+def _people_weeks(today, on_leave):
+    """Leave next week, and the four weeks before kept as if the weekly job had run (M9)."""
+    from project_manager.project_manager.services import performance, workload
+
+    monday = workload.monday(today)
+    workload.save_capacity(on_leave, add_days(monday, 7), add_days(monday, 9), 0, "Nghỉ phép", "Nghỉ phép năm (dữ liệu mẫu)")
+    for weeks in (4, 3, 2, 1):
+        performance.snapshot_week(add_days(monday, -7 * weeks))
 
 
 def _mention(email: str) -> str:
@@ -269,11 +281,14 @@ def down():
             for doctype in ("PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Project Member",
                             "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline Task",
                             "PM Baseline Curve", "PM Baseline", "PM Media", "PM Follow", "PM Document Version",
-                            "PM Document", "PM Alert"):
+                            "PM Document", "PM Alert", "PM Performance Snapshot"):
                 frappe.db.delete(doctype, {"project": project})
+            frappe.db.delete("PM Performance Snapshot", {"subject": project})
             frappe.db.delete("Task", {"project": project})
             frappe.delete_doc("Project", project, force=True, ignore_permissions=True)
     for email, *_ in PEOPLE:
+        frappe.db.delete("PM Resource Capacity", {"user": email})
+        frappe.db.delete("PM Performance Snapshot", {"subject": email})
         frappe.db.delete("Notification Log", {"for_user": email})
         frappe.db.delete("PM Notification Preference", {"user": email})
         frappe.delete_doc("User", email, force=True, ignore_permissions=True, ignore_missing=True)

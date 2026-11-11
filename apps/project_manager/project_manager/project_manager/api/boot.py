@@ -59,6 +59,8 @@ def build_boot() -> dict:
            {"group": GROUP_WORK, "items": [
                {"label": "Việc của tôi", "route": f"{SPA_HOME}/viec-cua-toi", "icon": "clipboard-check"},
                {"label": "Cảnh báo", "route": f"{SPA_HOME}/canh-bao", "icon": "bell", "badge": _open_alerts(user)},
+               {"label": "Khối lượng công việc", "route": f"{SPA_HOME}/khoi-luong-cong-viec", "icon": "calendar-clock"},
+               {"label": "Hiệu suất", "route": f"{SPA_HOME}/hieu-suat", "icon": "trending-up"},
                {"label": "Dự án", "route": f"{SPA_HOME}/du-an", "icon": "folder-kanban"}]}]
     if has_capability("forms.manage"):
         nav[-1]["items"].append({"label": "Mẫu biểu mẫu", "route": f"{SPA_HOME}/bieu-mau-mau", "icon": "clipboard-list"})

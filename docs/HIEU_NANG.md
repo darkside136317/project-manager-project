@@ -150,3 +150,28 @@ Số đầu là lần chạy thứ nhất, số sau là lần thứ hai, khi má
 Một phiếu cấp phát 99 dòng tốn gần hết thời gian ở ERPNext: lập và submit Stock Entry, ghi sổ kho, tính giá, ghi bút toán. Phần của hệ thống (kiểm từng dòng, tính lại chi phí) khoảng 0,3 s (đo bằng cProfile). Phiếu thực tế thường vài dòng, nên mất dưới 1 giây.
 
 Bảng định mức so với thực tế trả về mọi dòng của dự án. Với 9.000 dòng, trang tải chậm trên điện thoại. Cần lọc theo hạng mục hoặc chỉ hiện công tác đang làm (để sau).
+
+## M9 — Khối lượng công việc, hiệu suất, danh mục v2 trên 50 dự án (2026-11-11)
+
+`scripts/perf/people_check.py` tạo 50 dự án tạm × 204 việc (10.200 việc) trong ba tháng quanh hôm nay, 120 người, 25.012 lượt giao (mỗi việc một người chịu trách nhiệm chính, một hoặc hai người thực hiện; mỗi dự án 12 người lấy từ nhóm chung, nên mỗi người làm ở nhiều dự án). Một nửa số việc đã qua là xong (một phần ba trong đó trễ), còn lại đang làm. 10 người nghỉ phép hai ngày tuần này. Một quản lý tạm quản lý cả 50 dự án. Đo ở máy chủ, Docker Desktop trên Windows 11; script tự dọn dữ liệu.
+
+| Thao tác | Thời gian |
+|---|---|
+| Danh mục dự án v2, 50 dự án (quản trị / quản lý cả 50 dự án) | 0,58–0,62 s / 0,54–0,56 s |
+| Khối lượng công việc 6 tuần, mọi người (123 người, 712 xung đột) | 0,45–0,49 s |
+| Khối lượng công việc 12 tuần, mọi người | 0,32–0,42 s |
+| Khối lượng công việc 6 tuần, quản lý cả 50 dự án | 0,44–0,49 s |
+| Khối lượng công việc 6 tuần, một người tự xem | 28–33 ms |
+| Một ô (người × tuần) | 14–16 ms |
+| Cảnh báo quá tải: đánh giá tuần này và tuần sau, mọi người | 0,43–0,49 s |
+| Hiệu suất 4 tuần / 13 tuần (quản trị) | 0,22–0,30 s / 0,20–0,21 s |
+| Hiệu suất 4 tuần (quản lý cả 50 dự án) | 0,17–0,19 s |
+| Hiệu suất một người | 11–14 ms |
+| Ảnh chụp tuần trước (650 dòng; lần hai cập nhật các dòng đó) | 2,8–2,9 s; 1,3–1,4 s |
+
+Hai số là hai lần chạy. Ngưỡng "dashboard 50 dự án < 2 s" của kế hoạch đạt với dư nhiều. Trên trình duyệt, `people_flow.mjs` kiểm trên dữ liệu mẫu rằng trang khối lượng công việc mở dưới 3 giây và danh mục dự án dưới 2 giây.
+
+Dữ liệu đo dày hơn thực tế (mỗi người khoảng 200 lượt giao trong ba tháng), nên gần như ai cũng quá tải và có 712 xung đột. Trang khối lượng công việc chỉ hiện 10 xung đột đầu, bấm "Xem tất cả" để xem hết.
+
+Khối lượng công việc được tính trong bộ nhớ từ một truy vấn các lượt giao còn hiệu lực: mỗi việc chia cho mọi người đang giữ nó (kể cả người mà người xem không thấy), rồi chỉ giữ dòng của những người người xem được thấy. Ảnh chụp tuần chạy mỗi sáng thứ Hai lúc 01:30.
+

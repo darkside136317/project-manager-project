@@ -1,0 +1,120 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "week_start",
+  "kind",
+  "subject",
+  "project",
+  "tasks_done",
+  "on_time",
+  "open_late",
+  "delay_days",
+  "progress_reports",
+  "man_days",
+  "productivity"
+ ],
+ "fields": [
+  {
+   "fieldname": "week_start",
+   "fieldtype": "Date",
+   "label": "Tuần (thứ Hai)",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Đối tượng",
+   "options": "Người\nDự án\nĐội",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Người, đội",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "tasks_done",
+   "fieldtype": "Int",
+   "label": "Việc xong",
+   "read_only": 1
+  },
+  {
+   "fieldname": "on_time",
+   "fieldtype": "Int",
+   "label": "Xong đúng hạn",
+   "read_only": 1
+  },
+  {
+   "fieldname": "open_late",
+   "fieldtype": "Int",
+   "label": "Việc quá hạn còn mở",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delay_days",
+   "fieldtype": "Int",
+   "label": "Tổng ngày trễ của việc xong trễ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "progress_reports",
+   "fieldtype": "Int",
+   "label": "Số lần báo tiến độ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "man_days",
+   "fieldtype": "Float",
+   "label": "Ngày công",
+   "read_only": 1
+  },
+  {
+   "fieldname": "productivity",
+   "fieldtype": "Small Text",
+   "label": "Năng suất (JSON)",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Performance Snapshot",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

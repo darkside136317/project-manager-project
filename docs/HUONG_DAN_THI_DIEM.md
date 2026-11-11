@@ -136,6 +136,26 @@ docker compose exec backend bench --site pm.localhost execute pm_construction.pm
 docker compose exec backend bench --site pm.localhost execute pm_construction.pm_construction.setup.demo.up
 ```
 
+### Khối lượng công việc, hiệu suất, nhiều dự án (khoảng 10 phút)
+
+Trên cả hai dự án mẫu: tổ trưởng Võ Tổ Trưởng thực hiện phần thân ở nhà phố và phần kết cấu ở nhà xưởng.
+
+1. **Trang "Khối lượng công việc"** (quản lý dự án `demo.quanly@pm.localhost`, hoặc quản trị):
+   - mỗi người một dòng, mỗi tuần một ô: phần trăm = số ngày công cần / số ngày công có thể làm (ngày làm việc của lịch công ty, trừ nghỉ phép, bán thời gian);
+   - trên 80 % là bận (vàng), trên 120 % là quá tải (đỏ); tổ trưởng quá tải nhiều tuần vì việc của hai dự án (việc đã trễ dồn phần còn lại vào các ngày tới);
+   - mục "Xung đột giữa các dự án": tổ trưởng (người), và cần trục được hai dự án đặt trùng ngày (máy);
+   - bấm một ô: danh sách việc trong tuần, mỗi việc bao nhiêu ngày công; việc ở dự án bạn không xem được hiện là "Dự án khác";
+   - quản trị ghi kỳ nghỉ phép, bán thời gian ngay trong ô đó; Phạm Giám Sát đã có ba ngày nghỉ tuần sau.
+2. **Trang "Hiệu suất"**:
+   - theo người: việc xong, tỷ lệ đúng hạn, xong trễ, trễ trung bình, đang trễ, số lần báo tiến độ; bấm tên để xem từng dự án, các tuần trước và danh sách việc;
+   - theo dự án; năng suất tổ đội (khối lượng nhật ký chia cho số công đã xác nhận trên cùng công tác);
+   - kỹ sư chỉ thấy chính mình; tổ trưởng thấy tổ mình; quản lý, chỉ huy trưởng thấy mọi người trong dự án của họ.
+3. **Danh mục dự án** thêm: tỷ lệ đúng hạn 4 tuần, số người quá tải tuần này (bấm để mở khối lượng công việc của dự án), xu hướng tiến độ 8 tuần, chi phí so với giá trị làm được và số công tác vượt định mức (lớp thi công; cột chi phí chỉ hiện cho người xem được chi phí).
+4. **Tab "Máy" → "Lịch đặt máy"**: đặt máy cho một khoảng ngày; nếu dự án khác đã đặt cùng máy trùng ngày thì vẫn đặt được nhưng hiện "Trùng lịch".
+5. **Chi tiết công việc → "Chiếm …% thời gian người làm"** (người lập kế hoạch): việc giám sát, theo dõi chỉ chiếm một phần ngày (ví dụ 25 %).
+
+Kịch bản `scripts/e2e/ui/people_flow.mjs` chạy các bước 1–4.
+
 ## 3. Đưa một công trình thật vào
 
 1. **Người dùng và nhóm quyền** (Quản trị → Người dùng): tạo tài khoản; gán nhóm "Nhân viên"; giám đốc dùng nhóm có quyền xem mọi dự án.
@@ -188,7 +208,8 @@ Ghi lại mỗi tuần: số cảnh báo theo loại, số cảnh báo được 
 
 - **Mua hàng** (PO, PR, hóa đơn) làm trong Desk của ERPNext; chưa có màn hình riêng. Danh mục vật tư (Item) cũng tạo trong Desk.
 - **Giờ tăng ca** được ghi trong chấm công nhưng chưa tính tiền.
-- **Hiệu suất nhân sự, workload, xung đột nguồn lực** chưa có (M9). Danh mục dự án là bản v1: sức khỏe, tiến độ, cảnh báo.
+- **Khối lượng công việc** chỉ tính việc có ngày kế hoạch, giao cho người (không tính việc giao cho cả đội); việc đã trễ dồn phần còn lại vào các ngày làm việc từ hôm nay. Lịch nghỉ là lịch của công ty, chưa có lịch riêng từng người ngoài các kỳ nghỉ phép, bán thời gian.
+- **Hiệu suất** tính trên việc được giao (chịu trách nhiệm, thực hiện); ảnh chụp tuần ghi lại số liệu mỗi sáng thứ Hai, nên xu hướng chỉ có từ khi hệ thống chạy.
 - **Báo cáo xuất theo lịch, ngân sách, rủi ro, phát sinh** chưa có (M10).
 - **Kênh nhận:** cảnh báo chỉ đi qua thông báo trong ứng dụng và email; chưa có Zalo, SMS.
 - **Lịch chạy:** cảnh báo được đánh giá mỗi sáng 6 giờ, leo thang mỗi giờ. Một việc vừa quá hạn trong ngày sẽ được báo vào sáng hôm sau.

@@ -6,7 +6,9 @@
 * A shift (ca máy) is recorded on the project the machine is at, for a work item, with its fuel; its cost is the
   shifts times the machine's shift rate that day. Shifts are written from the phone (offline outbox, client_uuid).
 * Alert type "Máy đến hạn bảo dưỡng": a machine at a project whose next maintenance is within N days or past.
-Who: plan.edit or project.edit moves machines (on both projects); task.update records shifts.
+* Booking (đặt máy, M9): a project wants a machine from one day to another. Another project's booking on the same
+  days is shown when booking (a warning, not a refusal) and is a conflict between projects (services/people.py).
+Who: plan.edit or project.edit moves and books machines (on both projects); task.update records shifts.
 """
 
 import frappe
@@ -73,11 +75,80 @@ def overview(project: str) -> dict:
         shift["task_label"] = labels.get(shift.task)
         if not finance:
             shift.pop("amount")
+    bookings = _bookings(project)
     transfers = frappe.db.sql("""select name, machine, from_project, project, transfer_date, note from `tabPMC Machine Transfer`
                                  where project = %(p)s or from_project = %(p)s order by transfer_date desc, name desc
                                  limit 30""", {"p": project}, as_dict=True)
-    return {"machines": here, "free": free, "shifts": shifts, "transfers": transfers,
-            "can": {"move": can_move, "record": has_project_capability(project, "task.update"), "finance": finance}}
+    bookable = frappe.get_all("PMC Machine", filters={"status": ["not in", ["Đã trả", "Hỏng"]]},
+                              fields=["name", "machine_name", "machine_type", "current_project"],
+                              order_by="machine_name asc", limit_page_length=500) if can_move else []
+    return {"machines": here, "free": free, "shifts": shifts, "transfers": transfers, "bookings": bookings,
+            "bookable": bookable,
+            "can": {"move": can_move, "book": can_move, "record": has_project_capability(project, "task.update"),
+                    "finance": finance}}
+
+
+def _bookings(project: str) -> list:
+    """This project's bookings from 30 days ago on, each with the other projects' bookings of those days."""
+    from pm_construction.pm_construction.services import people
+
+    rows = frappe.get_all("PMC Machine Booking", filters={"project": project, "status": people.BOOKED,
+                                                          "to_date": [">=", add_days(nowdate(), -30)]},
+                          fields=["name", "machine", "machine_name", "task", "from_date", "to_date", "note", "booked_by"],
+                          order_by="from_date asc", limit_page_length=200)
+    read = get_access().read
+    labels = {}
+    for row in rows:
+        row["clashes"] = []
+        for other in people.clashes(row.machine, row.from_date, row.to_date, project):
+            known = project_in(read, other.project)
+            if known and other.project not in labels:
+                labels[other.project] = frappe.db.get_value("Project", other.project, "project_name") or other.project
+            row["clashes"].append({"project": other.project if known else None,
+                                   "project_name": labels.get(other.project) if known else _("Dự án khác"),
+                                   "from_date": other.from_date, "to_date": other.to_date})
+    return rows
+
+
+def book(project: str, machine: str, from_date, to_date, task: str | None = None, note: str = "") -> dict:
+    """Book a machine for the project; returns the booking and the other projects' bookings of those days."""
+    from pm_construction.pm_construction.services import people
+
+    _readable(project)
+    if not has_project_capability(project, "plan.edit", "project.edit"):
+        frappe.throw(_("Vai trò của bạn trong dự án không đặt được máy"), frappe.PermissionError)
+    status = frappe.db.get_value("PMC Machine", machine, "status")
+    if not status:
+        frappe.throw(_("Không có máy {0}").format(machine))
+    if status in ("Đã trả", "Hỏng"):
+        frappe.throw(_("Máy này đang {0}, không đặt được").format(status.lower()))
+    if task:
+        work = frappe.db.get_value("Task", task, ["project", "is_group"], as_dict=True)
+        if not work or work.project != project:
+            frappe.throw(_("Công tác không thuộc dự án này"))
+    first, last = getdate(from_date), getdate(to_date)
+    if last < first:
+        frappe.throw(_("Ngày kết thúc đặt máy phải sau ngày bắt đầu"))
+    doc = frappe.get_doc({"doctype": "PMC Machine Booking", "machine": machine, "project": project, "task": task or None,
+                          "from_date": first, "to_date": last, "status": people.BOOKED, "booked_by": frappe.session.user,
+                          "note": (note or "").strip() or None}).insert(ignore_permissions=True)
+    read = get_access().read
+    found = [{"project": c.project if project_in(read, c.project) else None, "from_date": c.from_date,
+              "to_date": c.to_date} for c in people.clashes(machine, first, last, project, exclude=doc.name)]
+    return {"name": doc.name, "clashes": found}
+
+
+def cancel_booking(name) -> dict:
+    from pm_construction.pm_construction.services import people
+
+    row = frappe.db.get_value("PMC Machine Booking", name, ["project", "status"], as_dict=True)
+    if not row:
+        frappe.throw(_("Không có lượt đặt máy này"))
+    _readable(row.project)
+    if not has_project_capability(row.project, "plan.edit", "project.edit"):
+        frappe.throw(_("Vai trò của bạn trong dự án không hủy được lượt đặt máy"), frappe.PermissionError)
+    frappe.db.set_value("PMC Machine Booking", name, "status", people.CANCELLED)
+    return {"name": name, "status": people.CANCELLED}
 
 
 def transfer(machine: str, to_project: str | None, transfer_date=None, note: str = "") -> dict:

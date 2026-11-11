@@ -13,12 +13,14 @@ import MonitorPage from "./pages/MonitorPage.vue";
 import MyTasksPage from "./pages/MyTasksPage.vue";
 import NotFound from "./pages/NotFound.vue";
 import OutboxPage from "./pages/OutboxPage.vue";
+import PerformancePage from "./pages/PerformancePage.vue";
 import PortfolioPage from "./pages/PortfolioPage.vue";
 import ProjectPage from "./pages/ProjectPage.vue";
 import ProjectsPage from "./pages/ProjectsPage.vue";
 import RolesPage from "./pages/RolesPage.vue";
 import TaskPage from "./pages/TaskPage.vue";
 import UsersPage from "./pages/UsersPage.vue";
+import WorkloadPage from "./pages/WorkloadPage.vue";
 import { moduleRoutes } from "./modules.js";
 
 // Frappe serves this app for /pm and every /pm/... path (hooks.website_route_rules).
@@ -27,6 +29,8 @@ export const routes = [
   { path: "/viec-cua-toi", name: "my-tasks", component: MyTasksPage, meta: { title: "Việc của tôi" } },
   { path: "/canh-bao", name: "alerts", component: AlertsPage, meta: { title: "Cảnh báo" } },
   { path: "/danh-muc-du-an", name: "portfolio", component: PortfolioPage, meta: { title: "Danh mục dự án" } },
+  { path: "/khoi-luong-cong-viec", name: "workload", component: WorkloadPage, meta: { title: "Khối lượng công việc" } },
+  { path: "/hieu-suat", name: "performance", component: PerformancePage, meta: { title: "Hiệu suất" } },
   { path: "/du-an", name: "projects", component: ProjectsPage, meta: { title: "Dự án" } },
   { path: "/du-an/:id/:tab?", name: "project", component: ProjectPage, meta: { title: "Dự án" } },
   { path: "/cong-viec/:id", name: "task", component: TaskPage, meta: { title: "Công việc" } },

@@ -111,6 +111,18 @@ Kịch bản vật tư, máy, chấm công M8 trên dữ liệu mẫu nhà xư�
 cd scripts/e2e/ui && node site_flow.mjs
 ```
 
+Kịch bản khối lượng công việc, hiệu suất, danh mục v2 của M9 trên hai dữ liệu mẫu (nhà phố và nhà xưởng; chạy từ gốc repo; kỳ nghỉ nó ghi được xóa khi xong):
+
+```bash
+cd scripts/e2e/ui && node people_flow.mjs
+```
+
+Đo khối lượng công việc, hiệu suất, danh mục v2 trên 50 dự án tạm, 120 người (trong `docker/`; tự dọn khi xong, `reset` để dọn nếu bị ngắt):
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -e PERF_PROJECTS=50 -e PERF_TASKS=200 -e PERF_PEOPLE=120 -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - seed < ../scripts/perf/people_check.py
+```
+
 Đo vật tư trên BOQ 3.000 công tác (trong `docker/`; tự dọn khi xong):
 
 ```bash

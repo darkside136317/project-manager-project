@@ -17,6 +17,14 @@ Hooks a layer may declare (pm_construction's hooks.py is the example):
   constants.DEFAULT_ALERT_RULES), created once (setup/install.ensure_alert_rules).
 * `pm_masters = ["dotted.path"]` — functions returning the layer's catalogues ([{"doctype", "slug", "label", "icon",
   "list_fields"}], like constants.MASTERS), shown by the generic master screens (/pm/danh-muc/<slug>).
+* `pm_productivity = ["dotted.path"]` — functions (first, last) returning the quantities crews made and the man-days
+  they took, per work item: [{"team", "team_name", "project", "task", "uom", "qty", "man_days"}] (M9, performance).
+* `pm_conflicts = ["dotted.path"]` — functions (first, last) returning conflicts between projects the layer knows
+  (machines booked twice...): [{"kind", "subject", "week", "projects": {project: share}, "message"}] (M9, workload);
+  the core keeps those touching a project the viewer reads and shows the others as "Dự án khác".
+* `pm_portfolio_columns = ["dotted.path"]` — functions (projects) returning {project: {key: {"label", "value",
+  "format": "percent"|"number"|"currency", "tone": "good"|"warn"|"bad"|None}}} added to the portfolio rows (M9); the
+  function checks what the viewer may see (finance figures...).
 * `pm_gate_checks = ["dotted.path"]` — conditions of passing a phase (M7, services/phases.py): the function gets the
   phase (a Task row) and returns the conditions still missing, as short sentences (empty: nothing missing).
 """

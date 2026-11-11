@@ -154,7 +154,7 @@ def task_detail(task: str) -> dict:
               "act_start_date", "act_end_date", "pm_wbs_code", "pm_level", "pm_node_type", "pm_accountable",
               "pm_reviewer", "pm_is_overdue", "pm_delay_days", "pm_delay_reason", "pm_delay_source", "pm_delay_note",
               "pm_last_progress_on", "priority", "task_weight", "pm_rollup_weight", "parent_task", "project",
-              "pm_health", "pm_health_reason", "pm_forecast_end", "pm_forecast_slip", "pm_is_critical"]
+              "pm_health", "pm_health_reason", "pm_forecast_end", "pm_forecast_slip", "pm_is_critical", "pm_load_pct"]
     data = {f: doc.get(f) for f in fields}
     data["status_label"] = C.STATUS_LABELS.get(doc.status, doc.status)
     data["project_name"] = frappe.db.get_value("Project", project, "project_name") if project else None

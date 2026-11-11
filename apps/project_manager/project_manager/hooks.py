@@ -46,6 +46,7 @@ permission_query_conditions = {
     "PM Project Member": _P + "project_member_query",
     "PM Activity": _P + "activity_query",
     "PM Snapshot": _P + "snapshot_query",
+    "PM Performance Snapshot": _P + "performance_snapshot_query",
     "PM Task Assignment": _P + "assignment_query",
     "PM Progress Entry": _P + "progress_entry_query",
     "PM Form Submission": _P + "form_submission_query",
@@ -68,6 +69,7 @@ has_permission = {
     "PM Project Member": _P + "has_project_member_permission",
     "PM Activity": _P + "has_activity_permission",
     "PM Snapshot": _P + "has_snapshot_permission",
+    "PM Performance Snapshot": _P + "has_performance_snapshot_permission",
     "PM Task Assignment": _P + "has_assignment_permission",
     "PM Progress Entry": _P + "has_progress_entry_permission",
     "PM Form Submission": _P + "has_form_submission_permission",
@@ -116,6 +118,7 @@ scheduler_events = {
         "0 * * * *": [_SERVICES + "alerts.queue_hourly"],
         "0 7 * * *": [_SERVICES + "digest.daily"],
         "0 7 * * 1": [_SERVICES + "digest.weekly"],
+        "30 1 * * 1": [_SERVICES + "performance.snapshot_week"],
     },
     "daily": [
         "project_manager.project_manager.services.audit.purge_expired",

@@ -200,6 +200,18 @@ def _crews(project, works, today, people, windows) -> None:
     frappe.set_user("Administrator")
 
 
+def bookings(project: str, works: list, today, other_code: str | None = None) -> None:
+    """The crane booked for the columns, and by the other demo project on some of the same days (M9 conflict)."""
+    crane = next((code for code, _n, _k, ownership, _r, _f in MACHINES if ownership == K.RENTED), None)
+    if not crane or not frappe.db.exists("PMC Machine", crane):
+        return
+    task = works[7].name if len(works) > 7 else None
+    machines.book(project, crane, add_days(today, 2), add_days(today, 8), task, "Cẩu lắp cốt thép, ván khuôn cột")
+    other = frappe.db.get_value("Project", {"pm_code": other_code}, "name") if other_code else None
+    if other:
+        machines.book(other, crane, add_days(today, 6), add_days(today, 10), None, "Cẩu vật liệu lên mái")
+
+
 def drop_site(projects) -> None:
     """Every stock entry, request, plan, shift, transfer, attendance sheet, store and location of these projects."""
     for project in projects:
@@ -211,7 +223,7 @@ def drop_site(projects) -> None:
         for name in frappe.get_all("Material Request", filters={"pm_project": project}, pluck="name"):
             frappe.db.delete("Material Request Item", {"parent": name})
             frappe.db.delete("Material Request", {"name": name})
-        for doctype in ("PMC Material Plan", "PMC Machine Shift", "PMC Machine Transfer"):
+        for doctype in ("PMC Material Plan", "PMC Machine Shift", "PMC Machine Transfer", "PMC Machine Booking"):
             frappe.db.delete(doctype, {"project": project})
         for name in frappe.get_all("PMC Crew Attendance", filters={"project": project}, pluck="name"):
             frappe.db.delete("PMC Attendance Line", {"parent": str(name)})
@@ -231,6 +243,7 @@ def remove(project: str | None) -> None:
         drop_site([project])
     codes = [code for code, *_rest in MACHINES]
     frappe.db.delete("PMC Machine Transfer", {"machine": ["in", codes]})
+    frappe.db.delete("PMC Machine Booking", {"machine": ["in", codes]})
     for name in frappe.get_all("Asset Movement Item", filters={"asset": ["in", frappe.get_all(
             "Asset", filters={"item_code": ASSET_ITEM}, pluck="name") or [""]]}, pluck="parent"):
         frappe.db.delete("Asset Movement Item", {"parent": name})

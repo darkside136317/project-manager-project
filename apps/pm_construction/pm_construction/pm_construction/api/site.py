@@ -151,3 +151,14 @@ def attendance_send_back(name, note):
 def cost_summary(project):
     assert_staff()
     return costs.summary(project)
+
+
+# --- machine bookings (M9) --------------------------------------------------------------------------------------------------
+@frappe.whitelist(methods=["POST"])
+def machine_book(project, machine, from_date, to_date, task=None, note=""):
+    return machines.book(project, machine, from_date, to_date, task or None, note)
+
+
+@frappe.whitelist(methods=["POST"])
+def machine_booking_cancel(name):
+    return machines.cancel_booking(name)

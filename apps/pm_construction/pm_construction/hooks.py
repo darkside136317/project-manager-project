@@ -2,8 +2,9 @@
 
 This app extends project_manager; the core never imports it. It plugs in through the core's `pm_*` hooks
 (project_manager/extensions.py): a roll-up method by estimate value, the site diary as a discussion target, the
-acceptance forms, an alert for missing site diaries, a phase condition (every work item accepted in full), and its
-screens (frontend/pm-module.js).
+acceptance forms, an alert for missing site diaries, a phase condition (every work item accepted in full), its
+screens (frontend/pm-module.js), and (M9) the productivity of the crews, the machines booked twice, the cost and norm
+columns of the portfolio.
 """
 
 app_name = "pm_construction"
@@ -32,6 +33,9 @@ pm_alert_types = {"Thiếu nhật ký thi công": _K + "services.alerts.missing_
 pm_masters = [_K + "setup.install.masters"]
 pm_alert_rules = [_K + "setup.install.alert_rules"]
 pm_gate_checks = [_K + "services.acceptance.gate_check"]
+pm_productivity = [_K + "services.people.productivity"]
+pm_conflicts = [_K + "services.people.machine_conflicts"]
+pm_portfolio_columns = [_K + "services.people.portfolio_columns"]
 
 # --- project scope of the layer's DocTypes (constants.PROJECT_SCOPED; tests/test_hook_coverage.py) -------------------
 _P = _K + "permissions."
@@ -44,6 +48,7 @@ permission_query_conditions = {
     "PMC Machine Transfer": _P + "machine_transfer_query",
     "PMC Machine Shift": _P + "machine_shift_query",
     "PMC Crew Attendance": _P + "attendance_query",
+    "PMC Machine Booking": _P + "machine_booking_query",
 }
 has_permission = {
     "PMC BOQ": _P + "has_boq_permission",
@@ -54,6 +59,7 @@ has_permission = {
     "PMC Machine Transfer": _P + "has_machine_transfer_permission",
     "PMC Machine Shift": _P + "has_machine_shift_permission",
     "PMC Crew Attendance": _P + "has_attendance_permission",
+    "PMC Machine Booking": _P + "has_machine_booking_permission",
 }
 
 # a work item with quantities in a diary keeps its history: it is cancelled, never deleted

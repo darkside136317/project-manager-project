@@ -6,6 +6,8 @@ built from the sample BOQ, three weeks of site diaries, acceptances. Uses the co
 * PHẦN THÂN: the columns are three days late and slow: their alert "Quá hạn" opened three days ago and climbed to the
   site commander; the column rebar is at risk.
 * Yesterday's site diary is missing: alert "Thiếu nhật ký thi công".
+* M9: the crew leader does the structure here and in the town house (core demo): overloaded, a conflict between
+  projects; the crane is booked for the columns, and by the town house on some of the same days.
 
     bench --site <site> execute pm_construction.pm_construction.setup.demo.up
     bench --site <site> execute pm_construction.pm_construction.setup.demo.down   (before the core demo's down)
@@ -84,12 +86,17 @@ def up():
     _acceptances(project, works[:FOUNDATION], engineer, commander)
     demo_site.build(project, works, today, {"manager": manager, "commander": commander, "engineer": engineer,
                                             "lead": lead}, WINDOWS)
+    demo_site.bookings(project, works, today, core_demo.PROJECT_CODE)
     rollup.reconcile(project)
     schedule.refresh(project)
     phases.check(project)
     frappe.db.commit()
     if len(works) > FOUNDATION:
         _alerts(works[FOUNDATION])
+    from project_manager.project_manager.services import performance, workload
+
+    for weeks in (2, 1):  # the crews' productivity of the last weeks, kept
+        performance.snapshot_week(add_days(workload.monday(today), -7 * weeks))
     frappe.db.commit()
     print(f"Construction demo created: {project}")
 

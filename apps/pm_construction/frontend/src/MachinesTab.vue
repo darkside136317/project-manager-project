@@ -5,10 +5,11 @@ import Icon from "@pm/components/Icon.vue";
 import { formatDate } from "@pm/lib/format.js";
 import { network, onSent, queueItem } from "@pm/lib/sync.js";
 import { toast } from "@pm/lib/toast.js";
-import { construction, moneyText, qtyText, site, today } from "./construction.js";
+import { clashText, construction, moneyText, qtyText, site, today } from "./construction.js";
 
 // Máy: the machines at the project, their shifts on work items (written on site, queued without a connection), fuel
-// against the norm; the planner brings machines in and sends them back.
+// against the norm; the planner brings machines in and sends them back, and books machines ahead (đặt máy): another
+// project's booking of the same days is a conflict, shown here and on the workload page.
 const { name: project } = inject("project");
 const data = ref(null);
 const works = ref([]);
@@ -16,6 +17,7 @@ const error = ref("");
 const busy = ref(false);
 const shift = reactive({ open: false, machine: "", task: "", shift_date: today(), shifts: "1", hours: "", fuel: "", operator: "", note: "" });
 const move = reactive({ open: false, machine: "", note: "" });
+const booking = reactive({ open: false, machine: "", task: "", from_date: today(), to_date: today(), note: "" });
 
 const can = computed(() => data.value?.can || {});
 const queued = computed(() => network.items.filter((item) => item.kind === "machine-shift" && item.payload.project === project.value));
@@ -73,6 +75,34 @@ async function release(machine) {
   }
 }
 
+async function book() {
+  if (!booking.machine) return toast("Chọn máy", "error");
+  if (booking.to_date < booking.from_date) return toast("Ngày kết thúc phải sau ngày bắt đầu", "error");
+  busy.value = true;
+  try {
+    const result = await site.book({ project: project.value, machine: booking.machine, task: booking.task || null,
+      from_date: booking.from_date, to_date: booking.to_date, note: booking.note });
+    if (result.clashes.length) toast(`Đã đặt máy, nhưng trùng lịch với ${clashText(result.clashes)}`, "warning", 9000);
+    else toast("Đã đặt máy");
+    booking.open = false;
+    await load();
+  } catch (e) {
+    toast(e.message, "error", 8000);
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function cancelBooking(row) {
+  try {
+    await site.cancelBooking(row.name);
+    toast("Đã hủy lượt đặt máy");
+    await load();
+  } catch (e) {
+    toast(e.message, "error");
+  }
+}
+
 async function removeShift(row) {
   try {
     await site.deleteShift(row.name);
@@ -121,6 +151,22 @@ onMounted(load);
             <button v-if="can.record" class="btn" type="button" @click="openShift(machine.name)">Ghi ca</button>
             <button v-if="can.move" class="btn btn-ghost" type="button" @click="release(machine)">Trả về công ty</button>
           </div>
+        </li>
+      </ul>
+    </section>
+
+    <section v-if="can.book || data.bookings?.length" class="card p-4" aria-labelledby="bookings-title" data-bookings>
+      <div class="flex flex-wrap items-center gap-2">
+        <h2 id="bookings-title" class="m-0 flex-1 text-sm font-semibold">Lịch đặt máy</h2>
+        <button v-if="can.book" class="btn" type="button" @click="Object.assign(booking, { open: true, machine: '', task: '', from_date: today(), to_date: today(), note: '' })"><Icon name="calendar-clock" :size="16" /> Đặt máy</button>
+      </div>
+      <p v-if="!data.bookings?.length" class="mt-2 text-sm text-ink-muted">Chưa đặt máy nào.</p>
+      <ul class="m-0 mt-2 list-none divide-y divide-line p-0 text-sm">
+        <li v-for="row in data.bookings" :key="row.name" class="flex flex-wrap items-center gap-2 py-2" data-booking>
+          <span class="w-28 text-xs text-ink-muted">{{ formatDate(row.from_date) }} – {{ formatDate(row.to_date) }}</span>
+          <span class="min-w-0 flex-1"><strong>{{ row.machine_name }}</strong><template v-if="row.note"> · {{ row.note }}</template>
+            <span v-if="row.clashes.length" class="block text-xs font-semibold text-danger" data-booking-clash>Trùng lịch: {{ clashText(row.clashes) }}</span></span>
+          <button v-if="can.book" class="btn btn-ghost" type="button" :aria-label="`Hủy đặt ${row.machine_name}`" @click="cancelBooking(row)"><Icon name="x" :size="14" /></button>
         </li>
       </ul>
     </section>
@@ -179,6 +225,31 @@ onMounted(load);
     <template #footer>
       <button class="btn" type="button" @click="move.open = false">Hủy</button>
       <button class="btn btn-primary" type="submit" form="move-form" :disabled="busy">Đưa vào</button>
+    </template>
+  </Drawer>
+
+  <Drawer :open="booking.open" title="Đặt máy cho dự án" width="440px" @close="booking.open = false">
+    <form id="booking-form" class="space-y-3" @submit.prevent="book">
+      <div><label class="label" for="booking-machine">Máy</label>
+        <select id="booking-machine" v-model="booking.machine" class="input">
+          <option value="">Chọn máy</option>
+          <option v-for="machine in data?.bookable || []" :key="machine.name" :value="machine.name">{{ machine.machine_name }}{{ machine.machine_type ? ` (${machine.machine_type})` : "" }}</option>
+        </select></div>
+      <div><label class="label" for="booking-task">Công tác</label>
+        <select id="booking-task" v-model="booking.task" class="input">
+          <option value="">Không gắn công tác</option>
+          <option v-for="work in works" :key="work.name" :value="work.name">{{ work.pm_wbs_code }} {{ work.subject }}</option>
+        </select></div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="label" for="booking-from">Từ ngày</label><input id="booking-from" v-model="booking.from_date" class="input" type="date" required /></div>
+        <div><label class="label" for="booking-to">Đến ngày</label><input id="booking-to" v-model="booking.to_date" class="input" type="date" :min="booking.from_date" required /></div>
+      </div>
+      <div><label class="label" for="booking-note">Ghi chú</label><textarea id="booking-note" v-model="booking.note" class="input" rows="2"></textarea></div>
+      <p class="m-0 text-xs text-ink-muted">Dự án khác đã đặt cùng máy trùng ngày: vẫn đặt được, nhưng sẽ hiện là xung đột ở trang Khối lượng công việc.</p>
+    </form>
+    <template #footer>
+      <button class="btn" type="button" @click="booking.open = false">Hủy</button>
+      <button class="btn btn-primary" type="submit" form="booking-form" :disabled="busy">Đặt máy</button>
     </template>
   </Drawer>
 </template>

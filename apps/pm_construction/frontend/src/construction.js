@@ -112,6 +112,8 @@ export const site = {
     call(`${S}.machine_transfer`, { machine, to_project: toProject, transfer_date: transferDate, note }, { post: true }),
   shift: (values, clientUuid = null) => call(`${S}.machine_shift`, { ...values, client_uuid: clientUuid }, { post: true }),
   deleteShift: (name) => call(`${S}.delete_shift`, { name }, { post: true }),
+  book: (values) => call(`${S}.machine_book`, values, { post: true }),
+  cancelBooking: (name) => call(`${S}.machine_booking_cancel`, { name }, { post: true }),
   labour: (project) => call(`${S}.labour_overview`, { project }),
   sheet: (project, team, day) => call(`${S}.attendance_sheet`, { project, team, day }),
   attendanceSave: (project, team, day, lines, note = "") => call(`${S}.attendance_save`, { project, team, day, lines, note }, { post: true }),
@@ -173,3 +175,9 @@ export function attendanceLines(lines) {
 
 export const SHEET_TONE = { "Nháp": "badge-muted", "Đã nộp": "badge-warning", "Đã xác nhận": "badge-success" };
 export const REQUEST_STATUS = { Pending: "Chờ cấp", "Partially Ordered": "Cấp một phần", Issued: "Đã cấp", Stopped: "Đã dừng", Ordered: "Đã cấp" };
+
+/** "Dự án khác 08/01–10/01" for the other projects' bookings of the same days. */
+export function clashText(clashes) {
+  const day = (iso) => (iso ? `${String(iso).slice(8, 10)}/${String(iso).slice(5, 7)}` : "");
+  return (clashes || []).map((c) => `${c.project_name || c.project || "Dự án khác"} ${day(c.from_date)}–${day(c.to_date)}`).join("; ");
+}
