@@ -90,5 +90,8 @@ export const PROJECT_TABS = [
   { slug: "tai-lieu", label: "Tài liệu", icon: "folder-open" },
   { slug: "bieu-mau", label: "Biểu mẫu", icon: "clipboard-list" },
   { slug: "baseline", label: "Baseline", icon: "history" },
+  { slug: "ngan-sach", label: "Ngân sách", icon: "wallet" },
+  { slug: "rui-ro", label: "Rủi ro, vấn đề", icon: "shield-alert" },
+  { slug: "phat-sinh", label: "Phát sinh", icon: "git-pull-request" },
   { slug: "thanh-vien", label: "Thành viên", icon: "users" },
 ];

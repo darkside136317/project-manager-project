@@ -36,6 +36,7 @@ DUE_SOON, OVERDUE, AT_RISK, CRITICAL_LATE = "Sắp đến hạn", "Quá hạn", 
 HEALTH, NOT_ACCEPTED, STALE, FORM_WAITING, PHASE_WAITING = (
     "Đổi sức khỏe dự án", "Chưa nhận việc", "Không cập nhật", "Biểu mẫu chờ duyệt", "Chờ duyệt chuyển giai đoạn")
 OVERLOADED = "Quá tải công việc"
+OVERDUE_ISSUE = "Vấn đề quá hạn xử lý"
 CLOSED_STATUSES = (C.COMPLETED, C.CANCELLED)
 LIVE_PROJECTS = ("Chuẩn bị", "Đang thực hiện")
 SPA_TASK, SPA_PROJECT, SPA_FORM = "/pm/cong-viec/{}", "/pm/du-an/{}/tong-quan", "/pm/bieu-mau/{}"
@@ -248,9 +249,15 @@ def overloaded(rule, today):
     return workload.overloaded(rule, today)
 
 
+def overdue_issues(rule, today):
+    from project_manager.project_manager.services import control
+
+    return control.overdue_issues(rule, today)
+
+
 TYPES = {DUE_SOON: due_soon, OVERDUE: overdue, AT_RISK: at_risk, CRITICAL_LATE: critical_late, HEALTH: None,
          NOT_ACCEPTED: not_accepted, STALE: stale, FORM_WAITING: form_waiting, PHASE_WAITING: phase_waiting,
-         OVERLOADED: overloaded}
+         OVERLOADED: overloaded, OVERDUE_ISSUE: overdue_issues}
 
 
 def types() -> dict:
@@ -423,6 +430,8 @@ def _link(alert) -> str:
         return SPA_ALERTS
     if alert.reference_doctype == "PM Form Submission":
         return SPA_FORM.format(alert.reference_name)
+    if alert.reference_doctype == "PM Issue":
+        return f"/pm/du-an/{alert.project}/rui-ro"
     if alert.task:
         return SPA_TASK.format(alert.task)
     return SPA_PROJECT.format(alert.project)

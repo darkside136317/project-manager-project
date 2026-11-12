@@ -175,3 +175,24 @@ Dữ liệu đo dày hơn thực tế (mỗi người khoảng 200 lượt giao 
 
 Khối lượng công việc được tính trong bộ nhớ từ một truy vấn các lượt giao còn hiệu lực: mỗi việc chia cho mọi người đang giữ nó (kể cả người mà người xem không thấy), rồi chỉ giữ dòng của những người người xem được thấy. Ảnh chụp tuần chạy mỗi sáng thứ Hai lúc 01:30.
 
+## M10 — Báo cáo, EVM, MS Project, hồ sơ dự án (2026-11-12)
+
+`scripts/perf/control_check.py` tạo 50 dự án tạm × 204 việc, mỗi dự án có ngân sách đã duyệt 8 dòng, 6 rủi ro, 4 vấn đề, 3 phát sinh; một phần ba việc đã trễ. Thêm một dự án 2.004 việc với 1.500 phụ thuộc để đo MS Project. Đo ở máy chủ, Docker Desktop trên Windows 11, trên site dev (có cả dữ liệu mẫu); script tự dọn dữ liệu.
+
+| Thao tác | Thời gian |
+|---|---|
+| Báo cáo "Tiến độ các dự án" (55 dự án) | 0,34–0,37 s |
+| Báo cáo "Ngân sách và giá trị thu được" (55 dự án, EVM từng dự án) | 0,38–0,49 s |
+| Báo cáo "Công việc trễ", trang đầu (1.927 việc trễ) | 30 ms |
+| Sổ rủi ro, vấn đề, phát sinh (mọi dự án), trang đầu | 4–7 ms |
+| Báo cáo của lớp thi công, một dự án | 22–26 ms |
+| EVM 55 dự án ra Excel / PDF | 0,13–0,16 s / 0,59–0,61 s |
+| Xuất MS Project XML, 2.004 việc (1,2 MB) | 0,24–0,33 s |
+| Đọc lại tệp đó (xem trước) | 0,17–0,21 s |
+| Nhập tệp đó vào dự án khác (2.004 việc, 1.500 phụ thuộc) | 1,6 s |
+| Lập hồ sơ dự án 2.004 việc (không có tài liệu, biểu mẫu) | 0,09–0,13 s |
+
+Lần đo đầu, nhập MS Project mất **42 s**: mỗi phụ thuộc được kiểm vòng tròn trên cả mạng việc (1.500 lần × 2.000 việc), rồi chèn từng dòng. Nay các quy tắc của từng phụ thuộc được kiểm riêng, vòng tròn được kiểm một lần cho tất cả (chỉ khi tệp có vòng tròn mới thử từng cái để bỏ cái gây vòng), và các phụ thuộc được chèn hàng loạt.
+
+Gói hồ sơ chạy ở hàng đợi `long`. Thời gian chủ yếu nằm ở việc tải các tệp tài liệu từ MinIO và lập PDF của biểu mẫu đã duyệt chưa có bản lưu; giới hạn 1 GB tệp mỗi gói.
+

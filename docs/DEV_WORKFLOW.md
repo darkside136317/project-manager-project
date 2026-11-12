@@ -117,6 +117,18 @@ Kịch bản khối lượng công việc, hiệu suất, danh mục v2 của M9
 cd scripts/e2e/ui && node people_flow.mjs
 ```
 
+Kịch bản kiểm soát dự án M10 trên dữ liệu mẫu nhà phố (ngân sách, rủi ro, phát sinh, báo cáo, MS Project, hồ sơ dự án; chạy từ gốc repo; đổi dữ liệu mẫu và để lại một dự án tạm đã đóng "E2E MS Project …"):
+
+```bash
+cd scripts/e2e/ui && node control_flow.mjs
+```
+
+Đo báo cáo, EVM, MS Project 2.000 việc, hồ sơ dự án trên 50 dự án tạm (trong `docker/`; tự dọn khi xong):
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -e PERF_PROJECTS=50 -e PERF_TASKS=200 -e PERF_BIG=2000 -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - seed < ../scripts/perf/control_check.py
+```
+
 Đo khối lượng công việc, hiệu suất, danh mục v2 trên 50 dự án tạm, 120 người (trong `docker/`; tự dọn khi xong, `reset` để dọn nếu bị ngắt):
 
 ```bash

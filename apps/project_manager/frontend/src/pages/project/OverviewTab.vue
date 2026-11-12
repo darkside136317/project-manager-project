@@ -71,6 +71,54 @@ async function acknowledge(alert) {
 }
 
 watch(() => [name.value, data.value?.alerts_open], loadAlerts, { immediate: true });
+
+// --- closing the project, its dossier (M10) ---------------------------------------------------------------------------
+const closing = ref(null);  // closing_check
+const closeDialog = ref("");  // "close" | "reopen"
+const closeError = ref("");
+const closed = computed(() => data.value.project.pm_state === "Đóng");
+const control = computed(() => data.value.control);
+const LEFT = [["tasks_open", "việc chưa xong"], ["risks_open", "rủi ro đang mở"], ["issues_open", "vấn đề đang mở"],
+  ["changes_waiting", "phát sinh chưa quyết"], ["forms_waiting", "biểu mẫu chờ duyệt"], ["budget_draft", "ngân sách nháp"],
+  ["alerts_open", "cảnh báo đang mở"]];
+const left = computed(() => (closing.value ? LEFT.filter(([key]) => closing.value[key]).map(([key, label]) => `${closing.value[key]} ${label}`) : []));
+
+async function loadClosing() {
+  if (!data.value.can?.["project.edit"]) return;
+  try {
+    closing.value = await api.control.closingCheck(name.value);
+  } catch {
+    closing.value = null;
+  }
+}
+
+async function closeOrReopen(note) {
+  busy.value = true;
+  closeError.value = "";
+  try {
+    if (closeDialog.value === "close") await api.control.close(name.value, note);
+    else await api.control.reopen(name.value, note);
+    toast(closeDialog.value === "close" ? "Đã đóng dự án" : "Đã mở lại dự án");
+    closeDialog.value = "";
+    reload();
+    loadClosing();
+  } catch (e) {
+    closeError.value = e.message;
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function dossier() {
+  try {
+    await api.control.requestDossier(name.value);
+    toast("Đang lập hồ sơ dự án: bạn sẽ nhận thông báo kèm liên kết tải khi xong", "success", 7000);
+  } catch (e) {
+    toast(e.message, "error", 7000);
+  }
+}
+
+watch(name, loadClosing, { immediate: true });
 </script>
 
 <template>
@@ -199,6 +247,33 @@ watch(() => [name.value, data.value?.alerts_open], loadAlerts, { immediate: true
       </table>
     </section>
 
+    <section v-if="control" class="card p-4" aria-labelledby="ov-control" data-control-card>
+      <h2 id="ov-control" class="m-0 text-sm font-semibold">Kiểm soát dự án</h2>
+      <ul class="m-0 mt-3 list-none space-y-1 p-0 text-sm">
+        <li><RouterLink :to="`${base}/rui-ro`">{{ control.risks_open }} rủi ro đang mở</RouterLink><span v-if="control.risks_high" class="badge badge-danger ml-1">{{ control.risks_high }} mức cao</span></li>
+        <li><RouterLink :to="`${base}/rui-ro`">{{ control.issues_open }} vấn đề đang mở</RouterLink><span v-if="control.issues_overdue" class="badge badge-danger ml-1">{{ control.issues_overdue }} quá hạn</span></li>
+        <li><RouterLink :to="`${base}/phat-sinh`">{{ control.changes_waiting }} phát sinh chờ duyệt</RouterLink></li>
+      </ul>
+    </section>
+
+    <section v-if="data.can?.['project.edit']" class="card p-4 lg:col-span-2" aria-labelledby="ov-closing" data-closing>
+      <h2 id="ov-closing" class="m-0 text-sm font-semibold">Kết thúc dự án</h2>
+      <p class="m-0 mt-2 text-sm text-ink-muted" v-if="!closed">
+        <template v-if="left.length">Còn: {{ left.join(", ") }}.</template>
+        <template v-else>Không còn việc, rủi ro, phát sinh nào đang mở.</template>
+      </p>
+      <p v-else class="m-0 mt-2 text-sm">Dự án đã đóng.</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button v-if="!closed" class="btn" type="button" @click="closeDialog = 'close'"><Icon name="archive" :size="16" /> Đóng dự án</button>
+        <button v-else class="btn" type="button" @click="closeDialog = 'reopen'">Mở lại dự án</button>
+        <button class="btn" type="button" @click="dossier"><Icon name="file-down" :size="16" /> Xuất hồ sơ dự án (ZIP)</button>
+      </div>
+      <ul v-if="closing?.dossiers?.length" class="m-0 mt-3 list-none space-y-1 p-0 text-sm">
+        <li v-for="file in closing.dossiers" :key="file.name"><a :href="file.file_url" data-dossier>{{ file.file_name }}</a>
+          <span class="text-xs text-ink-muted"> · {{ formatDateTime(file.creation) }}</span></li>
+      </ul>
+    </section>
+
     <section class="card p-4 lg:col-span-3" aria-labelledby="ov-recent">
       <h2 id="ov-recent" class="m-0 text-sm font-semibold">Hoạt động gần đây</h2>
       <p v-if="!data.recent.length" class="mt-3 text-sm text-ink-muted">Chưa có hoạt động nào.</p>
@@ -213,6 +288,11 @@ watch(() => [name.value, data.value?.alerts_open], loadAlerts, { immediate: true
       </ul>
     </section>
   </div>
+
+  <ReasonDialog :open="Boolean(closeDialog)" :title="closeDialog === 'close' ? 'Đóng dự án' : 'Mở lại dự án'"
+                :message="closeDialog === 'close' && left.length ? `Dự án còn ${left.join(', ')}. Đóng thì các cảnh báo đang mở kết thúc.` : ''"
+                :label="closeDialog === 'close' ? 'Kết luận, lý do đóng' : 'Lý do mở lại'" :confirm-text="closeDialog === 'close' ? 'Đóng dự án' : 'Mở lại'"
+                :danger="closeDialog === 'close'" :busy="busy" :error="closeError" @confirm="closeOrReopen" @cancel="closeDialog = ''" />
 
   <ReasonDialog :open="passing" :title="current?.state === GATE_WAITING ? 'Duyệt chuyển giai đoạn' : 'Chuyển giai đoạn'"
                 :message="current ? `Chuyển từ ${current.label} sang ${current.next || 'hoàn thành dự án'}.` : ''"

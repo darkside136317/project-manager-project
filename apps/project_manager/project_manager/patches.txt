@@ -2,3 +2,4 @@
 
 [post_model_sync]
 project_manager.patches.m8_stock_capabilities
+project_manager.patches.m10_control_capabilities

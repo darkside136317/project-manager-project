@@ -138,8 +138,10 @@ onMounted(() => tree.load(ROOT));
   <div class="mb-3 flex flex-wrap items-center gap-2">
     <template v-if="tree.canPlan">
       <button class="btn btn-primary" type="button" @click="startAdd(null)"><Icon name="plus" :size="16" /> Thêm hạng mục</button>
-      <button class="btn" type="button" @click="importing = true"><Icon name="file-spreadsheet" :size="16" /> Nhập từ Excel</button>
+      <button class="btn" type="button" @click="importing = 'excel'"><Icon name="file-spreadsheet" :size="16" /> Nhập từ Excel</button>
+      <button class="btn" type="button" @click="importing = 'msproject'"><Icon name="file-up" :size="16" /> Nhập MS Project</button>
     </template>
+    <a class="btn" :href="api.wbs.msprojectExportUrl(project)" data-msproject-export><Icon name="file-down" :size="16" /> Xuất MS Project</a>
     <button class="btn btn-ghost ml-auto" type="button" :disabled="busy" @click="refresh()"><Icon name="refresh-cw" :size="16" /> Tải lại</button>
   </div>
 
@@ -184,5 +186,5 @@ onMounted(() => tree.load(ROOT));
   <ConfirmDialog :open="Boolean(removing)" title="Xóa công việc" danger confirm-text="Xóa"
     :message="removing ? `Xóa ${removing.pm_wbs_code} ${removing.subject}? Việc đã giao hoặc đã có lịch sử thì chỉ hủy được, không xóa được.` : ''"
     @confirm="remove" @cancel="removing = null" />
-  <ImportDialog :open="importing" :project="project" @close="importing = false" @done="importing = false; refresh(); reload()" />
+  <ImportDialog :open="Boolean(importing)" :kind="importing || 'excel'" :project="project" @close="importing = false" @done="importing = false; refresh(); reload()" />
 </template>

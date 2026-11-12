@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "category",
+  "task",
+  "description",
+  "amount",
+  "change_request"
+ ],
+ "fields": [
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Khoản mục",
+   "options": "Vật tư\nNhân công\nMáy thi công\nThầu phụ\nChi phí chung\nDự phòng\nPhát sinh\nKhác",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Hạng mục, công việc",
+   "options": "Task",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Diễn giải",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Số tiền",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "change_request",
+   "fieldtype": "Link",
+   "label": "Từ phát sinh",
+   "options": "PM Change Request",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Budget Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

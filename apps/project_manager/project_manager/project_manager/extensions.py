@@ -25,6 +25,14 @@ Hooks a layer may declare (pm_construction's hooks.py is the example):
 * `pm_portfolio_columns = ["dotted.path"]` — functions (projects) returning {project: {key: {"label", "value",
   "format": "percent"|"number"|"currency", "tone": "good"|"warn"|"bad"|None}}} added to the portfolio rows (M9); the
   function checks what the viewer may see (finance figures...).
+* `pm_reports = ["dotted.path"]` — functions returning the layer's reports (services/reports/base.Report entries) for
+  the report hub, the exports and the scheduled sending (M10); each report keeps to what the user may read.
+* `pm_actual_costs = ["dotted.path"]` — functions (project) returning the actual costs the layer knows:
+  [{"task", "category", "amount"}] (M10, services/budget.py: earned value, budget against actual).
+* `pm_dossier_parts = ["dotted.path"]` — functions (project) returning more entries of the project's dossier:
+  [{"path", "content" (bytes), "source"}] (M10, services/closing.py); built as the person who asked for it.
+* `project_close_handlers = ["dotted.path"]` — functions (project) called when a project is closed (M10,
+  services/closing.close), e.g. an archive bridge taking the dossier.
 * `pm_gate_checks = ["dotted.path"]` — conditions of passing a phase (M7, services/phases.py): the function gets the
   phase (a Task row) and returns the conditions still missing, as short sentences (empty: nothing missing).
 """

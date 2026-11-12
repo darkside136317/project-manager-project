@@ -61,10 +61,15 @@ PROJECT_CAPABILITIES = (
     ("finance.view", "Xem chi phí của dự án"),
     ("material.request", "Đề xuất vật tư"),
     ("stock.manage", "Nhập, xuất, chuyển kho của dự án"),
+    ("budget.manage", "Lập, duyệt ngân sách của dự án"),
+    ("risk.manage", "Ghi, xử lý rủi ro và vấn đề"),
+    ("change.request", "Lập đề nghị phát sinh"),
+    ("change.approve", "Duyệt phát sinh"),
 )
 PROJECT_CAPABILITY_CODES = frozenset(code for code, _label in PROJECT_CAPABILITIES)
 WRITE_PROJECT_CAPABILITIES = frozenset({"project.edit", "project.members", "plan.edit", "task.assign", "task.update",
-                                        "task.approve", "material.request", "stock.manage"})
+                                        "task.approve", "material.request", "stock.manage", "budget.manage",
+                                        "risk.manage", "change.request", "change.approve"})
 
 VISIBILITY_ALL, VISIBILITY_ASSIGNED = "Tất cả công việc", "Chỉ việc được giao"
 
@@ -72,15 +77,17 @@ VISIBILITY_ALL, VISIBILITY_ASSIGNED = "Tất cả công việc", "Chỉ việc �
 DEFAULT_PROJECT_ROLES = (
     {"role_name": "Quản lý dự án", "task_visibility": VISIBILITY_ALL,
      "capabilities": ("project.edit", "project.members", "plan.edit", "task.assign", "task.update", "task.approve",
-                      "perf.view_project", "finance.view", "material.request", "stock.manage")},
+                      "perf.view_project", "finance.view", "material.request", "stock.manage", "budget.manage",
+                      "risk.manage", "change.request", "change.approve")},
     {"role_name": "Chỉ huy trưởng", "task_visibility": VISIBILITY_ALL,
      "capabilities": ("plan.edit", "task.assign", "task.update", "task.approve", "perf.view_project", "material.request",
-                      "stock.manage")},
-    {"role_name": "Kỹ sư", "task_visibility": VISIBILITY_ALL, "capabilities": ("task.update", "material.request")},
+                      "stock.manage", "risk.manage", "change.request")},
+    {"role_name": "Kỹ sư", "task_visibility": VISIBILITY_ALL,
+     "capabilities": ("task.update", "material.request", "risk.manage", "change.request")},
     {"role_name": "Tổ trưởng", "task_visibility": VISIBILITY_ASSIGNED, "capabilities": ("task.update",)},
     {"role_name": "Thủ kho", "task_visibility": VISIBILITY_ALL, "capabilities": ("stock.manage", "material.request"),
      "required_roles": ("Stock User",)},
-    {"role_name": "Kế toán dự án", "task_visibility": VISIBILITY_ALL, "capabilities": ("finance.view",),
+    {"role_name": "Kế toán dự án", "task_visibility": VISIBILITY_ALL, "capabilities": ("finance.view", "budget.manage"),
      "required_roles": ("Accounts User", "Purchase User")},
     {"role_name": "Khách", "task_visibility": VISIBILITY_ASSIGNED, "capabilities": ()},
 )
@@ -136,7 +143,7 @@ ROLE_MATRIX = (
 PROJECT_SCOPED = ("Task", "PM Project Member", "PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot",
                   "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline", "PM Baseline Task",
                   "PM Baseline Curve", "PM Media", "PM Follow", "PM Document", "PM Document Version", "PM Alert",
-                  "PM Performance Snapshot")
+                  "PM Performance Snapshot", "PM Budget", "PM Risk", "PM Issue", "PM Change Request")
 # ERPNext's stock and buying documents, narrowed to the projects of the app's staff (permissions.stock_query).
 # {DocType: the column naming its project}. People outside the app keep ERPNext's own permissions.
 STOCK_SCOPED = {"Warehouse": "pm_project", "Location": "pm_project", "Material Request": "pm_project",
@@ -231,5 +238,8 @@ DEFAULT_ALERT_RULES = [
     {"rule_name": "Quá tải công việc", "rule_type": "Quá tải công việc", "to_accountable": 0,
      "description": "Tuần này hoặc tuần sau, một người cần nhiều hơn 120% số ngày công họ có. Báo người đó và quản lý "
                     "các dự án có việc của họ."},
+    {"rule_name": "Vấn đề quá hạn xử lý", "rule_type": "Vấn đề quá hạn xử lý", "to_accountable": 0,
+     "escalations": [{"after_days": 3, "to_role": "Chỉ huy trưởng"}],
+     "description": "Một vấn đề của dự án còn mở mà đã qua hạn xử lý. Báo người xử lý và quản lý dự án."},
 ]
 

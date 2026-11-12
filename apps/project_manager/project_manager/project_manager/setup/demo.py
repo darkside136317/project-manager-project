@@ -7,6 +7,8 @@ of history, so every screen of the app has something to show.
 Everything it creates is marked (project code DEMO-*, accounts demo.*@pm.localhost) and `down` removes exactly that.
 Forms: the general checklist is approved on 2.1, waits for approval on 2.3, and is required (not yet filled in) on 2.5.
 Workload (M9): the second engineer is on leave three days next week; the weeks before are kept (performance trend).
+Control (M10): an approved budget by WBS section, three open risks (one high), an overdue issue, an approved change
+request (cost added, hand-over moved) and one waiting, a weekly report sent to the manager and the site commander.
 The demo accounts get no password: an administrator sets one (Người dùng → Gửi liên kết đặt mật khẩu) to log in as them.
 """
 
@@ -163,6 +165,7 @@ def up():
     _history(project, start, today)
     _discussion(project, tasks, manager, commander, eng1)
     _people_weeks(today, eng2)
+    _control(project, tasks, today, manager, commander, eng1)
     frappe.db.commit()
     print(f"Demo created: {project} (template {template.name})")
 
@@ -175,6 +178,72 @@ def _people_weeks(today, on_leave):
     workload.save_capacity(on_leave, add_days(monday, 7), add_days(monday, 9), 0, "Nghỉ phép", "Nghỉ phép năm (dữ liệu mẫu)")
     for weeks in (4, 3, 2, 1):
         performance.snapshot_week(add_days(monday, -7 * weeks))
+
+
+# (WBS group, cost category, amount) of the town house's budget; illustrative figures
+BUDGET = (("1", "Chi phí chung", 120_000_000), ("2", "Vật tư", 850_000_000), ("3", "Nhân công", 520_000_000),
+          ("4", "Thầu phụ", 310_000_000), (None, "Dự phòng", 100_000_000))
+
+
+def _control(project, tasks, today, manager, commander, engineer):
+    """Budget, risks, issues, change requests, a scheduled report (M10)."""
+    from project_manager.project_manager.services import budget, control
+    from project_manager.project_manager.services.reports import schedule as sending
+
+    frappe.set_user(manager)
+    draft = budget.save_draft(project, "Ngân sách thi công", [
+        {"category": category, "task": tasks[code].name if code else None, "amount": amount,
+         "description": "Số liệu minh họa"} for code, category, amount in BUDGET], "Lập theo dự toán")
+    budget.approve(draft["name"], "Theo hợp đồng thi công")
+    frappe.set_user(commander)
+    control.save_risk(project, {"title": "Mưa kéo dài làm chậm phần thân", "category": "Thời tiết", "probability": 4,
+                                "impact": 3, "owner_user": commander, "status": "Đang xử lý", "due_date": add_days(today, 7),
+                                "task": tasks["3.1.2"].name,
+                                "plan": "Che bạt khu vực đổ bê tông, dồn ca khi tạnh mưa, chuẩn bị máy bơm nước"})
+    frappe.set_user(manager)
+    control.save_risk(project, {"title": "Giá thép tăng trong quý", "category": "Chi phí", "probability": 3, "impact": 3,
+                                "owner_user": manager, "response": "Chuyển giao",
+                                "plan": "Chốt giá thép phần thân với nhà cung cấp trước 2 tuần"})
+    control.save_risk(project, {"title": "Thiếu thợ hoàn thiện dịp cuối năm", "category": "Cung ứng", "probability": 2,
+                                "impact": 4, "owner_user": commander, "plan": "Ký sớm với tổ hoàn thiện, giữ hai tổ dự phòng"})
+    control.save_risk(project, {"title": "Sạt lở thành hố móng", "category": "An toàn", "probability": 2, "impact": 5,
+                                "status": "Đã đóng", "close_note": "Đã xong phần móng"})
+    control.save_issue(project, {"title": "Bản vẽ điện tầng 2 chưa được duyệt", "priority": "Cao", "owner_user": engineer,
+                                 "due_date": add_days(today, -2), "task": tasks["4.3"].name,
+                                 "description": "Tư vấn thiết kế chưa gửi bản sửa sau góp ý của chủ nhà."})
+    solved = control.save_issue(project, {"title": "Đường vào công trường bị chắn", "priority": "Trung bình",
+                                          "owner_user": commander})
+    control.save_issue(project, {"status": "Đã giải quyết", "resolution": "Thỏa thuận với hàng xóm, đi lối phía sau"},
+                       solved["name"])
+    frappe.set_user(commander)
+    roof = control.save_change(project, {"title": "Bổ sung mái che sân thượng", "reason": "Chủ đầu tư yêu cầu",
+                                         "cost_impact": 45_000_000, "days_impact": 3,
+                                         "description": "Khung thép, mái tôn cách nhiệt 24 m2"},
+                               [{"task": tasks["4.4"].name,  # its end now (the plan moved since `tasks` was read)
+                                 "new_end": add_days(frappe.db.get_value("Task", tasks["4.4"].name, "exp_end_date"), 3)}])
+    control.submit_change(roof["name"])
+    frappe.set_user(manager)
+    control.decide(roof["name"], True, "Chủ nhà đã ký phụ lục")
+    frappe.set_user(engineer)
+    tiles = control.save_change(project, {"title": "Đổi gạch ốp phòng tắm", "reason": "Chủ đầu tư yêu cầu",
+                                          "cost_impact": 12_000_000, "description": "Gạch 30x60 thay cho 25x40"})
+    control.submit_change(tiles["name"])
+    frappe.set_user(manager)
+    sending.save("tien-do-du-an", {"title": "Tiến độ các dự án (hằng tuần)", "frequency": sending.WEEKLY,
+                                   "weekday": "Thứ Hai", "hour": 7, "file_format": "PDF"}, [manager, commander])
+    frappe.set_user("Administrator")
+
+
+def drop_control(project) -> None:
+    """The M10 records of a demo project (budgets, risks, issues, change requests, dossiers)."""
+    for doctype, child in (("PM Budget", "PM Budget Line"), ("PM Change Request", "PM Change Task")):
+        for name in frappe.get_all(doctype, filters={"project": project}, pluck="name"):
+            frappe.db.delete(child, {"parent": name})
+            frappe.db.delete(doctype, {"name": name})
+    for doctype in ("PM Risk", "PM Issue", "PM Performance Snapshot"):
+        frappe.db.delete(doctype, {"project": project})
+    for name in frappe.get_all("File", filters={"attached_to_doctype": "Project", "attached_to_name": project}, pluck="name"):
+        frappe.delete_doc("File", name, force=True, ignore_permissions=True)
 
 
 def _mention(email: str) -> str:
@@ -278,6 +347,7 @@ def down():
                 object_storage.delete_many([p.object_key for p in photos], "media")
                 object_storage.delete_many([p.thumb_key for p in photos], "thumbs")
                 object_storage.delete_many(files, "documents")
+            drop_control(project)
             for doctype in ("PM Activity", "PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Project Member",
                             "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline Task",
                             "PM Baseline Curve", "PM Baseline", "PM Media", "PM Follow", "PM Document Version",
@@ -287,6 +357,9 @@ def down():
             frappe.db.delete("Task", {"project": project})
             frappe.delete_doc("Project", project, force=True, ignore_permissions=True)
     for email, *_ in PEOPLE:
+        for name in frappe.get_all("PM Report Subscription", filters={"owner_user": email}, pluck="name"):
+            frappe.db.delete("PM Report Recipient", {"parent": str(name)})
+            frappe.db.delete("PM Report Subscription", {"name": name})
         frappe.db.delete("PM Resource Capacity", {"user": email})
         frappe.db.delete("PM Performance Snapshot", {"subject": email})
         frappe.db.delete("Notification Log", {"for_user": email})

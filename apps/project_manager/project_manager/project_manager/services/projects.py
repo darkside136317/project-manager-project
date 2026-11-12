@@ -18,7 +18,7 @@ from project_manager.project_manager.policy import (
     get_access,
     has_project_capability,
 )
-from project_manager.project_manager.services import activity, baseline, gates, rollup, schedule, tree
+from project_manager.project_manager.services import activity, baseline, control, gates, rollup, schedule, tree
 from project_manager.project_manager.services import phases as phase_gates
 
 MANAGER_ROLE = "Quản lý dự án"
@@ -128,7 +128,9 @@ def overview(project: str) -> dict:
                                            limit_page_length=500)),
         "sees_all_tasks": sees_all,
         "can": {cap: has_project_capability(project, cap) for cap in
-                ("project.edit", "project.members", "plan.edit", "task.assign", "task.update", "task.approve")},
+                ("project.edit", "project.members", "plan.edit", "task.assign", "task.update", "task.approve",
+                 "finance.view", "budget.manage", "risk.manage", "change.request", "change.approve")},
+        "control": control.summary(project) if sees_all else None,
     }
 
 

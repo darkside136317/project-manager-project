@@ -55,7 +55,8 @@ def build_boot() -> dict:
     user = frappe.session.user
     nav = [{"group": GROUP_OVERVIEW, "items": [
                {"label": "Tổng quan", "route": SPA_HOME, "icon": "layout-dashboard"},
-               {"label": "Danh mục dự án", "route": f"{SPA_HOME}/danh-muc-du-an", "icon": "chart-bar"}]},
+               {"label": "Danh mục dự án", "route": f"{SPA_HOME}/danh-muc-du-an", "icon": "chart-bar"},
+               {"label": "Báo cáo", "route": f"{SPA_HOME}/bao-cao", "icon": "file-chart-column"}]},
            {"group": GROUP_WORK, "items": [
                {"label": "Việc của tôi", "route": f"{SPA_HOME}/viec-cua-toi", "icon": "clipboard-check"},
                {"label": "Cảnh báo", "route": f"{SPA_HOME}/canh-bao", "icon": "bell", "badge": _open_alerts(user)},

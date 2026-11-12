@@ -1,0 +1,194 @@
+{
+ "actions": [],
+ "autoname": "RR-.#####",
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "title",
+  "category",
+  "description",
+  "task",
+  "column_score",
+  "probability",
+  "impact",
+  "score",
+  "level",
+  "response_section",
+  "owner_user",
+  "response",
+  "plan",
+  "due_date",
+  "column_state",
+  "status",
+  "raised_by",
+  "closed_on",
+  "close_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "reqd": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Rủi ro",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Nhóm",
+   "options": "Kỹ thuật\nTiến độ\nChi phí\nAn toàn\nPháp lý\nCung ứng\nThời tiết\nKhác",
+   "default": "Kỹ thuật",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Mô tả"
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Công việc liên quan",
+   "options": "Task"
+  },
+  {
+   "fieldname": "column_score",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "probability",
+   "fieldtype": "Int",
+   "label": "Khả năng xảy ra (1–5)",
+   "default": "3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "impact",
+   "fieldtype": "Int",
+   "label": "Mức ảnh hưởng (1–5)",
+   "default": "3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "score",
+   "fieldtype": "Int",
+   "label": "Điểm",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "level",
+   "fieldtype": "Select",
+   "label": "Mức",
+   "options": "Thấp\nTrung bình\nCao",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "response_section",
+   "fieldtype": "Section Break",
+   "label": "Ứng phó"
+  },
+  {
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "label": "Người phụ trách",
+   "options": "User",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "response",
+   "fieldtype": "Select",
+   "label": "Cách ứng phó",
+   "options": "Giảm thiểu\nTránh\nChuyển giao\nChấp nhận",
+   "default": "Giảm thiểu"
+  },
+  {
+   "fieldname": "plan",
+   "fieldtype": "Small Text",
+   "label": "Kế hoạch ứng phó"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Hạn xử lý"
+  },
+  {
+   "fieldname": "column_state",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Trạng thái",
+   "options": "Mở\nĐang xử lý\nĐã xảy ra\nĐã đóng",
+   "default": "Mở",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "raised_by",
+   "fieldtype": "Link",
+   "label": "Người ghi",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_on",
+   "fieldtype": "Date",
+   "label": "Ngày đóng",
+   "read_only": 1
+  },
+  {
+   "fieldname": "close_note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú khi đóng"
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Risk",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}

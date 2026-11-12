@@ -69,3 +69,22 @@ Không sao chép thêm từ `document_manager`. Cảnh báo, sức khỏe, chuy�
 ## M8
 
 Không sao chép thêm từ `document_manager`. Vật tư, máy, nhân công, chi phí (`pm_construction/services/materials.py`, `machines.py`, `labour.py`, `costs.py`) và phạm vi kho của lõi (`permissions.stock_query`) đều viết mới, trên các DocType kho, mua hàng, tài sản của ERPNext. Định mức và đơn giá của dữ liệu mẫu (`setup/demo_site.py`) là số minh họa, không lấy từ bộ định mức hay bảng giá nào.
+
+## M9
+
+Không sao chép thêm từ `document_manager`. Khối lượng công việc, hiệu suất, danh mục dự án v2, đặt máy đều viết mới.
+
+## M10
+
+| File ở repo này | Nguồn (`document_manager/...`) | Thay đổi so với nguồn |
+|---|---|---|
+| `project_manager/services/reports/base.py` | `document_manager/services/reports/base.py` | Phạm vi theo dự án (`Where.project_scope`) thay cho phông và mức mật; `may_run` thay cho danh sách DocType phải đọc được; thêm `order`; cột tiền (Currency) |
+| `project_manager/services/reports/__init__.py` | `document_manager/services/reports/__init__.py` | Báo cáo của lớp ngành qua hook `pm_reports`; bộ lọc bắt buộc |
+| `project_manager/services/reports/output.py` | `document_manager/services/reports/output.py` | Đầu trang là Company mặc định của ERPNext (không có Organization Info); cột tiền; `to_pdf` dùng chung cho gửi theo lịch |
+| `project_manager/api/reports.py` | `document_manager/api/reports.py` | Cổng nhân viên của repo này; thêm các API gửi theo lịch |
+| `project_manager/templates/pm_report_print.html` | `document_manager/templates/reports/report_print.html` | Đổi chữ ký "Lãnh đạo đơn vị" |
+| `frontend/src/lib/reports.js`, `components/FilterForm.vue` | `frontend/src/lib/reports.js`, `components/FilterForm.vue` | Bỏ phần kiểm kê (cột chênh lệch); thêm cột tiền, lịch gửi |
+| `frontend/src/pages/ReportsHub.vue`, `ReportPage.vue` | cùng tên | Bỏ liên kết kiểm kê, biểu đồ; thêm danh sách và ngăn gửi theo lịch, bộ lọc bắt buộc |
+
+Viết mới: ngân sách và EVM (`services/budget.py`), rủi ro, vấn đề, phát sinh (`services/control.py`), gửi báo cáo theo lịch (`services/reports/schedule.py`), MS Project XML (`services/msproject.py`), đóng dự án và gói hồ sơ (`services/closing.py`), các báo cáo (`services/reports/core.py`, lớp thi công `services/reporting.py`).
+

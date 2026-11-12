@@ -1,0 +1,174 @@
+{
+ "actions": [],
+ "autoname": "PS-.YYYY.-.####",
+ "creation": "2026-11-02 12:00:00.000000",
+ "description": "Đề nghị phát sinh: thay đổi phạm vi, chi phí, thời gian. Được duyệt thì chi phí cộng vào ngân sách đang dùng và các công việc dời ngày theo đề nghị.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "title",
+  "reason",
+  "description",
+  "column_impact",
+  "cost_impact",
+  "days_impact",
+  "status",
+  "tasks_section",
+  "tasks",
+  "decision_section",
+  "requested_by",
+  "submitted_on",
+  "decided_by",
+  "decided_on",
+  "decision_note",
+  "budget"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "reqd": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Nội dung phát sinh",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "label": "Nguyên nhân",
+   "options": "Chủ đầu tư yêu cầu\nThay đổi thiết kế\nĐiều kiện hiện trường\nSai sót, thiếu sót\nKhác",
+   "default": "Chủ đầu tư yêu cầu",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Mô tả"
+  },
+  {
+   "fieldname": "column_impact",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost_impact",
+   "fieldtype": "Currency",
+   "label": "Chi phí phát sinh",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "days_impact",
+   "fieldtype": "Int",
+   "label": "Ảnh hưởng tiến độ (ngày)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Trạng thái",
+   "options": "Nháp\nChờ duyệt\nĐã duyệt\nTừ chối\nĐã hủy",
+   "default": "Nháp",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "tasks_section",
+   "fieldtype": "Section Break",
+   "label": "Công việc dời ngày"
+  },
+  {
+   "fieldname": "tasks",
+   "fieldtype": "Table",
+   "label": "Công việc",
+   "options": "PM Change Task"
+  },
+  {
+   "fieldname": "decision_section",
+   "fieldtype": "Section Break",
+   "label": "Quyết định"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Người đề nghị",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_on",
+   "fieldtype": "Datetime",
+   "label": "Gửi duyệt lúc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Người quyết định",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_on",
+   "fieldtype": "Datetime",
+   "label": "Quyết định lúc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_note",
+   "fieldtype": "Small Text",
+   "label": "Ý kiến",
+   "read_only": 1
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Ngân sách đã cộng",
+   "options": "PM Budget",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Change Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}

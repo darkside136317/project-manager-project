@@ -367,7 +367,8 @@ def _label(row) -> str:
     return f"{row.pm_wbs_code or ''} {row.subject}".strip()
 
 
-def _check_dependency(net: Network, predecessor: str, successor: str, kind: str, ignore=None) -> None:
+def _link_rules(net: Network, predecessor: str, successor: str, kind: str) -> None:
+    """The rules of one link, but the circle (which needs the whole network)."""
     if kind not in (FS, SS, FF, SF):
         frappe.throw(_("Kiểu phụ thuộc không hợp lệ: {0}").format(kind))
     if predecessor == successor:
@@ -379,6 +380,11 @@ def _check_dependency(net: Network, predecessor: str, successor: str, kind: str,
         frappe.throw(_("Không đặt phụ thuộc giữa một nhóm và công việc nằm trong nhóm đó"))
     if before.is_group and kind in (SS, SF):
         frappe.throw(_("Nhóm công việc chỉ làm việc trước theo kiểu FS hoặc FF"))
+
+
+def _check_dependency(net: Network, predecessor: str, successor: str, kind: str, ignore=None) -> None:
+    _link_rules(net, predecessor, successor, kind)
+    before, after = net.rows[predecessor], net.rows[successor]
     trial = frappe._dict(name="(mới)", predecessor=predecessor, successor=successor, dep_type=kind, lag_days=0)
     net.dependencies = [d for d in net.dependencies if d.name != ignore] + [trial]
     try:
@@ -386,6 +392,37 @@ def _check_dependency(net: Network, predecessor: str, successor: str, kind: str,
     except CycleError:
         frappe.throw(_("Không thêm được: {0} đã phụ thuộc vào {1}, sẽ thành một vòng tròn").format(_label(before), _label(after)),
                      title=_("Phụ thuộc vòng tròn"))
+
+
+def check_many(net: Network, links: list[dict]) -> tuple[list, list]:
+    """Many links to add at once ({"predecessor", "successor", "kind"}): (the ones that keep every rule, [(link, why)]).
+    The circle is checked once for all of them; only when they close one are they tried one by one."""
+    kept, skipped = [], []
+    for link in links:
+        try:
+            _link_rules(net, link["predecessor"], link["successor"], link["kind"])
+        except frappe.ValidationError as e:
+            frappe.clear_last_message()
+            skipped.append((link, str(e)))
+            continue
+        kept.append(link)
+    base = net.dependencies
+    net.dependencies = base + [frappe._dict(name=f"(mới {i})", predecessor=l["predecessor"], successor=l["successor"],
+                                            dep_type=l["kind"], lag_days=0) for i, l in enumerate(kept)]
+    try:
+        order(*net.graph(lambda _row, _span: Activity(0), every=True))
+        return kept, skipped
+    except CycleError:
+        net.dependencies = base
+    out = []
+    for link in kept:
+        try:
+            _check_dependency(net, link["predecessor"], link["successor"], link["kind"])
+            out.append(link)
+        except frappe.ValidationError as e:
+            frappe.clear_last_message()
+            skipped.append((link, str(e)))
+    return out, skipped
 
 
 def add_dependency(predecessor: str, successor: str, kind: str = FS, lag: int = 0) -> dict:

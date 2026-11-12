@@ -156,6 +156,35 @@ Trên cả hai dự án mẫu: tổ trưởng Võ Tổ Trưởng thực hiện p
 
 Kịch bản `scripts/e2e/ui/people_flow.mjs` chạy các bước 1–4.
 
+### Ngân sách, rủi ro, phát sinh, báo cáo (khoảng 10 phút)
+
+1. **Tab "Ngân sách"** (quản lý dự án, kế toán dự án):
+   - tám ô EVM: ngân sách (BAC), giá trị kế hoạch (PV), giá trị thu được (EV), chi phí thực tế (AC), CPI, SPI, chi phí dự báo khi xong (EAC), chênh lệch khi xong (VAC);
+   - ngân sách so với thực tế theo khoản mục và theo hạng mục;
+   - "Điều chỉnh" tạo bản nháp từ ngân sách đang dùng; duyệt bản nháp thì bản cũ chuyển sang "Thay thế";
+   - nhà phố chưa có chi phí thực tế vì dự án chỉ dùng lõi, chưa có timesheet; nhà xưởng có chi phí vật tư, máy, nhân công nên CPI có nghĩa;
+   - kỹ sư, tổ trưởng không xem được tab này.
+2. **Tab "Rủi ro, vấn đề"**:
+   - ma trận 5 × 5 của các rủi ro đang mở; sổ rủi ro có người phụ trách, cách ứng phó, hạn;
+   - "Đã xảy ra" đóng rủi ro và mở một vấn đề cần xử lý;
+   - vấn đề quá hạn tô đỏ và có cảnh báo "Vấn đề quá hạn xử lý";
+   - tổ trưởng và khách (chỉ thấy việc của mình) không xem được tab này.
+3. **Tab "Phát sinh"**:
+   - kỹ sư lập phát sinh (chi phí, số ngày, các công việc dời ngày) rồi gửi duyệt;
+   - quản lý dự án duyệt hoặc từ chối (phải ghi lý do); người lập không tự duyệt;
+   - duyệt thì chi phí cộng vào ngân sách đang dùng, công việc dời ngày cùng các việc phụ thuộc.
+4. **Trang "Báo cáo"** (thanh bên, nhóm Tổng quan):
+   - mười báo cáo theo nhóm Tiến độ, Nhân sự, Tài chính, Kiểm soát dự án, Thi công; mỗi báo cáo chỉ có dữ liệu trong phạm vi người xem;
+   - xuất Excel, CSV, in, PDF có đầu trang công ty;
+   - "Gửi theo lịch": hằng ngày, hằng tuần hoặc hằng tháng, PDF hoặc Excel. Mỗi người nhận nhận báo cáo theo quyền của chính họ; email chỉ đi khi hệ thống có tài khoản gửi email, thông báo trong ứng dụng luôn có. Quản lý dự án mẫu đã có lịch gửi "Tiến độ các dự án" sáng thứ Hai.
+5. **Tab "Công việc"**: "Xuất MS Project" ra tệp XML mở được bằng MS Project; "Nhập MS Project" đọc tệp XML (cây, ngày, mốc, phụ thuộc, người phụ trách) với bước xem trước.
+6. **Tab "Tổng quan" → "Kết thúc dự án"** (người sửa được dự án):
+   - liệt kê những gì còn mở;
+   - "Xuất hồ sơ dự án (ZIP)": lập ở nền, xong thì có thông báo kèm liên kết tải. Gói gồm manifest.json (mỗi mục có kích thước, SHA-256, nguồn), danh sách công việc, thành viên, rủi ro, vấn đề, phát sinh, ngân sách, tài liệu, biểu mẫu đã duyệt (PDF), nhật ký thi công, BOQ;
+   - "Đóng dự án" (ghi kết luận) và "Mở lại".
+
+Kịch bản `scripts/e2e/ui/control_flow.mjs` chạy các bước 1–6.
+
 ## 3. Đưa một công trình thật vào
 
 1. **Người dùng và nhóm quyền** (Quản trị → Người dùng): tạo tài khoản; gán nhóm "Nhân viên"; giám đốc dùng nhóm có quyền xem mọi dự án.
@@ -210,7 +239,10 @@ Ghi lại mỗi tuần: số cảnh báo theo loại, số cảnh báo được 
 - **Giờ tăng ca** được ghi trong chấm công nhưng chưa tính tiền.
 - **Khối lượng công việc** chỉ tính việc có ngày kế hoạch, giao cho người (không tính việc giao cho cả đội); việc đã trễ dồn phần còn lại vào các ngày làm việc từ hôm nay. Lịch nghỉ là lịch của công ty, chưa có lịch riêng từng người ngoài các kỳ nghỉ phép, bán thời gian.
 - **Hiệu suất** tính trên việc được giao (chịu trách nhiệm, thực hiện); ảnh chụp tuần ghi lại số liệu mỗi sáng thứ Hai, nên xu hướng chỉ có từ khi hệ thống chạy.
-- **Báo cáo xuất theo lịch, ngân sách, rủi ro, phát sinh** chưa có (M10).
+- **Chi phí thực tế của dự án chỉ dùng lõi** lấy từ Timesheet của ERPNext (chi phí nhân công); dữ liệu mẫu nhà phố chưa có timesheet nên chưa có AC. Mua hàng, hóa đơn chưa được tính vào AC.
+- **Báo cáo gửi theo lịch** đi vào phút thứ 5 của giờ đã chọn, theo giờ của hệ thống; email cần tài khoản gửi email của Frappe.
+- **MS Project**: chỉ trao đổi tệp XML (không đọc tệp .mpp); lịch làm việc, tài nguyên ngoài thành viên dự án, chi phí trong tệp không được nhập.
+- **Hồ sơ dự án** là tệp ZIP giữ trong hệ thống; chưa có cầu nối tự gửi sang hệ thống lưu trữ (điểm mở rộng `project_close_handlers` đã có).
 - **Kênh nhận:** cảnh báo chỉ đi qua thông báo trong ứng dụng và email; chưa có Zalo, SMS.
 - **Lịch chạy:** cảnh báo được đánh giá mỗi sáng 6 giờ, leo thang mỗi giờ. Một việc vừa quá hạn trong ngày sẽ được báo vào sáng hôm sau.
 - **Giờ yên lặng** chỉ áp dụng cho email; thông báo trong ứng dụng luôn đến.

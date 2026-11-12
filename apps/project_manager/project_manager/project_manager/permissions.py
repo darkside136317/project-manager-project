@@ -111,6 +111,30 @@ def snapshot_query(user):
     return _query(user, "`tabPM Snapshot`.`project`")
 
 
+def _whole_query(user, column: str) -> str:
+    """Records about the whole project (risks, issues, change requests): where the user sees every task."""
+    access = get_access(user)
+    if access.kind == "admin":
+        return ""
+    return project_sql(access.read_tasks, column)
+
+
+def budget_query(user):
+    return _query(user, "`tabPM Budget`.`project`")
+
+
+def risk_query(user):
+    return _whole_query(user, "`tabPM Risk`.`project`")
+
+
+def issue_query(user):
+    return _whole_query(user, "`tabPM Issue`.`project`")
+
+
+def change_request_query(user):
+    return _whole_query(user, "`tabPM Change Request`.`project`")
+
+
 def performance_snapshot_query(user):
     """Kept weeks of performance (M9): read by the administrators, within the projects they read; the screens read
     them through services/performance.py, which applies who sees whose."""
@@ -244,6 +268,20 @@ has_document_version_permission = _read_only(lambda doc, ptype, user: _entry_sco
 has_follow_permission = _read_only(lambda doc, ptype, user: _own_follow(doc, user))
 has_snapshot_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
 has_performance_snapshot_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
+
+
+def _whole_scoped(doc, user, ptype) -> bool:
+    user = user or frappe.session.user
+    access = get_access(user)
+    if access.kind == "admin":
+        return True
+    return access.kind != "guest" and project_in(access.read_tasks, project_of(doc))
+
+
+has_budget_permission = _read_only(lambda doc, ptype, user: _scoped(doc, user, ptype))
+has_risk_permission = _read_only(lambda doc, ptype, user: _whole_scoped(doc, user, ptype))
+has_issue_permission = _read_only(lambda doc, ptype, user: _whole_scoped(doc, user, ptype))
+has_change_request_permission = _read_only(lambda doc, ptype, user: _whole_scoped(doc, user, ptype))
 has_assignment_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
 has_progress_entry_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))
 has_gate_permission = _read_only(lambda doc, ptype, user: _task_scoped(doc, user, ptype, doc.task))

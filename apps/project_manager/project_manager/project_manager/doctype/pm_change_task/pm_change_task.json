@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "creation": "2026-11-02 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "task",
+  "old_end",
+  "new_end",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "task",
+   "fieldtype": "Link",
+   "label": "Công việc",
+   "options": "Task",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "old_end",
+   "fieldtype": "Date",
+   "label": "Kết thúc hiện tại",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "new_end",
+   "fieldtype": "Date",
+   "label": "Kết thúc mới",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Data",
+   "label": "Ghi chú",
+   "in_list_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Change Task",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

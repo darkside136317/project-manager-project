@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "description": "Gửi một báo cáo theo lịch. Mỗi người nhận nhận báo cáo theo quyền xem của chính họ.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "report",
+  "title",
+  "filters",
+  "file_format",
+  "frequency",
+  "weekday",
+  "day_of_month",
+  "hour",
+  "is_active",
+  "column_owner",
+  "owner_user",
+  "recipients",
+  "last_sent_on",
+  "last_error"
+ ],
+ "fields": [
+  {
+   "fieldname": "report",
+   "fieldtype": "Data",
+   "label": "Báo cáo",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Tiêu đề",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "filters",
+   "fieldtype": "Small Text",
+   "label": "Bộ lọc (JSON)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_format",
+   "fieldtype": "Select",
+   "label": "Định dạng",
+   "options": "PDF\nExcel",
+   "default": "PDF",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "label": "Tần suất",
+   "options": "Hằng ngày\nHằng tuần\nHằng tháng",
+   "default": "Hằng tuần",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "weekday",
+   "fieldtype": "Select",
+   "label": "Thứ",
+   "options": "Thứ Hai\nThứ Ba\nThứ Tư\nThứ Năm\nThứ Sáu\nThứ Bảy\nChủ nhật",
+   "default": "Thứ Hai"
+  },
+  {
+   "fieldname": "day_of_month",
+   "fieldtype": "Int",
+   "label": "Ngày trong tháng",
+   "default": "1"
+  },
+  {
+   "fieldname": "hour",
+   "fieldtype": "Int",
+   "label": "Giờ gửi",
+   "default": "7"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Đang dùng",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_owner",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "label": "Người tạo",
+   "options": "User",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "recipients",
+   "fieldtype": "Table",
+   "label": "Người nhận",
+   "options": "PM Report Recipient"
+  },
+  {
+   "fieldname": "last_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Gửi lần cuối",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_error",
+   "fieldtype": "Small Text",
+   "label": "Lỗi lần cuối",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Project Manager",
+ "name": "PM Report Subscription",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

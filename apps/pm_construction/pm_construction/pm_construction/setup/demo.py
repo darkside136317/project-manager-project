@@ -8,6 +8,8 @@ built from the sample BOQ, three weeks of site diaries, acceptances. Uses the co
 * Yesterday's site diary is missing: alert "Thiếu nhật ký thi công".
 * M9: the crew leader does the structure here and in the town house (core demo): overloaded, a conflict between
   projects; the crane is booked for the columns, and by the town house on some of the same days.
+* M10: a cost budget made from the estimate (illustrative split), so the earned value has actual costs to weigh; a
+  high risk on the rebar supply, an issue about the crane booked twice, a change request waiting for the manager.
 
     bench --site <site> execute pm_construction.pm_construction.setup.demo.up
     bench --site <site> execute pm_construction.pm_construction.setup.demo.down   (before the core demo's down)
@@ -87,6 +89,7 @@ def up():
     demo_site.build(project, works, today, {"manager": manager, "commander": commander, "engineer": engineer,
                                             "lead": lead}, WINDOWS)
     demo_site.bookings(project, works, today, core_demo.PROJECT_CODE)
+    _control(project, works, today, manager, commander, engineer)
     rollup.reconcile(project)
     schedule.refresh(project)
     phases.check(project)
@@ -99,6 +102,41 @@ def up():
         performance.snapshot_week(add_days(workload.monday(today), -7 * weeks))
     frappe.db.commit()
     print(f"Construction demo created: {project}")
+
+
+SPLIT = (("Vật tư", 0.6), ("Nhân công", 0.25), ("Máy thi công", 0.15))  # illustrative split of the estimate
+
+
+def _control(project, works, today, manager, commander, engineer) -> None:
+    from project_manager.project_manager.services import budget, control
+
+    sections = frappe.get_all("Task", filters={"project": project, "is_group": 1, "pm_level": 1},
+                              fields=["name", "pm_path"], order_by="pm_path asc")
+    lines = []
+    for section in sections:
+        estimate = frappe.db.sql("""select sum(pmc_estimate_value) from `tabTask` where project = %s and is_group = 0
+                                    and pm_path like %s""", (project, f"{section.pm_path}.%"))[0][0] or 0
+        for category, share in SPLIT:
+            if estimate:
+                lines.append({"category": category, "task": section.name, "amount": round(estimate * 0.92 * share, -3),
+                              "description": "92% giá trị dự toán, chia minh họa"})
+    if lines:
+        frappe.set_user(manager)
+        draft = budget.save_draft(project, "Ngân sách chi phí", lines, "Lập từ dự toán được duyệt")
+        budget.approve(draft["name"])
+    frappe.set_user(commander)
+    control.save_risk(project, {"title": "Thép cột về chậm", "category": "Cung ứng", "probability": 3, "impact": 4,
+                                "owner_user": commander, "status": "Đang xử lý", "due_date": add_days(today, 3),
+                                "plan": "Đặt thêm nhà cung cấp thứ hai, điều thép từ kho công ty"})
+    control.save_issue(project, {"title": "Cần trục trùng lịch với dự án nhà phố", "priority": "Cao", "owner_user": manager,
+                                 "due_date": add_days(today, 3), "description": "Hai dự án đặt cùng cần trục 3 ngày."})
+    if len(works) > 6:
+        frappe.set_user(engineer)
+        change = control.save_change(project, {"title": "Tăng mác bê tông cột lên 300", "reason": "Thay đổi thiết kế",
+                                               "cost_impact": 28_000_000, "days_impact": 2},
+                                     [{"task": works[6].name, "new_end": add_days(today, 3)}])
+        control.submit_change(change["name"])
+    frappe.set_user("Administrator")
 
 
 def _dates(works, today) -> None:
@@ -206,6 +244,7 @@ def down():
             for file in frappe.get_all("File", filters={"attached_to_doctype": "PM Form Submission",
                                                         "attached_to_name": str(submission)}, pluck="name"):
                 frappe.delete_doc("File", file, force=True, ignore_permissions=True)
+        core_demo.drop_control(project)
         for doctype in ("PMC Diary Quantity", "PMC Site Diary", "PMC BOQ Item", "PMC BOQ", "PM Activity",
                         "PM Task Assignment", "PM Progress Entry", "PM Snapshot", "PM Project Member",
                         "PM Form Submission", "PM Gate Requirement", "PM Task Dependency", "PM Baseline Task",

@@ -195,7 +195,8 @@ class TestProjectScope(PMTestCase):
 
     def test_capabilities_follow_the_project_role(self):
         self.assertIn("project.members", policy.capabilities_in(self.a, MANAGER))
-        self.assertEqual(policy.capabilities_in(self.a, ENGINEER), frozenset({"task.update", "material.request"}))
+        self.assertEqual(policy.capabilities_in(self.a, ENGINEER),
+                         frozenset({"task.update", "material.request", "risk.manage", "change.request"}))
         self.assertEqual(policy.capabilities_in(self.b, ENGINEER), frozenset())
         self.assertEqual(policy.capabilities_in(self.b, ADMIN), C.PROJECT_CAPABILITY_CODES)
         self.assertIn("perf.view_project", policy.capabilities_in(self.b, DIRECTOR))

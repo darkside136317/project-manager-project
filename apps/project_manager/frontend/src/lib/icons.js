@@ -10,7 +10,8 @@ import {
   Kanban, UserCheck, CalendarClock, Flag, ArrowUp, ArrowDown, Hourglass, ListChecks, Ellipsis, CornerDownRight, UserX,
   ThumbsUp, ThumbsDown, ChartLine, Camera,
   BellOff, EyeOff, CloudUpload, Image, Images, MapPin, WifiOff, Paperclip, FileUp, BadgeCheck, Sheet, NotebookPen,
-  CloudSun, Truck, HardHat, Package, Coins,
+  CloudSun, Truck, HardHat, Package, Coins, AlarmClock, Wallet, ShieldAlert, CircleAlert, GitPullRequest,
+  FileChartColumn, Mail,
 } from "lucide-vue-next";
 
 export const icons = {
@@ -129,6 +130,13 @@ export const icons = {
   "hard-hat": HardHat,
   package: Package,
   coins: Coins,
+  "alarm-clock": AlarmClock,
+  wallet: Wallet,
+  "shield-alert": ShieldAlert,
+  "circle-alert": CircleAlert,
+  "git-pull-request": GitPullRequest,
+  "file-chart-column": FileChartColumn,
+  mail: Mail,
 };
 
 export const iconFor = (name) => icons[name] || FileText;

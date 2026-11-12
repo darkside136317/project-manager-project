@@ -3,8 +3,8 @@
 This app extends project_manager; the core never imports it. It plugs in through the core's `pm_*` hooks
 (project_manager/extensions.py): a roll-up method by estimate value, the site diary as a discussion target, the
 acceptance forms, an alert for missing site diaries, a phase condition (every work item accepted in full), its
-screens (frontend/pm-module.js), and (M9) the productivity of the crews, the machines booked twice, the cost and norm
-columns of the portfolio.
+screens (frontend/pm-module.js), (M9) the productivity of the crews, the machines booked twice, the cost and norm
+columns of the portfolio, and (M10) the actual costs of the earned value, two reports and the site part of the dossier.
 """
 
 app_name = "pm_construction"
@@ -36,6 +36,9 @@ pm_gate_checks = [_K + "services.acceptance.gate_check"]
 pm_productivity = [_K + "services.people.productivity"]
 pm_conflicts = [_K + "services.people.machine_conflicts"]
 pm_portfolio_columns = [_K + "services.people.portfolio_columns"]
+pm_actual_costs = [_K + "services.reporting.actual_costs"]
+pm_reports = [_K + "services.reporting.reports"]
+pm_dossier_parts = [_K + "services.reporting.dossier_parts"]
 
 # --- project scope of the layer's DocTypes (constants.PROJECT_SCOPED; tests/test_hook_coverage.py) -------------------
 _P = _K + "permissions."

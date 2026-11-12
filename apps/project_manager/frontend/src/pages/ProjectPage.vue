@@ -9,7 +9,10 @@ import { pageTitle } from "../lib/page.js";
 import { PROJECT_TABS } from "../lib/work.js";
 import { projectTabs } from "../modules.js";
 import BaselineTab from "./project/BaselineTab.vue";
+import BudgetTab from "./project/BudgetTab.vue";
 import CalendarTab from "./project/CalendarTab.vue";
+import ChangesTab from "./project/ChangesTab.vue";
+import ControlTab from "./project/ControlTab.vue";
 import DiscussionTab from "./project/DiscussionTab.vue";
 import DocumentsTab from "./project/DocumentsTab.vue";
 import FormsTab from "./project/FormsTab.vue";
@@ -25,7 +28,8 @@ import WbsTab from "./project/WbsTab.vue";
 const route = useRoute();
 const router = useRouter();
 const CORE = { "tong-quan": OverviewTab, "cong-viec": WbsTab, gantt: GanttTab, kanban: KanbanTab, lich: CalendarTab, "ai-lam-gi": PeopleTab,
-  "bieu-mau": FormsTab, baseline: BaselineTab, "thanh-vien": MembersTab, "trao-doi": DiscussionTab, "tai-lieu": DocumentsTab };
+  "bieu-mau": FormsTab, baseline: BaselineTab, "thanh-vien": MembersTab, "trao-doi": DiscussionTab, "tai-lieu": DocumentsTab,
+  "ngan-sach": BudgetTab, "rui-ro": ControlTab, "phat-sinh": ChangesTab };
 const tabs = projectTabs(PROJECT_TABS);  // with the tabs of the installed industry layers (modules.js)
 const TABS = { ...CORE, ...Object.fromEntries(tabs.filter((item) => item.component).map((item) => [item.slug, item.component])) };
 
