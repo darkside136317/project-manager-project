@@ -8,7 +8,7 @@ import frappe
 from frappe.utils import nowdate
 from project_manager.project_manager.services import budget, closing, reports
 
-from pm_construction.pm_construction.services import diary, reporting
+from pm_construction.pm_construction.services import diary, materials, reporting
 from pm_construction.tests.construction_helpers import ENGINEER, MANAGER, OUTSIDER, as_user
 from pm_construction.tests.site_helpers import SiteBase
 
@@ -32,6 +32,7 @@ class TestReporting(SiteBase):
         self.assertIn("vat-tu-dinh-muc", slugs)
         self.assertIn("chi-phi-du-toan", slugs)
         self.assertRaises(frappe.ValidationError, as_user, MANAGER, reports.run, "vat-tu-dinh-muc", {})  # needs a project
+        materials.plan_from_norms(self.project)  # the plan from the test's own norm (no demo data on a new site)
         norms = as_user(ENGINEER, reports.run, "vat-tu-dinh-muc", {"project": self.project})
         self.assertGreater(norms["total"], 0)
         costs = as_user(MANAGER, reports.run, "chi-phi-du-toan", {"project": self.project})
