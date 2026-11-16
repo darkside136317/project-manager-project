@@ -20,6 +20,7 @@ from project_manager.project_manager.services import (
     msproject,
     reports,
     schedule,
+    workdays,
 )
 from project_manager.project_manager.services.reports import output
 from project_manager.project_manager.services.reports import schedule as sending
@@ -170,7 +171,8 @@ class TestChanges(ControlBase):
         name = as_user(MANAGER, budget.save_draft, self.project, "Gốc", [{"category": "Vật tư", "amount": 1000}])["name"]
         as_user(MANAGER, budget.approve, name)
         work = self.task("Cột", 0, 3)
-        new_end = add_days(nowdate(), 6)
+        calendar = workdays.calendar_of(self.project)
+        new_end = calendar.date_at(calendar.index(add_days(nowdate(), 6)))  # a working day: the plan keeps to them
         change = as_user(ENGINEER, control.save_change, self.project, {"title": "Thêm cột trục 9", "cost_impact": 250,
                                                                        "days_impact": 3},
                          [{"task": work, "new_end": new_end}])
