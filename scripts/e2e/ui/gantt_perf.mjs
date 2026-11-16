@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const env = Object.fromEntries(readFileSync(join(HERE, "../../../docker/.env"), "utf8").split(/\r?\n/)
+const env = Object.fromEntries(readFileSync(join(HERE, "../../..", process.env.PM_ENV_FILE || "docker/.env"), "utf8").split(/\r?\n/)
   .filter((line) => line.includes("=") && !line.trimStart().startsWith("#"))
   .map((line) => [line.slice(0, line.indexOf("=")).trim(), line.slice(line.indexOf("=") + 1)]));
 const PROJECT = process.argv[2];

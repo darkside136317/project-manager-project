@@ -46,8 +46,10 @@ jobs:
           EOF
       - name: Repository rules (core/layer boundary, no outside paths, .env.example complete)
         run: python scripts/ci/check_repo.py
+      - name: Production environment checks
+        run: python -m unittest discover -s scripts/ci -p "test_*.py"
       - name: Shell scripts
-        run: bash -n scripts/bootstrap.sh
+        run: bash -n scripts/bootstrap.sh scripts/deploy_prod.sh scripts/backup.sh scripts/restore.sh
       - name: Compose files are valid
         working-directory: docker
         run: |
@@ -56,6 +58,12 @@ jobs:
               -e 's/^MINIO_APP_SECRET_KEY=$/MINIO_APP_SECRET_KEY=ci/' .env.example > .env
           docker compose config -q
           COMPOSE_FILE=docker-compose.yml,docker-compose.dev.yml docker compose config -q
+          sed -e 's/^\(ADMIN_PASSWORD\|MARIADB_ROOT_PASSWORD\|MEILISEARCH_MASTER_KEY\|MINIO_ROOT_PASSWORD\|MINIO_APP_SECRET_KEY\)=$/\1=ci/' \
+              -e 's/^FRAPPE_SITE_NAME=$/FRAPPE_SITE_NAME=duan.example.vn/' -e 's/^COMPANY_NAME=$/COMPANY_NAME=CI/' \
+              -e 's/^COMPANY_ABBR=$/COMPANY_ABBR=CI/' .env.prod.example > /tmp/prod.env
+          docker compose --env-file /tmp/prod.env -f docker-compose.yml -f docker-compose.prod.yml config -q
+          DATA_ROOT=/srv/pm docker compose --env-file /tmp/prod.env -f docker-compose.yml -f docker-compose.prod.yml \
+              -f docker-compose.prod.bind.yml config -q
 
   frontend:
     name: SPA (unit tests + build)

@@ -9,6 +9,8 @@ tree by path and sets them against the estimate value and the value of the work 
 Only with finance.view in the project.
 """
 
+import time
+
 import frappe
 from frappe import _
 from frappe.utils import flt
@@ -18,6 +20,43 @@ from project_manager.project_manager.policy import get_access, has_project_capab
 from pm_construction.pm_construction import constants as K
 
 FIELDS = ("pmc_material_cost", "pmc_machine_cost", "pmc_labour_cost", "pmc_actual_cost")
+TOTALS_KEY = "pmc_cost_totals"
+TOTALS_SECONDS = 600
+
+
+def totals(projects) -> dict:
+    """{project: (actual cost, value of the work done)} over all the work items, for the portfolio, which sets them
+    side by side for every running project: one sum over all their tasks costs about 0.5 s at 300 000 tasks. Kept
+    TOTALS_SECONDS in Redis; refresh(), a moved done quantity and a BOQ that changes unit prices drop the project at
+    once (forget_totals)."""
+    projects = list(projects)
+    if not projects:
+        return {}
+    now = time.time()
+    cached = frappe.cache.hgetall(TOTALS_KEY)
+    out, missing = {}, []
+    for project in projects:
+        hit = cached.get(project.encode())
+        if hit and now - hit[2] < TOTALS_SECONDS:
+            out[project] = (hit[0], hit[1])
+        else:
+            missing.append(project)
+    if missing:
+        found = {row.project: (flt(row.actual), flt(row.earned)) for row in frappe.db.sql(
+            """select project, sum(ifnull(pmc_actual_cost, 0)) as actual,
+                      sum(ifnull(pmc_done_qty, 0) * ifnull(pmc_unit_price, 0)) as earned
+               from `tabTask` where project in %(p)s and is_group = 0 and status != %(cancelled)s
+               group by project""", {"p": tuple(missing), "cancelled": C.CANCELLED}, as_dict=True)}
+        for project in missing:
+            out[project] = found.get(project, (0.0, 0.0))
+            frappe.cache.hset(TOTALS_KEY, project, (*out[project], now))
+    return out
+
+
+def forget_totals(projects) -> None:
+    projects = [p for p in set(projects or []) if p]
+    if projects:
+        frappe.cache.hdel(TOTALS_KEY, projects)
 
 
 def of_tasks(project: str, tasks=None) -> dict:
@@ -69,6 +108,8 @@ def refresh(project: str, tasks=None) -> int:
         if any(flt(row.get(k)) != v for k, v in values.items()):
             frappe.db.set_value("Task", row.name, values, update_modified=False)
             changed += 1
+    if changed:
+        forget_totals([project])
     return changed
 
 

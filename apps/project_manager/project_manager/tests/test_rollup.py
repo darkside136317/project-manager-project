@@ -10,7 +10,7 @@ import frappe
 from frappe.utils import add_days, flt, getdate, nowdate
 
 from project_manager.project_manager import constants as C
-from project_manager.project_manager.services import rollup
+from project_manager.project_manager.services import jobs, rollup
 from project_manager.project_manager.setup import install
 from project_manager.tests.helpers import PMTestCase, drop_project, make_project, make_task
 
@@ -131,6 +131,26 @@ class TestRollup(PMTestCase):
             frappe.db.after_commit.run()
         self.assertTrue(any(c.kwargs.get("job_id") == f"pm-rollup:{self.project}:next" and c.kwargs.get("deduplicate")
                             for c in enqueue.call_args_list))
+
+    def test_a_waiting_job_is_not_queued_again(self):
+        from rq.job import JobStatus
+
+        with patch("frappe.enqueue") as enqueue, \
+                patch("frappe.utils.background_jobs.get_job_status", return_value=JobStatus.QUEUED):
+            jobs.enqueue_once("x.y", f"pm-rollup:{self.project}", "pm", project=self.project)
+        enqueue.assert_not_called()  # (frappe.enqueue would log an error line for each skipped duplicate)
+
+    def test_a_failed_enqueue_after_the_commit_does_not_fail_the_request(self):
+        """M11 load test: RQ may not find the execution of a job that just finished while Frappe deletes it."""
+        race = ValueError("Execution abc not found in Redis")
+        with patch("frappe.enqueue", side_effect=[race, None]) as enqueue, \
+                patch("frappe.utils.background_jobs.get_job_status", return_value=None):
+            jobs.enqueue_once("x.y", f"pm-rollup:{self.project}", "pm", project=self.project)
+        self.assertEqual(enqueue.call_count, 2)  # tried once more
+        with patch("frappe.enqueue", side_effect=race) as enqueue, \
+                patch("frappe.utils.background_jobs.get_job_status", return_value=None):
+            jobs.enqueue_once("x.y", f"pm-rollup:{self.project}", "pm", project=self.project)  # no exception
+        self.assertEqual(enqueue.call_count, 2)  # then left to the 5-minute sweeper
 
     def test_a_failed_job_keeps_the_work_for_the_sweeper(self):
         t = self.tree()

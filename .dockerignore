@@ -9,6 +9,7 @@ __pycache__
 *.md
 docs/
 docker/.env
+docker/.env.prod
 docker/dev/
 docker/mariadb/
 scripts/

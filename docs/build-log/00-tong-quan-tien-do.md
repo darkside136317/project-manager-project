@@ -14,5 +14,5 @@ Kế hoạch: [../KE_HOACH.md](../KE_HOACH.md). Mỗi phase dừng lại để n
 | M7 | Cảnh báo, chuyển giai đoạn → **thí điểm** | ✅ Xong (100f54b, CI xanh) | [08-m7-canh-bao-giai-doan.md](08-m7-canh-bao-giai-doan.md) |
 | M8 | Vật tư, máy, nhân công | ✅ Xong (0ab392c, CI xanh) | [09-m8-vat-tu-may-nhan-cong.md](09-m8-vat-tu-may-nhan-cong.md) |
 | M9 | Hiệu suất, workload | ✅ Xong (2705e9f, CI xanh) | [10-m9-hieu-suat-khoi-luong.md](10-m9-hieu-suat-khoi-luong.md) |
-| M10 | Báo cáo, nhập/xuất, ngân sách, rủi ro | 🟡 Xong, chờ duyệt | [11-m10-bao-cao-ngan-sach-rui-ro.md](11-m10-bao-cao-ngan-sach-rui-ro.md) |
-| M11 | Hardening, triển khai | ⚪ Chưa bắt đầu | — |
+| M10 | Báo cáo, nhập/xuất, ngân sách, rủi ro | ✅ Xong (5483684 + sửa test 878de6a, 58c3ca9, CI xanh) | [11-m10-bao-cao-ngan-sach-rui-ro.md](11-m10-bao-cao-ngan-sach-rui-ro.md) |
+| M11 | Hardening, triển khai | 🟡 Xong, chờ duyệt | [12-m11-hardening-trien-khai.md](12-m11-hardening-trien-khai.md) |

@@ -5,7 +5,7 @@ built from the sample BOQ, three weeks of site diaries, acceptances. Uses the co
   Approving it passes the phase by itself to PHẦN THÂN (Cần duyệt).
 * PHẦN THÂN: the columns are three days late and slow: their alert "Quá hạn" opened three days ago and climbed to the
   site commander; the column rebar is at risk.
-* Yesterday's site diary is missing: alert "Thiếu nhật ký thi công".
+* The diary of the last working day (yesterday; Saturday on a Monday) is missing: alert "Thiếu nhật ký thi công".
 * M9: the crew leader does the structure here and in the town house (core demo): overloaded, a conflict between
   projects; the crane is booked for the columns, and by the town house on some of the same days.
 * M10: a cost budget made from the estimate (illustrative split), so the earned value has actual costs to weigh; a
@@ -23,6 +23,7 @@ import frappe
 from frappe.utils import add_days, getdate, now_datetime, nowdate
 
 from pm_construction.pm_construction import constants as K
+from pm_construction.pm_construction.services import alerts as layer_alerts
 from pm_construction.pm_construction.services import boq, boq_import, diary
 from project_manager.project_manager import constants as C
 from project_manager.project_manager.services import (
@@ -35,6 +36,7 @@ from project_manager.project_manager.services import (
     projects,
     rollup,
     schedule,
+    workdays,
 )
 from project_manager.project_manager.setup import demo as core_demo
 
@@ -146,10 +148,13 @@ def _dates(works, today) -> None:
 
 
 def _diaries(project, works, today, engineer, commander) -> None:
-    """A diary each working day up to the day before yesterday (none yesterday) with the quantities of the day."""
+    """A diary each working day before the last one (that one is missing: the alert) with the quantities of the day.
+    The last working day is the rule's own: on a Monday it is Saturday, not the Sunday before."""
     done = {row.name: 0.0 for row in works}
-    days = [add_days(today, offset) for offset in range(WINDOWS[0][0], -1)]
-    days = [d for d in days if getdate(d).weekday() != 6]  # no work on Sundays
+    missing = layer_alerts.last_working_day(project, today)
+    calendar = workdays.calendar_of(project)
+    days = [add_days(today, offset) for offset in range(WINDOWS[0][0], 0)]
+    days = [d for d in days if getdate(d) < missing and calendar.is_working(d)]
     offsets = [(getdate(d) - today).days for d in days]
     worked = {index: [o for o in offsets if first <= o <= last] for index, (first, last) in enumerate(WINDOWS)}
     for number, day in enumerate(days):

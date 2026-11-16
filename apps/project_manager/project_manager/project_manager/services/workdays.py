@@ -75,7 +75,24 @@ def _weekly_off(rows) -> frozenset:
 
 def calendar_of(project: str | None) -> WorkCalendar:
     """The calendar of a project, built once per request for each Holiday List."""
-    name = list_of(project)
+    return calendar_named(list_of(project))
+
+
+def calendars_of(projects) -> dict:
+    """{project: calendar} for many projects with two queries (the portfolio)."""
+    projects = list(projects)
+    if not projects:
+        return {}
+    rows = frappe.get_all("Project", filters={"name": ["in", projects]}, fields=["name", "pm_holiday_list", "company"],
+                          limit_page_length=0)
+    companies = list({r.company for r in rows if not r.pm_holiday_list and r.company})
+    lists = dict(frappe.get_all("Company", filters={"name": ["in", companies]}, fields=["name", "default_holiday_list"],
+                                as_list=True)) if companies else {}
+    return {r.name: calendar_named(r.pm_holiday_list or lists.get(r.company)) for r in rows}
+
+
+def calendar_named(name: str | None) -> WorkCalendar:
+    """The calendar of a Holiday List (None: only the default weekly day off), built once per request."""
     memo = getattr(frappe.local, "pm_calendars", None)
     if memo is None:
         memo = frappe.local.pm_calendars = {}

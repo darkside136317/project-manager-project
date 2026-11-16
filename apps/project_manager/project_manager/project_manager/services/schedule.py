@@ -43,7 +43,7 @@ from project_manager.project_manager.services import activity, jobs, rollup
 from project_manager.project_manager.services.cpm import FF, FS, SF, SS, Activity, CycleError, Link, forward, order, solve
 from project_manager.project_manager.services.errors import retry_on_deadlock
 from project_manager.project_manager.services.notify import notify_user
-from project_manager.project_manager.services.workdays import calendar_of
+from project_manager.project_manager.services.workdays import calendar_of, calendars_of
 
 QUEUE = "pm"
 DIRTY = "pm_cpm_dirty"
@@ -697,20 +697,36 @@ def summary(project: str) -> dict:
             from `tabTask` where project = %s and is_group = 0""", project, as_dict=True)[0]
     calendar = calendar_of(project)
     target = (baseline.end_date if baseline else None) or info.expected_end_date
-
-    def slip(day) -> int | None:
-        if not day or not target:
-            return None
-        return calendar.index(day, forward=False) - calendar.index(target, forward=False)
-
     return {
         "contract_end": info.expected_end_date, "plan_end": info.pm_plan_end, "forecast_end": info.pm_forecast_end,
         "baseline_end": baseline.end_date if baseline else None, "baseline_title": baseline.title if baseline else None,
         "baseline": info.pm_primary_baseline, "spi": flt(info.pm_spi), "critical": cint(counts.critical),
         "conflicts": cint(counts.conflicts), "unscheduled": cint(counts.unscheduled),
-        "links": frappe.db.count("PM Task Dependency", {"project": project}), "forecast_slip": slip(info.pm_forecast_end),
-        "plan_slip": slip(info.pm_plan_end),
+        "links": frappe.db.count("PM Task Dependency", {"project": project}), "forecast_slip": _slip(calendar, info.pm_forecast_end, target),
+        "plan_slip": _slip(calendar, info.pm_plan_end, target),
     }
+
+
+def _slip(calendar, day, target) -> int | None:
+    """Working days from the target to a day (negative: ahead of it)."""
+    if not day or not target:
+        return None
+    return calendar.index(day, forward=False) - calendar.index(target, forward=False)
+
+
+def targets(rows) -> dict:
+    """{project: {"target_end", "forecast_slip"}} as summary() gives them, for many projects at once (the portfolio).
+    Rows carry name, expected_end_date, pm_forecast_end and pm_primary_baseline."""
+    chosen = [r.pm_primary_baseline for r in rows if r.pm_primary_baseline]
+    ends = dict(frappe.get_all("PM Baseline", filters={"name": ["in", chosen]}, fields=["name", "end_date"],
+                               as_list=True)) if chosen else {}
+    calendars = calendars_of([r.name for r in rows])
+    out = {}
+    for row in rows:
+        target = ends.get(row.pm_primary_baseline) or row.expected_end_date
+        calendar = calendars.get(row.name) or calendar_of(row.name)
+        out[row.name] = {"target_end": target, "forecast_slip": _slip(calendar, row.pm_forecast_end, target)}
+    return out
 
 
 GANTT_FIELDS = ["name", "subject", "pm_wbs_code", "pm_level", "is_group", "parent_task", "exp_start_date", "exp_end_date",

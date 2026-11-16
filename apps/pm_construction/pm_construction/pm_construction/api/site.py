@@ -156,9 +156,11 @@ def cost_summary(project):
 # --- machine bookings (M9) --------------------------------------------------------------------------------------------------
 @frappe.whitelist(methods=["POST"])
 def machine_book(project, machine, from_date, to_date, task=None, note=""):
+    assert_staff()
     return machines.book(project, machine, from_date, to_date, task or None, note)
 
 
 @frappe.whitelist(methods=["POST"])
 def machine_booking_cancel(name):
+    assert_staff()
     return machines.cancel_booking(name)

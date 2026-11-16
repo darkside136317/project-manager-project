@@ -46,3 +46,5 @@ scripts/e2e/ui/out/
 # Spikes: dependencies and builds
 spikes/**/node_modules/
 spikes/**/dist/
+# scripts/backup.sh
+backups/

@@ -297,6 +297,7 @@ def ensure_task_indexes():
     frappe.db.add_index("Task", ["project", "parent_task"])
     frappe.db.add_index("Task", ["pm_accountable", "status"])
     frappe.db.add_index("Task", ["project", "status"])
+    frappe.db.add_index("Task", ["pm_is_overdue", "project"])  # late work: the portfolio, the report, the alerts
 
 
 def ensure_task_paths():

@@ -88,3 +88,13 @@ Không sao chép thêm từ `document_manager`. Khối lượng công việc, hi
 
 Viết mới: ngân sách và EVM (`services/budget.py`), rủi ro, vấn đề, phát sinh (`services/control.py`), gửi báo cáo theo lịch (`services/reports/schedule.py`), MS Project XML (`services/msproject.py`), đóng dự án và gói hồ sơ (`services/closing.py`), các báo cáo (`services/reports/core.py`, lớp thi công `services/reporting.py`).
 
+
+## M11
+
+| File ở repo này | Nguồn (`document-manager-project/...`) | Thay đổi so với nguồn |
+|---|---|---|
+| `scripts/validate_prod_env.py` | `scripts/validate_prod_env.py` | Biến của repo này (MinIO của ứng dụng, Meilisearch, công ty); bắt buộc `HTTP_PUBLISH_PORT=127.0.0.1:<cổng>`; `DATA_ROOT` tuyệt đối và nằm ngoài mã nguồn; không dùng lại tiền tố volume hay mật khẩu của `docker/.env`; chế độ diễn tập `PM_REHEARSAL=1` cho tên `*.test` qua http |
+| `scripts/prod_compose.py` | `scripts/prod_compose.py` | Thêm overlay bind khi có `DATA_ROOT`; giá trị của `docker/.env.prod` thắng biến môi trường của máy; bỏ overlay MinIO riêng (MinIO đã ở compose gốc) |
+| `docker/docker-compose.prod.yml`, `docker-compose.prod.bind.yml` | `docker/docker-compose.prod.yml`, `docker-compose.prod.bind.yml` | Image `pm-custom` (hoặc image CI), các dịch vụ của repo này (queue `pm`, Meilisearch, MinIO), giới hạn bộ nhớ theo biến, chỉ nginx mở và chỉ ở `127.0.0.1` |
+
+Viết mới: `scripts/deploy_prod.sh`, `backup.sh`, `restore.sh` (DM không có script sao lưu, khôi phục), `scripts/perf/load_progress.py`, phần M11 của `scripts/perf/volume_check.py`, `tests/test_security.py`, tài liệu `DEPLOYMENT.md`, `SAO_LUU_KHOI_PHUC.md`, `HUONG_DAN_SU_DUNG.md`.

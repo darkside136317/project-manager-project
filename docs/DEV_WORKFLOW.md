@@ -157,6 +157,40 @@ docker compose exec backend bench --site pm.localhost execute project_manager.pr
 docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.services.digest.daily
 ```
 
+**M11, quy mô đầy đủ** trên site riêng `perfpm.localhost` (tên phải bắt đầu bằng `perf`; tạo site bằng `create-site` và `setup-site` với `FRAPPE_SITE_NAME=perfpm.localhost`). Lần lượt: 1 triệu việc (khoảng 2 phút), thêm 5 triệu trao đổi, 2 triệu ảnh, 100 nghìn phiếu kho, 500 người (khoảng 9 phút), rồi đo. Cần chừng 10 GB đĩa:
+
+```bash
+docker compose exec -T -e PERF_SITE=perfpm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - seed < ../scripts/perf/volume_check.py
+```
+
+```bash
+docker compose exec -T -e PERF_SITE=perfpm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - extra < ../scripts/perf/volume_check.py
+```
+
+```bash
+docker compose exec -T -e PERF_SITE=perfpm.localhost -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - measure < ../scripts/perf/volume_check.py
+```
+
+Xong thì xóa site: `docker compose exec backend bench drop-site perfpm.localhost --db-root-password <MARIADB_ROOT_PASSWORD> --force`.
+
+**M11, 200 người báo tiến độ cùng lúc** qua nginx (tạo dự án và 200 người tạm, mật khẩu ngẫu nhiên không in ra, tự dọn khi xong). Chạy được trên site dev hoặc bản diễn tập prod (`python scripts/prod_compose.py exec -T ...`):
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -e PERF_BASE=http://frontend:8080 -e PERF_USERS=200 -e PERF_ROUNDS=3 -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - < ../scripts/perf/load_progress.py
+```
+
+**Sao lưu, khôi phục trên máy dev** (từ gốc repo; bỏ `--prod` nghĩa là dùng `docker/.env`). Chi tiết: [SAO_LUU_KHOI_PHUC.md](SAO_LUU_KHOI_PHUC.md).
+
+```bash
+scripts/backup.sh
+```
+
+```bash
+scripts/restore.sh backups/pm.localhost-<ngày-giờ>
+```
+
+**Diễn tập prod trên máy này:** xuất repo sang thư mục mới (`git ls-files -co --exclude-standard`), tạo `docker/.env.prod` với stack, cổng, site `*.test` riêng, rồi chạy `PM_REHEARSAL=1 scripts/deploy_prod.sh` ([DEPLOYMENT.md](DEPLOYMENT.md#8-diễn-tập-trên-máy-thử)). Smoke của bản đó: `PM_ENV_FILE=docker/.env.prod python scripts/e2e/smoke_http.py`.
+
 ## Lưu ý
 
 - **Git Bash trên Windows** đổi đường dẫn dạng `/home/...` trong tham số lệnh: đặt `MSYS_NO_PATHCONV=1` khi gọi `docker exec -w /home/...` hoặc truyền đường dẫn container. `scripts/bootstrap.sh` đã đặt sẵn.

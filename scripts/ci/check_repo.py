@@ -4,7 +4,8 @@
 
 1. The core (apps/project_manager) never imports an industry layer (pm_construction).
 2. No absolute machine paths and no references to sibling repositories in code, compose or scripts.
-3. Every variable that docker compose requires (${VAR:?}) has an entry in docker/.env.example.
+3. Every variable that docker compose requires (${VAR:?}) has an entry in docker/.env.example (the production
+   overlays: in docker/.env.prod.example).
 Exit code 1 when a rule is broken.
 """
 
@@ -44,11 +45,17 @@ def main() -> int:
             if FOREIGN_PATH.search(line):
                 problems.append(f"{path.relative_to(ROOT)}:{number}: path outside the repository: {line.strip()[:120]}")
 
-    example = (ROOT / "docker" / ".env.example").read_text(encoding="utf-8")
-    declared = {line.split("=", 1)[0] for line in example.splitlines() if "=" in line and not line.startswith("#")}
+    def declared(name):
+        example = (ROOT / "docker" / name).read_text(encoding="utf-8")
+        return {line.split("=", 1)[0] for line in example.splitlines() if "=" in line and not line.startswith("#")}
+
     for path in (ROOT / "docker").glob("docker-compose*.yml"):
-        for name in sorted(set(REQUIRED_VAR.findall(path.read_text(encoding="utf-8"))) - declared):
-            problems.append(f"docker/{path.name}: ${{{name}}} is required but missing from docker/.env.example")
+        template = ".env.prod.example" if path.name.startswith("docker-compose.prod") else ".env.example"
+        names = set(REQUIRED_VAR.findall(path.read_text(encoding="utf-8")))
+        if template == ".env.prod.example":  # the base file's variables come along with the overlay
+            names |= set(REQUIRED_VAR.findall((ROOT / "docker" / "docker-compose.yml").read_text(encoding="utf-8")))
+        for name in sorted(names - declared(template)):
+            problems.append(f"docker/{path.name}: ${{{name}}} is required but missing from docker/{template}")
 
     for problem in problems:
         print(problem)

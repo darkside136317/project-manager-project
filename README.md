@@ -8,9 +8,26 @@ Frappe/ERPNext v16 bằng Docker. Kế hoạch đầy đủ: [docs/KE_HOACH.md](
 | `project_manager` | Lõi dùng chung mọi ngành: dự án, công việc, tiến độ, giao việc, cảnh báo, biểu mẫu, phân quyền, SPA `/pm` |
 | `pm_construction` | Lớp nghiệp vụ thi công: hạng mục, khối lượng, nhật ký thi công, vật tư, máy, nghiệm thu. Phụ thuộc lõi; lõi không bao giờ import lớp này |
 
-Trạng thái: **M1** — nền tảng chung: phân quyền theo dự án, mixin Task của ERPNext, API khung, khung SPA với các trang quản trị . Tiến độ: [docs/build-log/00-tong-quan-tien-do.md](docs/build-log/00-tong-quan-tien-do.md).
+Trạng thái: **M0–M11 xong**. Đã có:
+- dự án, WBS, giao việc, tiến độ cộng dồn; Gantt, đường găng, baseline;
+- biểu mẫu; trao đổi, tài liệu, chạy khi mất mạng;
+- lớp thi công: BOQ, nhật ký, nghiệm thu, vật tư, máy, chấm công, chi phí;
+- cảnh báo, chuyển giai đoạn; khối lượng công việc, hiệu suất;
+- báo cáo, ngân sách và EVM, rủi ro, phát sinh, MS Project, hồ sơ dự án;
+- triển khai prod, sao lưu và khôi phục.
+
+Tiến độ từng phase: [docs/build-log/00-tong-quan-tien-do.md](docs/build-log/00-tong-quan-tien-do.md).
+
+Tài liệu:
+- [Hướng dẫn sử dụng](docs/HUONG_DAN_SU_DUNG.md)
+- [Hướng dẫn thí điểm và kịch bản demo](docs/HUONG_DAN_THI_DIEM.md)
+- [Triển khai lên máy chủ](docs/DEPLOYMENT.md)
+- [Sao lưu và khôi phục](docs/SAO_LUU_KHOI_PHUC.md)
+- [Hiệu năng đo được](docs/HIEU_NANG.md)
 
 ## Chạy thử trên máy
+
+Phần này để thử trên máy cá nhân. Cài cho doanh nghiệp trên máy chủ có tên miền và HTTPS thì xem [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) (`scripts/deploy_prod.sh`).
 
 Yêu cầu: Docker Desktop (Windows/macOS) hoặc Docker Engine 24+ với Compose v2 (Linux); Docker được cấp **≥ 8 GB RAM**; khoảng 15 GB đĩa trống. Không cần cài Python, Node hay Frappe trên máy.
 
@@ -61,6 +78,8 @@ docker compose logs -f backend      # xem log
 docker compose down -v              # XÓA HẲN dữ liệu (volume) — không khôi phục được
 ```
 
+Sao lưu trước khi xóa: `scripts/backup.sh`; khôi phục: `scripts/restore.sh <thư mục>` ([docs/SAO_LUU_KHOI_PHUC.md](docs/SAO_LUU_KHOI_PHUC.md)).
+
 ## Phát triển
 
 ```bash
@@ -79,15 +98,22 @@ docker compose exec backend bench --site pm.localhost run-tests --app pm_constru
 cd .. && python scripts/e2e/smoke_http.py
 ```
 
-SPA: `npm ci && npm test` trong `apps/project_manager/frontend`. CI (`.github/workflows/ci.yml`) chạy kiểm tra tĩnh, test SPA, test lõi khi **không** cài lớp thi công, và một bản clone sạch bootstrap từ đầu.
+SPA: `npm ci && npm test` trong `apps/project_manager/frontend`. Kịch bản trình duyệt (Playwright, cần Edge hoặc Chrome): `cd scripts/e2e/ui && npm ci && node pilot_flow.mjs` (và `site_flow`, `people_flow`, `control_flow`, `forms_flow`, `schedule_flow`, `discussion_flow`, `construction_flow`); xem [docs/DEV_WORKFLOW.md](docs/DEV_WORKFLOW.md).
+
+CI (`.github/workflows/ci.yml`) chạy:
+- kiểm tra tĩnh, test SPA;
+- test lõi khi **không** cài lớp thi công;
+- một bản clone sạch bootstrap từ đầu;
+- rồi đăng image lên GHCR.
 
 ## Cấu trúc thư mục
 
 ```
 apps/project_manager/      lõi (Frappe app) + frontend/ (Vue 3 + Vite → public/spa)
 apps/pm_construction/      lớp thi công (Frappe app)
-docker/                    Dockerfile, compose (base, local, dev), .env.example, mariadb/, minio/, dev/
-scripts/                   bootstrap.ps1, bootstrap.sh, e2e/, ci/
+docker/                    Dockerfile, compose (base, local, dev, prod, prod.bind), .env.example, .env.prod.example, mariadb/, minio/, dev/
+scripts/                   bootstrap.ps1, bootstrap.sh, deploy_prod.sh, prod_compose.py, validate_prod_env.py,
+                           backup.sh, restore.sh, e2e/ (smoke, kịch bản trình duyệt), perf/ (đo hiệu năng, load test), ci/
 docs/                      kế hoạch, nhật ký xây dựng, truy vết yêu cầu, quy trình dev
 ```
 

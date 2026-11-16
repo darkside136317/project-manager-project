@@ -5,12 +5,12 @@ Run: bench --site <site> run-tests --app pm_construction --module pm_constructio
 """
 
 import frappe
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, flt, nowdate
 from project_manager.project_manager.services import assignments, performance, workload
 from project_manager.project_manager import constants as C
 
 from pm_construction.pm_construction import constants as K
-from pm_construction.pm_construction.services import diary, labour, machines, people
+from pm_construction.pm_construction.services import costs, diary, labour, machines, people
 from pm_construction.tests.construction_helpers import COMMANDER, ENGINEER, LEAD, MANAGER, OUTSIDER, as_user
 from pm_construction.tests.test_machines_labour import MachineBase
 
@@ -70,6 +70,7 @@ class TestMachineBookings(MachineBase):
 
 class TestPortfolioColumns(MachineBase):
     def test_cost_and_norm(self):
+        costs.forget_totals([self.project])  # a rolled-back project of an earlier run may have had this name
         frappe.db.set_value("Task", self.footing, {"pmc_done_qty": 10, "pmc_actual_cost": 0})
         price = frappe.db.get_value("Task", self.footing, "pmc_unit_price")
         frappe.db.set_value("Task", self.footing, "pmc_actual_cost", price * 10 * 1.2)  # 120 % of the work done
@@ -83,3 +84,14 @@ class TestPortfolioColumns(MachineBase):
                         "task": self.footing, "reference_doctype": "Task", "reference_name": self.footing, "episode": "x",
                         "state": "Đang mở", "level": 0, "message": "thử"}).insert(ignore_permissions=True)
         self.assertEqual(people.portfolio_columns([self.project])[self.project]["over_norm"]["value"], 1)
+
+    def test_cost_totals_are_kept_until_the_costs_move(self):
+        costs.forget_totals([self.project])
+        first = costs.totals([self.project])[self.project]
+        frappe.db.set_value("Task", self.footing, "pmc_actual_cost", 12345)  # behind the app's back: still the old sum
+        self.assertEqual(tuple(costs.totals([self.project])[self.project]), tuple(first))
+        costs.refresh(self.project)  # the ledgers' figure comes back and the project is forgotten
+        live = frappe.db.sql("""select sum(ifnull(pmc_actual_cost, 0)) from `tabTask` where project = %s
+                                and is_group = 0 and status != 'Cancelled'""", self.project)[0][0]
+        self.assertAlmostEqual(costs.totals([self.project])[self.project][0], flt(live))
+        self.assertNotEqual(costs.totals([self.project])[self.project][0], first[0] + 12345)

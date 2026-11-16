@@ -1,0 +1,26 @@
+# =============================================================================
+# Production overlay: keep the data in host folders under DATA_ROOT (added by scripts/prod_compose.py when
+# DATA_ROOT is set in docker/.env.prod). scripts/deploy_prod.sh creates the folders. Without it the data lives in
+# Docker named volumes (<DATA_VOLUME_PREFIX>_db_data...), which is fine too: back them up with scripts/backup.sh.
+# Copied from document_manager (docker/docker-compose.prod.bind.yml, see docs/NGUON_GOC.md) and adapted.
+# =============================================================================
+
+volumes:
+  db-data:
+    driver: local
+    driver_opts: {type: none, o: bind, device: "${DATA_ROOT:?}/db"}
+  redis-queue-data:
+    driver: local
+    driver_opts: {type: none, o: bind, device: "${DATA_ROOT:?}/redis-queue"}
+  sites:
+    driver: local
+    driver_opts: {type: none, o: bind, device: "${DATA_ROOT:?}/sites"}
+  logs:
+    driver: local
+    driver_opts: {type: none, o: bind, device: "${DATA_ROOT:?}/logs"}
+  meilisearch-data:
+    driver: local
+    driver_opts: {type: none, o: bind, device: "${DATA_ROOT:?}/meilisearch"}
+  minio-data:
+    driver: local
+    driver_opts: {type: none, o: bind, device: "${DATA_ROOT:?}/minio"}

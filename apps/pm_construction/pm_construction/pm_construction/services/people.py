@@ -5,17 +5,18 @@ pm_portfolio_columns; the core never imports this module).
   the crews that worked on it by their man-days (confirmed attendance sheets, lines on that work item). A crew's
   productivity is quantity / man-days, per unit.
 * Conflicts: one machine booked by two projects on the same days (PMC Machine Booking).
-* Portfolio columns: the actual cost against the value of the work done (only with finance.view in the project), the
-  work items over their material norm (open or acknowledged alerts "Vượt định mức vật tư").
+* Portfolio columns: the actual cost against the value of the work done (only with finance.view in the project;
+  totals cached a few minutes, costs.totals), the work items over their material norm (open or acknowledged alerts
+  "Vượt định mức vật tư").
 """
 
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate
-from project_manager.project_manager import constants as C
 from project_manager.project_manager.policy import has_project_capability
 
 from pm_construction.pm_construction import constants as K
+from pm_construction.pm_construction.services import costs
 
 BOOKED, CANCELLED = "Đã đặt", "Đã hủy"
 
@@ -101,13 +102,10 @@ def portfolio_columns(projects) -> dict:
     out = {}
     finance = [p for p in projects if has_project_capability(p, "finance.view")]
     if finance:
-        for row in frappe.db.sql("""select project, sum(ifnull(pmc_actual_cost, 0)) as actual,
-                                           sum(ifnull(pmc_done_qty, 0) * ifnull(pmc_unit_price, 0)) as earned
-                                    from `tabTask` where project in %(p)s and is_group = 0 and status != %(cancelled)s
-                                    group by project""", {"p": tuple(finance), "cancelled": C.CANCELLED}, as_dict=True):
-            if flt(row.earned) > 0 or flt(row.actual) > 0:
-                ratio = flt(row.actual) / flt(row.earned) if flt(row.earned) else None
-                out.setdefault(row.project, {})["cost_ratio"] = {
+        for project, (actual, earned) in costs.totals(finance).items():  # cached a few minutes
+            if earned > 0 or actual > 0:
+                ratio = actual / earned if earned else None
+                out.setdefault(project, {})["cost_ratio"] = {
                     "label": _("Chi phí / giá trị làm được"), "value": None if ratio is None else round(ratio, 3),
                     "format": "percent",
                     "tone": "bad" if ratio is None or ratio > 1.05 else "warn" if ratio > 0.95 else "good"}

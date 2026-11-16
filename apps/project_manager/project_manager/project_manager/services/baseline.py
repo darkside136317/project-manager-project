@@ -204,6 +204,18 @@ def interpolate(points: list[dict], day) -> float:
     return round(flt(before["value"]) + (flt(after["value"]) - flt(before["value"])) * share, 2)
 
 
+def curves_of(rows) -> dict:
+    """{project: its main baseline's curve} for many projects in one query; rows carry name and pm_primary_baseline."""
+    chosen = {r.pm_primary_baseline: r.name for r in rows if r.pm_primary_baseline}
+    out = {}
+    if chosen:
+        for point in frappe.get_all("PM Baseline Curve", filters={"baseline": ["in", list(chosen)]},
+                                    fields=["baseline", "point_date as day", "planned_progress as value"],
+                                    order_by="baseline asc, point_date asc", limit_page_length=0):
+            out.setdefault(chosen[point.baseline], []).append(point)
+    return out
+
+
 def planned_on(project: str, day, fallback: float) -> float:
     """What the plan says for a project on a day: its main baseline's curve when it has one."""
     points = curve_of(project)

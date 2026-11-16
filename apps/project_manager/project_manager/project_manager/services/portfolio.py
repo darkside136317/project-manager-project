@@ -20,7 +20,8 @@ from project_manager.project_manager.services import performance as perf
 
 LIVE = ("Chuẩn bị", "Đang thực hiện", "Tạm dừng")
 FIELDS = ["name", "project_name", "pm_code", "pm_state", "percent_complete", "expected_start_date", "expected_end_date",
-          "pm_manager", "pm_spi", "pm_forecast_end", "pm_health", "pm_health_reason", "pm_current_phase"]
+          "pm_manager", "pm_spi", "pm_forecast_end", "pm_health", "pm_health_reason", "pm_current_phase",
+          "pm_primary_baseline"]
 HEALTH_ORDER = {"Đỏ": 0, "Vàng": 1, "Xanh": 2}
 MAX_PROJECTS = 300
 
@@ -55,13 +56,15 @@ def portfolio(state: str | None = None, health: str | None = None) -> dict:
     for path in frappe.get_hooks("pm_portfolio_columns") or []:
         for project, values in (frappe.get_attr(path)(names) or {}).items():
             extra.setdefault(project, {}).update(values)
+    ends = schedule.targets(rows)
+    curves = baseline.curves_of(rows)
     totals = {"Đỏ": 0, "Vàng": 0, "Xanh": 0, "": 0}
     for row in rows:
-        summary = schedule.summary(row.name)
-        row["planned_progress"] = flt(baseline.planned_on(row.name, today, rollup.planned_progress(
-            row.expected_start_date, row.expected_end_date)), 1)
-        row["target_end"] = summary["baseline_end"] or summary["contract_end"]
-        row["forecast_slip"] = summary["forecast_slip"]
+        points = curves.get(row.name)
+        row["planned_progress"] = flt(baseline.interpolate(points, today) if points else rollup.planned_progress(
+            row.expected_start_date, row.expected_end_date), 1)
+        row["target_end"] = ends[row.name]["target_end"]
+        row["forecast_slip"] = ends[row.name]["forecast_slip"]
         phase = phases.get(row.pm_current_phase)
         row["phase"] = f"{phase.pm_wbs_code or ''} {phase.subject}".strip() if phase else None
         row["phase_waiting"] = bool(phase and phase.pm_gate_state == "Chờ duyệt")

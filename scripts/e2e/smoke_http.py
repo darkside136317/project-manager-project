@@ -4,10 +4,12 @@
 
 The base URL defaults to http://localhost:<HTTP_PUBLISH_PORT from docker/.env>. The Administrator
 password is read from docker/.env (ADMIN_PASSWORD). The exit code is the number of failed checks.
+PM_ENV_FILE=docker/.env.prod reads the production file instead (its HTTP_PUBLISH_PORT is 127.0.0.1:<port>).
 """
 
 import http.cookiejar
 import json
+import os
 import re
 import sys
 import urllib.error
@@ -15,7 +17,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-ENV_PATH = Path(__file__).resolve().parents[2] / "docker" / ".env"
+ROOT = Path(__file__).resolve().parents[2]
+ENV_PATH = ROOT / os.environ["PM_ENV_FILE"] if os.environ.get("PM_ENV_FILE") else ROOT / "docker" / ".env"
 
 
 def env_values() -> dict:
@@ -34,7 +37,9 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def main() -> int:
     env = env_values()
-    base = (sys.argv[1] if len(sys.argv) > 1 else f"http://localhost:{env.get('HTTP_PUBLISH_PORT') or 8890}").rstrip("/")
+    port = env.get("HTTP_PUBLISH_PORT") or "8890"
+    default = f"http://{port}" if ":" in port else f"http://localhost:{port}"
+    base = (sys.argv[1] if len(sys.argv) > 1 else default).rstrip("/")
     jar = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar), NoRedirect)
     failures = 0

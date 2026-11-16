@@ -1,0 +1,92 @@
+# =============================================================================
+# Production overlay — run through scripts/prod_compose.py (never directly)
+# =============================================================================
+#   python3 scripts/prod_compose.py <docker compose arguments>     reads docker/.env.prod, checks it, adds this file
+#   scripts/deploy_prod.sh                                         first deploy and upgrades
+#
+# * The image is pm-custom built on the server, or the one CI publishes (PM_IMAGE=ghcr.io/<owner>/pm-custom,
+#   PM_IMAGE_TAG=<ERPNext version>|latest|sha-<commit>). MinIO is always built here from its pinned source.
+# * Only nginx is published, on 127.0.0.1 (HTTP_PUBLISH_PORT=127.0.0.1:<port>); a reverse proxy on the host ends
+#   TLS in front of it (docs/DEPLOYMENT.md). MariaDB, Redis, Meilisearch and MinIO stay inside the Docker network.
+# * Every service restarts with the host; memory limits keep one runaway job from starving the others.
+# Copied from document_manager (docker/docker-compose.prod.yml, see docs/NGUON_GOC.md) and adapted.
+# =============================================================================
+
+x-prod-image: &prod-image
+  image: ${PM_IMAGE:-pm-custom}:${PM_IMAGE_TAG:-${ERPNEXT_VERSION:?}}
+
+services:
+  backend:
+    <<: *prod-image
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: ${BACKEND_MEMORY:-3G}
+
+  frontend:
+    <<: *prod-image
+    restart: always
+    ports:
+      - "${HTTP_PUBLISH_PORT:?set HTTP_PUBLISH_PORT=127.0.0.1:<port> in .env.prod}:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  websocket:
+    <<: *prod-image
+    restart: always
+
+  queue-pm:
+    <<: *prod-image
+    restart: always
+
+  queue-short:
+    <<: *prod-image
+    restart: always
+
+  queue-long:
+    <<: *prod-image
+    restart: always
+    deploy:
+      resources:
+        limits:
+          # dossiers (ZIP), report PDFs, the nightly reconciliations
+          memory: ${QUEUE_LONG_MEMORY:-2G}
+
+  scheduler:
+    <<: *prod-image
+    restart: always
+
+  configurator:
+    <<: *prod-image
+
+  create-site:
+    <<: *prod-image
+
+  setup-site:
+    <<: *prod-image
+
+  db:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: ${DB_MEMORY:-3G}
+
+  redis-cache:
+    restart: always
+
+  redis-queue:
+    restart: always
+
+  meilisearch:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  minio:
+    restart: always

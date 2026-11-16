@@ -196,3 +196,64 @@ Lần đo đầu, nhập MS Project mất **42 s**: mỗi phụ thuộc được
 
 Gói hồ sơ chạy ở hàng đợi `long`. Thời gian chủ yếu nằm ở việc tải các tệp tài liệu từ MinIO và lập PDF của biểu mẫu đã duyệt chưa có bản lưu; giới hạn 1 GB tệp mỗi gói.
 
+
+## M11 — Quy mô đầy đủ và 200 người cùng lúc (2026-11-16)
+
+### Quy mô đầy đủ (mục 12 của kế hoạch)
+
+Site riêng `perfpm.localhost` trên stack dev (scheduler tắt), Docker Desktop trên Windows 11, Docker được 8 GB RAM và 12 nhân. `volume_check.py seed` rồi `extra`:
+
+| Dữ liệu | Số dòng | Thời gian sinh |
+|---|---|---|
+| Dự án: 50 đang chạy (6.000 việc mỗi dự án), 450 đã đóng | 500 | |
+| Công việc | 999.750 | 94 s (`seed`) |
+| Trao đổi (PM Activity) | 5.000.150 | |
+| Ảnh (PM Media, chỉ dữ liệu, không có tệp) | 1.999.950 | |
+| Phiếu kho (Stock Entry, chỉ phần đầu phiếu) | 100.000 | |
+| Người dùng, mỗi người là Kỹ sư của 3 dự án đang chạy | 500 | 539 s cho cả phần `extra` |
+
+Một phần mười số việc lá của các dự án đang chạy đã quá hạn. Trao đổi và ảnh rải đều trên các dự án và trong 3 năm.
+
+**Kết quả** (`volume_check.py measure`, lần nhanh nhất trong 3 lần, thay đổi được rollback):
+
+| Thao tác | Thời gian | Ngưỡng |
+|---|---|---|
+| Gantt một dự án đang chạy (2.000 dòng đầu), thành viên | 115 ms (API) | < 2 s cả vẽ |
+| Kanban một dự án đang chạy, thành viên | 17 ms | < 1 s |
+| Việc của tôi (thành viên 3 dự án) | 8 ms | |
+| Báo tiến độ một việc (việc đã trễ: có lý do chậm) | 34 ms | |
+| Cộng dồn sau lần báo đó (nhánh của việc lên tới dự án, dự án 6.000 việc) | 23 ms | < 5 s |
+| Đối soát cả dự án 6.000 việc (chạy hằng đêm) | 2,5 s | |
+| **Danh mục dự án, 50 dự án đang chạy, giám đốc**: cache trống / lần sau | **0,87 s / 0,12 s** | < 2 s |
+| Dòng thời gian một việc nhiều trao đổi, trang đầu | 14 ms | < 500 ms |
+| Dòng thời gian một dự án, trang đầu / trang lùi 40.000 mục (keyset) | 15 ms / 16 ms | < 500 ms; < 1 s |
+| Danh sách công việc, trang sau 1.000 dòng (keyset trên `pm_path`) | 11 ms | < 1 s |
+| Phiếu kho của các dự án của mình, trang 1 (thủ kho) | 49 ms | |
+| Báo cáo "Công việc trễ" trang 1 / "Tiến độ các dự án" (giám đốc) | 281 ms / 113 ms | |
+| Khối lượng công việc 6 tuần của một người | 13 ms | |
+| Thêm một việc vào dự án 6.000 việc / vào dự án cũ nhất | 19 ms / 11 ms | < 300 ms |
+| (so sánh) Cập nhật mọi dòng Task một lần, như nested set của Frappe | 1,96 s | |
+
+Các số của M1 (danh sách, đếm, di chuyển) đo lại cùng lúc, vẫn như M1.
+
+**Danh mục dự án** là chỗ duy nhất sát ngưỡng. Lần đo đầu: **1,93–2,29 s**. Đo từng phần:
+- `schedule.summary` gọi riêng cho từng dự án: 0,78 s. Nó đếm việc găng, xung đột, việc chưa có ngày trên mọi việc của dự án, trong khi danh mục chỉ cần ngày đích và độ trễ dự báo. Nay `schedule.targets` lấy hai số đó cho mọi dự án bằng vài truy vấn. Lịch nghỉ (`workdays.calendars_of`) và đường cong baseline (`baseline.curves_of`) cũng đọc một lần cho tất cả.
+- Đếm việc quá hạn của 50 dự án (quét 300.000 việc): 0,46 s. Index mới `(pm_is_overdue, project)` trên Task đưa xuống 69 ms. Báo cáo "Công việc trễ" và quy tắc cảnh báo cũng dùng index này.
+- Cột chi phí / giá trị làm được của lớp thi công (cộng hai trường trên 300.000 việc): 0,54 s. Nay tổng của từng dự án được giữ 10 phút trong Redis (`costs.totals`). Cập nhật chi phí (`costs.refresh`), khối lượng đã làm (`quantities.refresh`) hay đơn giá từ BOQ thì bỏ ngay tổng của dự án đó, nên số liệu không cũ đi khi có thay đổi qua ứng dụng.
+
+Sau khi sửa: 0,87 s khi cache trống, 0,12 s các lần sau.
+
+### 200 người báo tiến độ cùng lúc
+
+`scripts/perf/load_progress.py` trên bản diễn tập prod (overlay prod, gunicorn 4 tiến trình × 4 luồng, một worker `queue-pm`), cùng máy Docker Desktop. 200 người đăng nhập thật, gửi qua nginx, cùng bấm một lúc, 3 vòng (600 yêu cầu). 50 người báo vào các công tác của cùng một giai đoạn, 10 người cùng một hạng mục.
+
+| | Kết quả |
+|---|---|
+| Thời gian cho 600 yêu cầu | 16,6–18,5 s (khoảng 35 yêu cầu/s) |
+| Thời gian trả lời: trung vị / p95 / lớn nhất | 2,9–3,1 s / 4,1–4,7 s / 4,4–5,0 s |
+| Câu trả lời lỗi | 0 (sau khi sửa `jobs.enqueue_once`; lần đầu 1 lỗi 500, xem [nhật ký M11](build-log/12-m11-hardening-trien-khai.md#7-lỗi-tìm-ra-trong-m11-đã-sửa)) |
+| Bản ghi tiến độ được giữ | 600/600 |
+| Deadlock | 0 |
+| Cộng dồn sau khi hàng đợi xong | 90,0 %, đúng bằng tính lại toàn cây (0 node lệch) |
+
+Ba lần chạy sau khi sửa cho cùng kết quả. Thời gian trả lời là thời gian xếp hàng của 200 yêu cầu đến cùng lúc vào 16 luồng. Một lần báo tiến độ tốn khoảng 34 ms ở server.

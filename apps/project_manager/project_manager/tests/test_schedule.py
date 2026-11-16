@@ -544,6 +544,10 @@ class TestBaseline(ScheduleBase):
         self.assertEqual((getdate(after["plan_end"]), getdate(after["forecast_end"])), (getdate(day(18)), getdate(day(18))))
         self.assertEqual((after["forecast_slip"], after["plan_slip"]), (2, 2))
         self.assertEqual(getdate(after["baseline_end"]), getdate(day(15)))
+        row = frappe.db.get_value("Project", self.project, ["name", "expected_end_date", "pm_forecast_end",
+                                                            "pm_primary_baseline"], as_dict=True)
+        batched = schedule.targets([row])[self.project]  # the portfolio's way, for many projects at once
+        self.assertEqual((getdate(batched["target_end"]), batched["forecast_slip"]), (getdate(day(15)), 2))
 
         payload = as_user(ENGINEER, schedule.gantt, self.project)
         row = dict(zip(payload["columns"], next(r for r in payload["rows"] if r[0] == self.b)))

@@ -25,7 +25,7 @@ from project_manager.project_manager.services.queries import reserve_ids
 from project_manager.project_manager.services.text import plain
 
 from pm_construction.pm_construction import constants as K
-from pm_construction.pm_construction.services import boq_import, quantities
+from pm_construction.pm_construction.services import boq_import, costs, quantities
 
 PREVIEW_LINES = 400
 ITEM_FIELDS = ("name", "boq", "project", "line_no", "code", "norm_code", "description", "uom", "qty", "unit_price",
@@ -211,6 +211,8 @@ def sync_wbs(name: str) -> dict:
         if task in known and "pmc_planned_qty" in fields:
             replanned.append(task)
     _bulk_update("Task", changes)
+    if changes:
+        costs.forget_totals([project])  # unit prices moved: the value of the work done in the portfolio
     _bulk_update("PMC BOQ Item", {item.name: {"task": task_of[item.line_no]} for item in items})
     missing = sorted(set(existing) - set(keys.values()))
     missing_tasks = [existing[k] for k in missing]

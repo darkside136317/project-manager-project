@@ -258,7 +258,8 @@ class TestAlerts(AlertBase):
         late = self.leaf("Cốt thép", 1, 5)
         alerts.evaluate_rule(self.rule("Quá hạn"), day(7))  # steps: 2 days → Chỉ huy trưởng, 5 days → manager
         alert = self.alert_of("Quá hạn", late)
-        self.assertEqual(alerts.escalate(now_datetime() + timedelta(days=1)), 0)
+        alerts.escalate(now_datetime() + timedelta(days=1))  # (other open alerts of the site may climb)
+        self.assertEqual(frappe.db.get_value("PM Alert", alert.name, "level"), 0)
         alerts.escalate(now_datetime() + timedelta(days=2))
         self.assertEqual(frappe.db.get_value("PM Alert", alert.name, "level"), 1)
         self.assertEqual(alert_notices(CHIEF, "Leo thang bậc 1"), 1)
