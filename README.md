@@ -9,7 +9,7 @@ Frappe/ERPNext v16 bằng Docker. Kế hoạch đầy đủ: [docs/KE_HOACH.md](
 | `pm_construction` | Lớp nghiệp vụ thi công: hạng mục, khối lượng, nhật ký thi công, vật tư, máy, nghiệm thu. Phụ thuộc lõi; lõi không bao giờ import lớp này |
 | `pm_archive` | Lưu trữ hồ sơ dự án: danh mục hồ sơ, lập hồ sơ, nộp lưu (khóa, SHA-256), kiểm toàn vẹn, mục lục, bản giấy, gói nộp lưu TT 05/2025. Cũng là một lớp: phụ thuộc lõi, không import lớp thi công |
 
-Trạng thái: **M0–M11 xong; M12 (lưu trữ hồ sơ) chờ duyệt**. Đã có:
+Trạng thái: **M0–M12 xong**. Đã có:
 - dự án, WBS, giao việc, tiến độ cộng dồn; Gantt, đường găng, baseline;
 - biểu mẫu; trao đổi, tài liệu, chạy khi mất mạng;
 - lớp thi công: BOQ, nhật ký, nghiệm thu, vật tư, máy, chấm công, chi phí;
