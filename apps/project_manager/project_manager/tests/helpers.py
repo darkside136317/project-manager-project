@@ -46,7 +46,8 @@ class MemoryStore:
         self.objects = {}
 
     def put(self, path, data, content_type, metadata):
-        self.objects[path] = (bytes(data), content_type)
+        content = data.read() if hasattr(data, "read") else data  # an open file (object_storage.put_stream)
+        self.objects[path] = (bytes(content), content_type)
 
     def get(self, path):
         return self.objects[path][0]

@@ -257,3 +257,32 @@ Sau khi sửa: 0,87 s khi cache trống, 0,12 s các lần sau.
 | Cộng dồn sau khi hàng đợi xong | 90,0 %, đúng bằng tính lại toàn cây (0 node lệch) |
 
 Ba lần chạy sau khi sửa cho cùng kết quả. Thời gian trả lời là thời gian xếp hàng của 200 yêu cầu đến cùng lúc vào 16 luồng. Một lần báo tiến độ tốn khoảng 34 ms ở server.
+
+## M12 — Lưu trữ hồ sơ dự án (2026-11-18)
+
+`scripts/perf/archive_check.py` trên site dev (có dữ liệu mẫu), Docker Desktop trên Windows 11; script tự dọn khi xong.
+
+**Một dự án thật:** 2.000 ảnh là đối tượng MinIO thật (mỗi ảnh khoảng 50 KB, 100 MB tất cả) và 300 tài liệu đã duyệt.
+
+| Thao tác | Thời gian |
+|---|---|
+| Lập hồ sơ: 2.300 tài liệu vào 5 hồ sơ | 1,0–1,4 s |
+| Lập hồ sơ lần nữa (không có gì mới) | 40–50 ms |
+| Nộp lưu hồ sơ 2.000 ảnh (đọc từng đối tượng, tính SHA-256) | 13,2–13,4 s (khoảng 150 tài liệu/s) |
+| Kiểm toàn vẹn hồ sơ đó | 9,0–9,1 s |
+
+Nộp lưu và kiểm toàn vẹn chủ yếu tốn thời gian ở việc lấy từng đối tượng từ MinIO. Một hồ sơ 20.000 ảnh nộp lưu mất khoảng 2–3 phút ở hàng đợi `long`, màn hình hiện tiến độ. Kiểm toàn vẹn hằng tuần chỉ đọc một phần tư kho.
+
+**Quy mô:** 15.000 hồ sơ của 500 dự án tạm, 1.507.221 tài liệu, chèn bằng SQL (459 s). Đọc với tư cách người lưu trữ (mọi dự án):
+
+| Thao tác | Thời gian |
+|---|---|
+| Danh sách lưu trữ, trang 1 / trang 2 (keyset) | 15 ms / 7 ms |
+| Chỉ hồ sơ chờ nộp lưu / lọc theo năm | 6 ms / 16 ms |
+| Tìm trong tiêu đề hồ sơ và trích yếu tài liệu | 547 ms |
+| Tab hồ sơ của một dự án (30 hồ sơ) | 13 ms |
+| Một hồ sơ 5.000 tài liệu, trang đầu 500 | 17 ms |
+| Mục lục hồ sơ: một dự án / mọi dự án, trang 1 | 144 ms / 74 ms |
+| Mục lục văn bản của hồ sơ 5.000 tài liệu, trang 1 | 14 ms |
+
+Phép tìm quét trích yếu của mọi tài liệu bằng `LIKE`. Ở 1,5 triệu tài liệu vẫn dưới 1 giây; nhiều hơn nữa thì nên đưa vào Meilisearch như trao đổi và tài liệu.

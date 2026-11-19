@@ -8,6 +8,7 @@
 | Tệp đính kèm của Frappe: biểu mẫu đã duyệt (PDF), hồ sơ dự án (ZIP), tệp tải vào Desk | Thư mục `sites` | Có: `*-files.tar`, `*-private-files.tar` |
 | Cấu hình của site, gồm **khóa mã hóa** (giải mã mật khẩu SMTP, API key đã lưu) | `site_config.json` | Có: `*-site_config_backup.json` |
 | Ảnh hiện trường, tài liệu dự án | MinIO (bucket `pm-files`) | Có: thư mục `minio/` |
+| Hồ sơ lưu trữ (M12): dữ liệu dự án, trao đổi, bản scan, gói nộp lưu | MinIO (cùng bucket, nhóm `archive`) | Có: thư mục `minio/` |
 | Chỉ mục tìm kiếm | Meilisearch | Không: dựng lại từ dữ liệu khi khôi phục |
 | Hàng đợi, bộ nhớ đệm | Redis | Không: không cần |
 | Các mật khẩu của hệ thống (CSDL, MinIO, Meilisearch, Administrator lúc cài) | `docker/.env.prod` | **Không**: giữ tệp này riêng, ở nơi an toàn |
@@ -80,7 +81,8 @@ Thời gian và dung lượng tham khảo (mục 6):
    - màn Quản trị → Giám sát hệ thống;
    - mở một dự án: tiến độ, trao đổi;
    - một ảnh hiện trường, một tài liệu tải về được;
-   - tìm kiếm trong trao đổi có kết quả.
+   - tìm kiếm trong trao đổi có kết quả;
+   - có lưu trữ hồ sơ (M12): màn Lưu trữ hồ sơ → **Kiểm tra toàn vẹn**. Nó đọc lại mọi tài liệu đã nộp lưu và so SHA-256 với mã ghi lúc nộp lưu, nên chứng minh bản khôi phục đủ và đúng từng byte.
 
 Khôi phục **ghi đè** dữ liệu đang có trên site đích. Muốn giữ dữ liệu hiện tại thì sao lưu nó trước.
 

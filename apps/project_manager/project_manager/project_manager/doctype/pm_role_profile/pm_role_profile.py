@@ -2,7 +2,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from project_manager.project_manager.constants import ADMIN_ONLY_CAPABILITIES, ADMIN_ROLE, CAPABILITY_CODES
+from project_manager.project_manager import extensions
+from project_manager.project_manager.constants import ADMIN_ONLY_CAPABILITIES, ADMIN_ROLE
 
 # Frappe's own roles never become permission groups of the application.
 RESERVED_ROLES = frozenset({"Administrator", "System Manager", "Guest", "All", "Desk User"})
@@ -25,7 +26,7 @@ class PMRoleProfile(Document):
         if self.is_admin:
             self.set("capabilities", [])  # an administrator holds every capability: nothing to list
             return
-        validate_capabilities(self, CAPABILITY_CODES, ADMIN_ONLY_CAPABILITIES)
+        validate_capabilities(self, extensions.capability_codes(), ADMIN_ONLY_CAPABILITIES)
 
     def on_update(self):
         _forget()

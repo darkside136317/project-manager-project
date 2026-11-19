@@ -24,7 +24,8 @@ class TestInstall(PMTestCase):
     def test_project_roles_and_node_types(self):
         for spec in C.DEFAULT_PROJECT_ROLES:
             doc = frappe.get_doc("PM Project Role", spec["role_name"])
-            self.assertEqual({r.capability for r in doc.capabilities}, set(spec["capabilities"]))
+            # the core's capabilities, and maybe those an installed layer adds (pm_archive's archive.view...)
+            self.assertTrue(set(spec["capabilities"]) <= {r.capability for r in doc.capabilities}, spec["role_name"])
         for spec in C.DEFAULT_NODE_TYPES:
             self.assertTrue(frappe.db.exists("PM Node Type", spec["node_type"]))
 

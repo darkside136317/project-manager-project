@@ -35,6 +35,14 @@ Hooks a layer may declare (pm_construction's hooks.py is the example):
   services/closing.close), e.g. an archive bridge taking the dossier.
 * `pm_gate_checks = ["dotted.path"]` — conditions of passing a phase (M7, services/phases.py): the function gets the
   phase (a Task row) and returns the conditions still missing, as short sentences (empty: nothing missing).
+* `pm_capabilities = ["dotted.path"]` — functions returning the layer's global capabilities: [{"code", "label",
+  "module", "builtin": [Frappe roles whose built-in group starts with it]}]; permission groups may then hold them.
+* `pm_project_capabilities = ["dotted.path"]` — functions returning the layer's capabilities inside a project:
+  [{"code", "label"}]; project roles may then hold them (the layer adds them to the default roles itself).
+* `pm_object_stores = {"collection": [("DocType", "field")]}` — the layer's kinds of objects in MinIO and the fields
+  holding their keys (services/object_storage: allowed collections, and the nightly sweep keeps those keys).
+* `pm_nav_items = ["dotted.path"]` — functions (user) returning sidebar entries [{"group", "label", "route", "icon"}]
+  for that user (api/boot.py); "group" names an existing sidebar group or a new one.
 """
 
 import frappe
@@ -84,3 +92,74 @@ def registry() -> dict:
 
 def spa_modules() -> list[str]:
     return sorted(set(frappe.get_hooks("pm_spa_modules") or []))
+
+
+def _entries(hook: str) -> list[dict]:
+    """The dicts returned by the functions a hook lists."""
+    out = []
+    for path in frappe.get_hooks(hook) or []:
+        out.extend(entry for entry in (frappe.get_attr(path)() or []) if isinstance(entry, dict) and entry.get("code"))
+    return out
+
+
+def capabilities() -> list[tuple[str, str, str]]:
+    """(code, label, module) of the global capabilities: the core's (constants.CAPABILITIES), then the layers'."""
+    from project_manager.project_manager import constants as C
+
+    out, known = list(C.CAPABILITIES), set(C.CAPABILITY_CODES)
+    for entry in _entries("pm_capabilities"):
+        if entry["code"] not in known:
+            out.append((entry["code"], entry.get("label") or entry["code"], entry.get("module") or "Khác"))
+            known.add(entry["code"])
+    return out
+
+
+def capability_codes() -> frozenset:
+    return frozenset(code for code, _label, _module in capabilities())
+
+
+def builtin_capabilities() -> dict:
+    """{Frappe role: capabilities its group starts with}: the core's, plus what a layer grants to a built-in role."""
+    from project_manager.project_manager import constants as C
+
+    out = {role: list(codes) for role, codes in C.BUILTIN_CAPABILITIES.items()}
+    for entry in _entries("pm_capabilities"):
+        for role in entry.get("builtin") or ():
+            if role in out and entry["code"] not in out[role]:
+                out[role].append(entry["code"])
+    return {role: tuple(codes) for role, codes in out.items()}
+
+
+def project_capabilities() -> list[tuple[str, str]]:
+    """(code, label) of the capabilities inside a project: the core's, then the layers'."""
+    from project_manager.project_manager import constants as C
+
+    out, known = list(C.PROJECT_CAPABILITIES), set(C.PROJECT_CAPABILITY_CODES)
+    for entry in _entries("pm_project_capabilities"):
+        if entry["code"] not in known:
+            out.append((entry["code"], entry.get("label") or entry["code"]))
+            known.add(entry["code"])
+    return out
+
+
+def project_capability_codes() -> frozenset:
+    return frozenset(code for code, _label in project_capabilities())
+
+
+def object_stores() -> dict:
+    """{collection: [(DocType, field)]}: the layers' kinds of objects in MinIO and the fields that hold their keys."""
+    out = {}
+    for name, holders in (frappe.get_hooks("pm_object_stores") or {}).items():
+        for holder in holders if isinstance(holders, list | tuple) else [holders]:
+            pair = tuple(holder)
+            if len(pair) == 2 and pair not in out.setdefault(name, []):
+                out[name].append(pair)
+    return out
+
+
+def nav_items(user: str) -> list[dict]:
+    """Sidebar entries of the layers for `user`: [{"group", "label", "route", "icon"}] (the functions check access)."""
+    out = []
+    for path in frappe.get_hooks("pm_nav_items") or []:
+        out.extend(item for item in (frappe.get_attr(path)(user) or []) if isinstance(item, dict) and item.get("route"))
+    return out

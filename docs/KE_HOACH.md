@@ -75,6 +75,7 @@ Trạng thái: ✅ đã chốt · ❓ cần người dùng xác nhận khi duy�
 | D18 | Thời điểm thí điểm | Sau M7 | Sau M5 / sau M8 | Người dùng chọn | ✅ |
 | D19 | Repo | `D:\Documents\project-manager-project`, remote `github.com/darkside136317/project-manager-project` (**riêng tư**) | Đặt trong `frappe_docker` | Tách khỏi repo upstream của Frappe; cùng tài khoản với DM | ✅ |
 | D20 | Cấu hình mặc định để chạy cùng máy với DM | `COMPOSE_PROJECT_NAME=pmdev`, `DATA_VOLUME_PREFIX=pm`, site `pm.localhost`, port `8890` | — | `document_manager` dùng `docker` / `docmanager` / `8888` | ✅ |
+| D21 | Lưu trữ hồ sơ dự án (thêm sau M11) | App `pm_archive` trong repo này: lập hồ sơ, nộp lưu, kiểm toàn vẹn, mục lục, bản giấy, gói TT 05/2025 | Cầu nối `pm_archive_bridge` sang `document_manager`; cài DM chung site; gộp DM vào repo | Người dùng chọn: một giao diện, một hệ phân quyền theo dự án, repo vẫn tự đủ. Mã của DM được sao chép khi cần (gói AIP) | ✅ |
 
 ---
 
@@ -537,7 +538,19 @@ Quy ước cỡ việc: S ≤ 2 tuần, M 3–5 tuần, L 6–8 tuần (đội n
   - Triển khai prod qua `prod_compose.py`; diễn tập sao lưu và khôi phục sang máy khác.
   - Tài liệu: README, DEPLOYMENT, HIEU_NANG, hướng dẫn sử dụng.
 
-**Để sau** (ngoài lộ trình): cổng CĐT/TVGS, `pm_archive_bridge` (repo riêng), AI (Claude API), Zalo/SMS.
+### M12 — Lưu trữ hồ sơ dự án trong hệ thống (M) · bổ sung sau M11 (quyết định D21)
+Thay cho `pm_archive_bridge`, người dùng chọn làm phần lưu trữ ngay trong repo, không qua cầu nối sang `document_manager`.
+- **Nội dung:**
+  - App thứ ba `pm_archive`, như một lớp: không import lớp khác, lõi không biết nó. Lõi thêm các hook chung `pm_capabilities`, `pm_project_capabilities`, `pm_object_stores`, `pm_nav_items`.
+  - Danh mục hồ sơ có thời hạn bảo quản và quy tắc xếp. Lớp thi công góp nhóm "Hồ sơ hoàn thành công trình" qua hook `pm_archive_categories`.
+  - Lập hồ sơ: tài liệu đã duyệt, biểu mẫu đã duyệt, ảnh; khi đóng dự án có thêm dữ liệu dự án và trao đổi.
+  - Văn thư lưu trữ (nhóm quyền "Lưu trữ") duyệt nộp lưu thì hồ sơ mới khóa: SHA-256 từng tài liệu, chặn xóa nguồn, hồ sơ bổ sung khi có tài liệu mới.
+  - Kiểm toàn vẹn hằng tuần; cảnh báo hồ sơ chưa nộp lưu và lỗi toàn vẹn.
+  - Mục lục hồ sơ, mục lục văn bản; vị trí bản giấy (kho, giá, hộp); gói nộp lưu theo TT 05/2025/TT-BNV.
+- **Để sau:** khai thác cho người ngoài dự án (phiếu yêu cầu, duyệt, hạn dùng); tiêu hủy hồ sơ hết hạn bảo quản.
+- Kế hoạch chi tiết và các lựa chọn của người dùng: [nhật ký M12](build-log/13-m12-luu-tru-ho-so.md).
+
+**Để sau** (ngoài lộ trình): cổng CĐT/TVGS, AI (Claude API), Zalo/SMS. (`pm_archive_bridge` không làm nữa: M12 thay nó.)
 
 ---
 

@@ -152,27 +152,33 @@ class _Zip:
         return self.buffer.getvalue()
 
 
-def _project_parts(box: _Zip, project: str) -> None:
-    from project_manager.project_manager.services import object_storage
+def data_parts(project: str) -> list[dict]:
+    """The project's data as files, as the current user may read it: du-an.json, the lists (tasks, members, risks,
+    issues, changes, budget) and the industry layers' parts (hook pm_dossier_parts). [{"path", "content", "source"}].
+    The dossier adds the documents and approved forms to these; an archive keeps them for a closed project."""
+    parts = []
+
+    def add(path, content, source):
+        parts.append({"path": path, "content": content, "source": source})
 
     info = frappe.get_doc("Project", project)
     fields = ("name", "project_name", "pm_code", "pm_state", "company", "expected_start_date", "expected_end_date",
               "percent_complete", "pm_manager", "pm_health", "pm_spi", "pm_forecast_end")
-    box.add("du-an.json", json.dumps({f: info.get(f) for f in fields}, ensure_ascii=False, indent=2, default=str),
-            f"Project {project}")
+    add("du-an.json", json.dumps({f: info.get(f) for f in fields}, ensure_ascii=False, indent=2, default=str),
+        f"Project {project}")
     tasks = frappe.get_list("Task", filters={"project": project},
                             fields=["name", "pm_wbs_code", "subject", "pm_node_type", "is_group", "status", "progress",
                                     "exp_start_date", "exp_end_date", "act_start_date", "act_end_date", "pm_accountable"],
                             order_by="pm_path asc", limit_page_length=0)
-    box.add("cong-viec.csv", _csv(tasks, [("pm_wbs_code", "Mã WBS"), ("subject", "Công việc"), ("pm_node_type", "Loại"),
-                                          ("status", "Trạng thái"), ("progress", "Tiến độ (%)"),
-                                          ("exp_start_date", "Bắt đầu kế hoạch"), ("exp_end_date", "Kết thúc kế hoạch"),
-                                          ("act_start_date", "Bắt đầu thực tế"), ("act_end_date", "Kết thúc thực tế"),
-                                          ("pm_accountable", "Chịu trách nhiệm"), ("name", "Mã hệ thống")]), "Task")
+    add("cong-viec.csv", _csv(tasks, [("pm_wbs_code", "Mã WBS"), ("subject", "Công việc"), ("pm_node_type", "Loại"),
+                                      ("status", "Trạng thái"), ("progress", "Tiến độ (%)"),
+                                      ("exp_start_date", "Bắt đầu kế hoạch"), ("exp_end_date", "Kết thúc kế hoạch"),
+                                      ("act_start_date", "Bắt đầu thực tế"), ("act_end_date", "Kết thúc thực tế"),
+                                      ("pm_accountable", "Chịu trách nhiệm"), ("name", "Mã hệ thống")]), "Task")
     members = frappe.get_all("PM Project Member", filters={"project": project},
                              fields=["user", "project_role", "is_active", "valid_from", "valid_to"], limit_page_length=0)
-    box.add("thanh-vien.csv", _csv(members, [("user", "Người"), ("project_role", "Vai trò"), ("is_active", "Đang hiệu lực"),
-                                             ("valid_from", "Từ ngày"), ("valid_to", "Đến ngày")]), "PM Project Member")
+    add("thanh-vien.csv", _csv(members, [("user", "Người"), ("project_role", "Vai trò"), ("is_active", "Đang hiệu lực"),
+                                         ("valid_from", "Từ ngày"), ("valid_to", "Đến ngày")]), "PM Project Member")
     if project_in(get_access().read_tasks, project):
         for doctype, path, columns in (
                 ("PM Risk", "rui-ro.csv", [("name", "Mã"), ("title", "Rủi ro"), ("level", "Mức"), ("status", "Trạng thái"),
@@ -182,7 +188,7 @@ def _project_parts(box: _Zip, project: str) -> None:
                 ("PM Change Request", "phat-sinh.csv", [("name", "Mã"), ("title", "Nội dung"), ("status", "Trạng thái"),
                                                         ("cost_impact", "Chi phí"), ("days_impact", "Ngày")])):
             rows = frappe.get_all(doctype, filters={"project": project}, fields=[k for k, _l in columns], limit_page_length=0)
-            box.add(path, _csv(rows, columns), doctype)
+            add(path, _csv(rows, columns), doctype)
     if has_project_capability(project, "finance.view", "budget.manage"):
         from project_manager.project_manager.services import budget
 
@@ -190,8 +196,19 @@ def _project_parts(box: _Zip, project: str) -> None:
         if name:
             lines = frappe.get_all("PM Budget Line", filters={"parent": name, "parenttype": "PM Budget"},
                                    fields=["category", "task", "description", "amount"], order_by="idx asc")
-            box.add("ngan-sach.csv", _csv(lines, [("category", "Khoản mục"), ("task", "Công việc"),
-                                                 ("description", "Diễn giải"), ("amount", "Số tiền")]), f"PM Budget {name}")
+            add("ngan-sach.csv", _csv(lines, [("category", "Khoản mục"), ("task", "Công việc"),
+                                              ("description", "Diễn giải"), ("amount", "Số tiền")]), f"PM Budget {name}")
+    for path in frappe.get_hooks("pm_dossier_parts") or []:
+        for part in frappe.get_attr(path)(project) or []:
+            add(part["path"], part["content"], part.get("source") or path)
+    return parts
+
+
+def _project_parts(box: _Zip, project: str) -> None:
+    from project_manager.project_manager.services import object_storage
+
+    for part in data_parts(project):
+        box.add(part["path"], part["content"], part["source"])
     versions = frappe.db.sql("""select d.name, d.title, d.category, v.version_no, v.file_name, v.object_key
                                 from `tabPM Document` d join `tabPM Document Version` v
                                   on v.document = d.name and v.version_no = d.current_version
@@ -209,9 +226,6 @@ def _project_parts(box: _Zip, project: str) -> None:
                                       fields=["name", "template_code"], as_list=True, limit_page_length=0):
         file_name, content = form_output.pdf_of(name)
         box.add(f"bieu-mau/{_safe(code)}/{file_name}", content, f"PM Form Submission {name}")
-    for path in frappe.get_hooks("pm_dossier_parts") or []:
-        for part in frappe.get_attr(path)(project) or []:
-            box.add(part["path"], part["content"], part.get("source") or path)
 
 
 def build_dossier(project: str, user: str) -> str:

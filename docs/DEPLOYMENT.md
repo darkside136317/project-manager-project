@@ -161,6 +161,8 @@ git pull
 scripts/deploy_prod.sh --backup
 ```
 
+Một app mới của hệ thống (ví dụ `pm_archive`, lưu trữ hồ sơ, từ M12) được cài lên site đang chạy ở bước này. Muốn bỏ một lớp thì đặt `PM_INSTALL_APPS` trong `docker/.env.prod` (mặc định `erpnext project_manager pm_construction pm_archive`) trước lần triển khai đầu; lớp đã cài thì không tự gỡ.
+
 `--backup` sao lưu đầy đủ trước (mục 3 của [SAO_LUU_KHOI_PHUC.md](SAO_LUU_KHOI_PHUC.md)), rồi build image mới, migrate và khởi động lại. Khi dùng image của CI, đổi `PM_IMAGE_TAG` sang tag mới (ví dụ `sha-5483684`).
 
 **Quay lui:**

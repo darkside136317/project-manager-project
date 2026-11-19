@@ -1,0 +1,215 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2026-11-02 12:00:00.000000",
+ "description": "Một tài liệu trong hồ sơ lưu trữ: tham chiếu tới tệp của dự án (hoặc tệp do lớp lưu trữ tạo), kèm SHA-256 lúc nộp lưu.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "archive_file",
+  "project",
+  "seq",
+  "kind",
+  "title",
+  "doc_number",
+  "doc_date",
+  "author",
+  "page_count",
+  "excluded",
+  "note",
+  "column_file",
+  "source_doctype",
+  "source_name",
+  "file_name",
+  "content_type",
+  "size_bytes",
+  "collection",
+  "object_key",
+  "file_url",
+  "sha256",
+  "added_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "archive_file",
+   "fieldtype": "Link",
+   "label": "Hồ sơ",
+   "options": "PM Archive File",
+   "reqd": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "seq",
+   "fieldtype": "Int",
+   "label": "STT",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Loại",
+   "options": "Tài liệu\nBiểu mẫu\nẢnh\nTrao đổi\nDữ liệu\nTệp tải lên",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Small Text",
+   "label": "Trích yếu",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "doc_number",
+   "fieldtype": "Data",
+   "label": "Số, ký hiệu",
+   "read_only": 1
+  },
+  {
+   "fieldname": "doc_date",
+   "fieldtype": "Date",
+   "label": "Ngày",
+   "read_only": 1
+  },
+  {
+   "fieldname": "author",
+   "fieldtype": "Data",
+   "label": "Tác giả",
+   "read_only": 1
+  },
+  {
+   "fieldname": "page_count",
+   "fieldtype": "Int",
+   "label": "Số tờ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "excluded",
+   "fieldtype": "Check",
+   "label": "Bỏ khỏi hồ sơ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_file",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Data",
+   "label": "Nguồn",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_name",
+   "fieldtype": "Data",
+   "label": "Mã nguồn",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "label": "Tên tệp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_type",
+   "fieldtype": "Data",
+   "label": "Kiểu tệp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "size_bytes",
+   "fieldtype": "Int",
+   "label": "Dung lượng (byte)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "collection",
+   "fieldtype": "Data",
+   "label": "Kho tệp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "object_key",
+   "fieldtype": "Data",
+   "label": "Khóa tệp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_url",
+   "fieldtype": "Data",
+   "label": "Tệp Frappe",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sha256",
+   "fieldtype": "Data",
+   "label": "SHA-256",
+   "read_only": 1
+  },
+  {
+   "fieldname": "added_by",
+   "fieldtype": "Link",
+   "label": "Người thêm",
+   "options": "User",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Archive",
+ "name": "PM Archive Item",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Archivist",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}

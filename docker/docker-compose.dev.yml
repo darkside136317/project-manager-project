@@ -15,6 +15,7 @@ x-app-mounts: &app-mounts
   - logs:/home/frappe/frappe-bench/logs
   - ../apps/project_manager:/home/frappe/frappe-bench/apps/project_manager
   - ../apps/pm_construction:/home/frappe/frappe-bench/apps/pm_construction
+  - ../apps/pm_archive:/home/frappe/frappe-bench/apps/pm_archive
   - ./dev:/dev-tools:ro
 
 services:
@@ -87,6 +88,7 @@ services:
     volumes:
       - ../apps/project_manager:/app
       - ../apps/pm_construction:/pm_construction:ro   # its frontend/ joins the SPA (frontend/src/modules.js)
+      - ../apps/pm_archive:/pm_archive:ro
       - spa-node-modules:/app/frontend/node_modules   # Linux modules, kept out of the host folder
 
 volumes:

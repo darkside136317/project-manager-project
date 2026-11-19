@@ -206,7 +206,10 @@ class TestReports(ControlBase):
         for slug in [r.slug for r in as_user(MANAGER, reports.visible)]:
             filters = {}
             spec = reports.get(slug)
-            if any(f.get("reqd") for f in spec.filters):
+            required = {f["fieldname"] for f in spec.filters if f.get("reqd")}
+            if required - {"project"}:
+                continue  # a layer's report that needs something else (an archive file...): its own tests run it
+            if required:
                 filters = {"project": self.project}
             result = as_user(MANAGER, reports.run, slug, filters)
             self.assertIn("rows", result, slug)

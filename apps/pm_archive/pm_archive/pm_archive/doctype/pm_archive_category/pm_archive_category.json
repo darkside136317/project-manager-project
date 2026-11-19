@@ -1,0 +1,217 @@
+{
+ "actions": [],
+ "autoname": "field:code",
+ "creation": "2026-11-02 12:00:00.000000",
+ "description": "Danh mục hồ sơ: mỗi dòng là một loại hồ sơ của dự án, với thời hạn bảo quản và quy tắc xếp tài liệu vào nó.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "code",
+  "title",
+  "parent_pm_archive_category",
+  "is_group",
+  "column_retention",
+  "retention",
+  "required",
+  "access_mode",
+  "is_active",
+  "rules_section",
+  "document_categories",
+  "form_templates",
+  "all_forms",
+  "column_kinds",
+  "kinds",
+  "data_paths",
+  "industry",
+  "description",
+  "lft",
+  "rgt",
+  "old_parent"
+ ],
+ "fields": [
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "Mã",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Tên hồ sơ",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "parent_pm_archive_category",
+   "fieldtype": "Link",
+   "label": "Thuộc nhóm",
+   "options": "PM Archive Category"
+  },
+  {
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Là nhóm"
+  },
+  {
+   "fieldname": "column_retention",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "retention",
+   "fieldtype": "Data",
+   "label": "Thời hạn bảo quản",
+   "default": "10",
+   "in_list_view": 1,
+   "description": "Số năm, hoặc Vĩnh viễn"
+  },
+  {
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "label": "Bắt buộc khi nộp lưu",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "access_mode",
+   "fieldtype": "Select",
+   "label": "Chế độ sử dụng",
+   "options": "Nội bộ dự án\nHạn chế",
+   "default": "Nội bộ dự án",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Đang dùng",
+   "default": "1"
+  },
+  {
+   "fieldname": "rules_section",
+   "fieldtype": "Section Break",
+   "label": "Tài liệu tự xếp vào"
+  },
+  {
+   "fieldname": "document_categories",
+   "fieldtype": "Small Text",
+   "label": "Nhóm tài liệu",
+   "description": "Nhóm của tài liệu dự án, mỗi dòng một"
+  },
+  {
+   "fieldname": "form_templates",
+   "fieldtype": "Small Text",
+   "label": "Mẫu biểu mẫu",
+   "description": "Mã mẫu biểu mẫu đã duyệt, mỗi dòng một"
+  },
+  {
+   "fieldname": "all_forms",
+   "fieldtype": "Check",
+   "label": "Mọi biểu mẫu đã duyệt còn lại"
+  },
+  {
+   "fieldname": "column_kinds",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kinds",
+   "fieldtype": "Small Text",
+   "label": "Loại tư liệu",
+   "description": "Ảnh, Trao đổi, Dữ liệu: mỗi dòng một"
+  },
+  {
+   "fieldname": "data_paths",
+   "fieldtype": "Small Text",
+   "label": "Tệp dữ liệu",
+   "description": "Đầu đường dẫn của tệp dữ liệu, ví dụ thi-cong/"
+  },
+  {
+   "fieldname": "industry",
+   "fieldtype": "Data",
+   "label": "Do lớp nghiệp vụ tạo",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "label": "Left",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "label": "Right",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "label": "Old Parent",
+   "options": "PM Archive Category",
+   "hidden": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_tree": 1,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Archive",
+ "name": "PM Archive Category",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Archivist",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "search_fields": "title",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}

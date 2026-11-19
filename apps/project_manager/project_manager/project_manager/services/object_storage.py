@@ -23,6 +23,16 @@ CHUNK = 256 * 1024
 _clients = {}
 
 
+def collections() -> frozenset:
+    """The core's collections and the industry layers' (hook pm_object_stores)."""
+    from project_manager.project_manager import extensions
+
+    return COLLECTIONS | frozenset(extensions.object_stores())
+
+
+HOLDERS = (("PM Media", ("object_key", "thumb_key")), ("PM Document Version", ("object_key",)))
+
+
 class StorageError(Exception):
     """The object store cannot be reached or refused the request."""
 
@@ -45,7 +55,7 @@ def _site_prefix() -> str:
 
 
 def _check_key(key: str, collection: str) -> str:
-    if collection not in COLLECTIONS:
+    if collection not in collections():
         raise ValueError(f"Unknown object collection {collection}")
     if not key or not key.startswith(PREFIX):
         raise ValueError("Not an object key")
@@ -125,12 +135,23 @@ def _call(action, *args):
 
 def put(data: bytes, filename: str, content_type: str, collection: str) -> str:
     """Store `data` and return its key."""
-    if collection not in COLLECTIONS:
+    if collection not in collections():
         raise ValueError(f"Unknown object collection {collection}")
     path = f"{_site_prefix()}/{collection}/{uuid.uuid4().hex}"
     metadata = {"filename": quote(filename or "", safe=""), "sha256": hashlib.sha256(data).hexdigest()}
     store = backend()
     _call(store.put, path, data, content_type or "application/octet-stream", metadata)
+    return PREFIX + path
+
+
+def put_stream(stream, filename: str, content_type: str, collection: str, sha256: str) -> str:
+    """Store an object read from an open binary file, not held in memory (a large export); `sha256` is its digest,
+    worked out by the caller while writing the file. Returns its key."""
+    if collection not in collections():
+        raise ValueError(f"Unknown object collection {collection}")
+    path = f"{_site_prefix()}/{collection}/{uuid.uuid4().hex}"
+    metadata = {"filename": quote(filename or "", safe=""), "sha256": sha256}
+    _call(backend().put, path, stream, content_type or "application/octet-stream", metadata)
     return PREFIX + path
 
 
@@ -177,18 +198,22 @@ def ping() -> None:
 def sweep_orphans(older_than_hours: int = 24) -> int:
     """Objects that no row points to (an upload whose transaction rolled back): delete them after a day.
 
-    Runs daily. Keys are listed per collection and compared with the rows that hold keys."""
+    Runs daily. Keys are listed per collection and compared with the rows that hold keys: the core's and those the
+    industry layers declare (hook pm_object_stores)."""
     from datetime import datetime, timedelta, timezone
 
     if not configured():
         return 0
+    from project_manager.project_manager import extensions
+
+    holders = [(doctype, field) for doctype, fields in HOLDERS for field in fields]
+    holders += [pair for pairs in extensions.object_stores().values() for pair in pairs]
     held = set()
-    for doctype, fields in (("PM Media", ("object_key", "thumb_key")), ("PM Document Version", ("object_key",))):
-        for field in fields:
-            held.update(frappe.get_all(doctype, filters={field: ["is", "set"]}, pluck=field))
+    for doctype, field in holders:
+        held.update(frappe.get_all(doctype, filters={field: ["is", "set"]}, pluck=field, limit_page_length=0))
     cutoff = datetime.now(timezone.utc) - timedelta(hours=older_than_hours)
     store, removed = backend(), 0
-    for collection in sorted(COLLECTIONS):
+    for collection in sorted(collections()):
         for path, modified in store.keys(f"{_site_prefix()}/{collection}/"):
             if PREFIX + path not in held and modified < cutoff:
                 store.delete(path)

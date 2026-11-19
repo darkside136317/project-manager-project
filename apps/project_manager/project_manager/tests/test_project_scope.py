@@ -6,6 +6,7 @@ Run: bench --site <site> run-tests --app project_manager --module project_manage
 import frappe
 
 from project_manager.project_manager import constants as C
+from project_manager.project_manager import extensions
 from project_manager.project_manager import policy
 from project_manager.project_manager.permissions import has_project_member_permission
 from project_manager.project_manager.setup import install
@@ -198,7 +199,7 @@ class TestProjectScope(PMTestCase):
         self.assertEqual(policy.capabilities_in(self.a, ENGINEER),
                          frozenset({"task.update", "material.request", "risk.manage", "change.request"}))
         self.assertEqual(policy.capabilities_in(self.b, ENGINEER), frozenset())
-        self.assertEqual(policy.capabilities_in(self.b, ADMIN), C.PROJECT_CAPABILITY_CODES)
+        self.assertEqual(policy.capabilities_in(self.b, ADMIN), extensions.project_capability_codes())  # layers' too
         self.assertIn("perf.view_project", policy.capabilities_in(self.b, DIRECTOR))
 
     def test_membership_grants_the_staff_role(self):

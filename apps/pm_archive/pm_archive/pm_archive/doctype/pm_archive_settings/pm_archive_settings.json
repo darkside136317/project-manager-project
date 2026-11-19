@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "creation": "2026-11-02 12:00:00.000000",
+ "description": "Thiết lập lưu trữ hồ sơ.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "fonds_code",
+  "fonds_name",
+  "check_parts"
+ ],
+ "fields": [
+  {
+   "fieldname": "fonds_code",
+   "fieldtype": "Data",
+   "label": "Mã phông lưu trữ",
+   "description": "Dùng trong gói nộp lưu; để trống thì lấy viết tắt của công ty"
+  },
+  {
+   "fieldname": "fonds_name",
+   "fieldtype": "Data",
+   "label": "Tên phông lưu trữ"
+  },
+  {
+   "fieldname": "check_parts",
+   "fieldtype": "Int",
+   "label": "Kiểm toàn vẹn: chia kho thành mấy phần",
+   "default": "4",
+   "description": "Mỗi tuần kiểm một phần; 4 phần thì cả kho được kiểm mỗi tháng"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Archive",
+ "name": "PM Archive Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Archivist",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

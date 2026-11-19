@@ -32,8 +32,9 @@ Kịch bản trình diễn trên dữ liệu mẫu: [HUONG_DAN_THI_DIEM.md](HUON
 | **Khách** (chủ đầu tư, tư vấn giám sát) | Chỉ thấy việc được giao cho mình |
 
 Ngoài vai trò trong dự án còn có quyền toàn công ty:
-- **Giám đốc:** xem mọi dự án, hiệu suất, chi phí;
-- **Quản trị:** người dùng, phân quyền, cấu hình.
+- **Giám đốc:** xem mọi dự án, hiệu suất, chi phí, hồ sơ lưu trữ;
+- **Quản trị:** người dùng, phân quyền, cấu hình;
+- **Lưu trữ** (văn thư lưu trữ): hồ sơ lưu trữ của mọi dự án, nộp lưu, kho lưu trữ (mục 10).
 
 ## 3. Hằng ngày
 
@@ -116,6 +117,7 @@ Ngoài vai trò trong dự án còn có quyền toàn công ty:
 | Tài chính | Ngân sách và EVM |
 | Kiểm soát | Rủi ro, Vấn đề, Phát sinh |
 | Thi công | Vật tư so với định mức, Chi phí so với dự toán |
+| Lưu trữ | Mục lục hồ sơ, Mục lục văn bản trong hồ sơ |
 
 Cách dùng:
 - chọn bộ lọc rồi bấm "Xem báo cáo";
@@ -128,9 +130,50 @@ Cách dùng:
 Tab Tổng quan → **Kết thúc dự án** (quản lý dự án):
 - xem những gì còn mở;
 - **Xuất hồ sơ dự án (ZIP)**: danh sách công việc, thành viên, rủi ro, vấn đề, phát sinh, ngân sách, tài liệu, biểu mẫu đã duyệt, nhật ký thi công, BOQ, kèm `manifest.json` ghi mã kiểm tra của từng tệp. Lập xong thì có thông báo kèm liên kết tải;
-- **Đóng dự án** (ghi kết luận): dự án ra khỏi các danh sách đang chạy, cảnh báo của nó kết thúc. Mở lại được khi cần.
+- **Đóng dự án** (ghi kết luận): dự án ra khỏi các danh sách đang chạy, cảnh báo của nó kết thúc, hồ sơ lưu trữ chờ nộp lưu (mục 10). Mở lại được khi cần.
 
-## 10. Quản trị
+## 10. Lưu trữ hồ sơ
+
+Hồ sơ lưu trữ của một dự án hình thành dần trong lúc làm, mỗi **danh mục hồ sơ** một hồ sơ. Ví dụ:
+- hồ sơ pháp lý, hợp đồng;
+- hồ sơ kỹ thuật, bản vẽ;
+- biên bản, báo cáo; biểu mẫu đã duyệt;
+- ảnh hiện trường; trao đổi; dữ liệu dự án;
+- với thi công: biên bản nghiệm thu; nhật ký và khối lượng; bản vẽ hoàn công; hồ sơ bàn giao.
+
+**Quản lý dự án** (tab **Hồ sơ lưu trữ** của dự án):
+- **Cập nhật hồ sơ** xếp vào đúng hồ sơ những gì mới có: tài liệu đã duyệt, biểu mẫu đã duyệt, ảnh hiện trường. Hệ thống cũng tự làm việc này mỗi đêm;
+- mở một hồ sơ để:
+  - sắp lại thứ tự;
+  - sửa số, ký hiệu, ngày, tác giả, số tờ, trích yếu;
+  - bỏ một tài liệu ra, chuyển nó sang hồ sơ khác;
+  - **thêm tệp**: bản scan biên bản ký tay, tài liệu ngoài hệ thống;
+- ghi **chỗ để bản giấy**: kho, giá, hộp;
+- "Còn thiếu" liệt kê danh mục bắt buộc chưa có tài liệu nào.
+
+**Khi đóng dự án:**
+- hệ thống xếp nốt mọi thứ;
+- giữ thêm dữ liệu dự án (danh sách công việc, thành viên, rủi ro, ngân sách, nhật ký thi công…) và toàn bộ trao đổi;
+- chuyển các hồ sơ sang **Chờ nộp lưu** và báo người lưu trữ. Quản lý dự án cũng có thể bấm "Đề nghị nộp lưu" sớm hơn.
+
+**Người lưu trữ** (nhóm quyền **Lưu trữ**, không cần là thành viên dự án):
+- màn **Lưu trữ hồ sơ** (thanh bên): hồ sơ của mọi dự án, lọc theo trạng thái, năm, tìm theo tiêu đề và trích yếu;
+- **Nộp lưu**: hệ thống tính mã kiểm tra (SHA-256) từng tài liệu rồi khóa hồ sơ:
+  - không ai sửa, thêm, bỏ tài liệu được nữa;
+  - tài liệu gốc trong dự án không xóa được;
+  - tài liệu duyệt sau đó vào một **hồ sơ bổ sung**;
+- **Mục lục hồ sơ**, **mục lục văn bản** (báo cáo; Excel, PDF, in);
+- **Lập gói nộp lưu**: tệp ZIP theo Thông tư 05/2025/TT-BNV, để nộp cho một cơ quan lưu trữ khác;
+- **Kiểm tra toàn vẹn**: đọc lại các tài liệu đã nộp lưu, so mã kiểm tra. Hệ thống tự chạy mỗi tuần một phần kho, và có cảnh báo khi có tài liệu bị đổi hoặc bị mất.
+
+**Ai xem được gì:**
+- quản lý dự án xem và lập hồ sơ của dự án mình;
+- chỉ huy trưởng, kế toán dự án xem, trừ hồ sơ "Hạn chế" (dữ liệu dự án có ngân sách);
+- giám đốc xem mọi dự án.
+
+Danh mục hồ sơ (thời hạn bảo quản, tài liệu nào tự xếp vào đâu) và kho lưu trữ sửa ở nhóm **Danh mục** của thanh bên. Thời hạn bảo quản mặc định là đề xuất, doanh nghiệp cần xác nhận lại.
+
+## 11. Quản trị
 
 - **Người dùng:** tạo tài khoản, gửi liên kết đặt mật khẩu, khóa hoặc mở tài khoản, gán nhóm quyền và phạm vi dự án (chỉ dự án tham gia, dự án được chọn, tất cả).
 - **Phân quyền:** nhóm quyền toàn công ty; **vai trò trong dự án** (mỗi vai trò là một bộ quyền, sửa được).

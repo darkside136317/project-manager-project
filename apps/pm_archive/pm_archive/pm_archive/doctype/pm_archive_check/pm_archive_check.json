@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "autoname": "KTTV-.YYYY.-.####",
+ "creation": "2026-11-02 12:00:00.000000",
+ "description": "Một lần kiểm tra toàn vẹn các tài liệu đã nộp lưu (SHA-256).",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "run_on",
+  "trigger",
+  "scope",
+  "status",
+  "started_by",
+  "column_counts",
+  "checked",
+  "changed",
+  "missing",
+  "finished_on",
+  "details_section",
+  "details"
+ ],
+ "fields": [
+  {
+   "fieldname": "run_on",
+   "fieldtype": "Datetime",
+   "label": "Lúc chạy",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "trigger",
+   "fieldtype": "Select",
+   "label": "Cách chạy",
+   "options": "Theo lịch\nThủ công",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Data",
+   "label": "Phạm vi",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Trạng thái",
+   "options": "Đang chạy\nHoàn thành\nCó lỗi",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "started_by",
+   "fieldtype": "Link",
+   "label": "Người chạy",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_counts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "checked",
+   "fieldtype": "Int",
+   "label": "Đã kiểm",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "changed",
+   "fieldtype": "Int",
+   "label": "Bị đổi",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "missing",
+   "fieldtype": "Int",
+   "label": "Bị mất",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "finished_on",
+   "fieldtype": "Datetime",
+   "label": "Xong lúc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Chi tiết"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Long Text",
+   "label": "Tài liệu có lỗi",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Archive",
+ "name": "PM Archive Check",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Archivist",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

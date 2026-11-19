@@ -20,6 +20,7 @@ from frappe import _
 from frappe.utils import getdate, nowdate
 
 from project_manager.project_manager import constants as C
+from project_manager.project_manager import extensions
 
 ADMIN_ROLES = frozenset({C.ADMIN_ROLE, "System Manager", "Administrator"})
 
@@ -44,7 +45,7 @@ def _profile_capabilities() -> dict:
     """{role: frozenset(capabilities)} of every permission group (the built-in defaults before the groups exist)."""
     memo = _memo()
     if "profiles" not in memo:
-        profiles = {role: frozenset(caps) for role, caps in C.BUILTIN_CAPABILITIES.items()}
+        profiles = {role: frozenset(caps) for role, caps in extensions.builtin_capabilities().items()}
         if frappe.db.table_exists("PM Role Profile"):
             granted = {}
             for row in frappe.get_all("PM Role Capability", filters={"parenttype": "PM Role Profile"},
@@ -100,7 +101,7 @@ def capabilities_of(user: str | None = None) -> frozenset:
     """Global capabilities: every one for an administrator, else the union of the user's permission groups."""
     user = user or frappe.session.user
     if is_admin(user):
-        return C.CAPABILITY_CODES | C.ADMIN_ONLY_CAPABILITIES
+        return extensions.capability_codes() | C.ADMIN_ONLY_CAPABILITIES
     profiles = _profile_capabilities()
     granted = set()
     for role in frappe.get_roles(user):
@@ -320,7 +321,7 @@ def capabilities_in(project: str, user: str | None = None) -> frozenset:
     user = user or frappe.session.user
     access = get_access(user)
     if access.kind == "admin":
-        return C.PROJECT_CAPABILITY_CODES
+        return extensions.project_capability_codes()
     if access.kind == "guest" or not project:
         return frozenset()
     roles = project_roles()

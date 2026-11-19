@@ -39,6 +39,8 @@ pm_portfolio_columns = [_K + "services.people.portfolio_columns"]
 pm_actual_costs = [_K + "services.reporting.actual_costs"]
 pm_reports = [_K + "services.reporting.reports"]
 pm_dossier_parts = [_K + "services.reporting.dossier_parts"]
+# read by the archive layer when it is installed (it never imports this one, nor this one it)
+pm_archive_categories = [_K + "setup.archive.categories"]
 
 # --- project scope of the layer's DocTypes (constants.PROJECT_SCOPED; tests/test_hook_coverage.py) -------------------
 _P = _K + "permissions."

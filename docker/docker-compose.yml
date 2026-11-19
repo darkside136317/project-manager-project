@@ -1,7 +1,7 @@
 # =============================================================================
 # Project Manager — Docker Compose (base)
 # =============================================================================
-# Frappe/ERPNext + project_manager + pm_construction, MariaDB, Redis, Meilisearch, MinIO.
+# Frappe/ERPNext + project_manager + pm_construction + pm_archive, MariaDB, Redis, Meilisearch, MinIO.
 # Run through scripts/bootstrap.ps1 or scripts/bootstrap.sh: they create docker/.env
 # (secrets included) and pick the overlays through COMPOSE_FILE:
 #   docker-compose.local.yml  publishes the site on 127.0.0.1:${HTTP_PUBLISH_PORT}
@@ -81,7 +81,8 @@ services:
       PUBLIC_URL: ${PUBLIC_URL:-}
 
   # ---------------------------------------------------------------------------
-  # One-shot: creates the site with ERPNext and the apps (skipped when it exists)
+  # One-shot: creates the site with ERPNext and the apps. When it exists, installs the apps of PM_INSTALL_APPS it
+  # lacks (a new industry layer reaches an existing site this way, in dev and on upgrades).
   # ---------------------------------------------------------------------------
   create-site:
     <<: *app-image
@@ -102,8 +103,14 @@ services:
           if (( `date +%s`-start > 120 )); then echo "common_site_config.json is incomplete"; exit 1; fi
         done;
         if [ -f "sites/$$FRAPPE_SITE_NAME/site_config.json" ]; then
-          bench --site "$$FRAPPE_SITE_NAME" list-apps >/dev/null;
+          installed=`bench --site "$$FRAPPE_SITE_NAME" list-apps | awk '{print $$1}'`;
           echo "Site $$FRAPPE_SITE_NAME already exists; skipping creation";
+          for app in $$PM_INSTALL_APPS; do
+            if ! echo "$$installed" | grep -qx "$$app"; then
+              echo "Installing $$app on $$FRAPPE_SITE_NAME";
+              bench --site "$$FRAPPE_SITE_NAME" install-app "$$app";
+            fi;
+          done;
         else
           apps=();
           for app in $$PM_INSTALL_APPS; do apps+=(--install-app "$$app"); done;
@@ -114,7 +121,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Run scripts/bootstrap to generate the secrets}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?}
       # CI installs the core alone to prove it never needs pm_construction.
-      PM_INSTALL_APPS: ${PM_INSTALL_APPS:-erpnext project_manager pm_construction}
+      PM_INSTALL_APPS: ${PM_INSTALL_APPS:-erpnext project_manager pm_construction pm_archive}
     depends_on:
       configurator:
         condition: service_completed_successfully

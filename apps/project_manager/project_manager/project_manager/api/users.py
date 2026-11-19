@@ -16,6 +16,7 @@ from frappe import _
 from frappe.utils import cint, now_datetime, validate_email_address
 
 from project_manager.project_manager import constants as C
+from project_manager.project_manager import extensions
 from project_manager.project_manager.constants import ADMIN_ROLE, DOCTYPE_LABELS, ROLE_MATRIX
 from project_manager.project_manager.policy import assert_capability, assignable_roles, role_profiles
 from project_manager.project_manager.services import permission_matrix
@@ -103,7 +104,7 @@ def _access_of(user: str) -> dict:
                "read_projects": _project_rows([r.project for r in doc.read_projects]),
                "write_projects": _project_rows([r.project for r in doc.write_projects])}
     access = get_access(user)
-    labels = {code: label for code, label, _module in C.CAPABILITIES}
+    labels = {code: label for code, label, _module in extensions.capabilities()}
     effective = {
         "kind": access.kind,
         "read_projects": None if access.read is None else _project_rows(access.read),

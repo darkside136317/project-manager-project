@@ -98,3 +98,13 @@ Viết mới: ngân sách và EVM (`services/budget.py`), rủi ro, vấn đề,
 | `docker/docker-compose.prod.yml`, `docker-compose.prod.bind.yml` | `docker/docker-compose.prod.yml`, `docker-compose.prod.bind.yml` | Image `pm-custom` (hoặc image CI), các dịch vụ của repo này (queue `pm`, Meilisearch, MinIO), giới hạn bộ nhớ theo biến, chỉ nginx mở và chỉ ở `127.0.0.1` |
 
 Viết mới: `scripts/deploy_prod.sh`, `backup.sh`, `restore.sh` (DM không có script sao lưu, khôi phục), `scripts/perf/load_progress.py`, phần M11 của `scripts/perf/volume_check.py`, `tests/test_security.py`, tài liệu `DEPLOYMENT.md`, `SAO_LUU_KHOI_PHUC.md`, `HUONG_DAN_SU_DUNG.md`.
+
+## M12
+
+| File ở repo này | Nguồn (`document-manager-project/...`) | Thay đổi so với nguồn |
+|---|---|---|
+| `apps/pm_archive/.../services/aip.py` | `document_manager/services/exchange/aip.py` | Đọc từng tài liệu theo khúc từ MinIO (hoặc tệp riêng tư của Frappe) vào ZIP, kiểm SHA-256 với mã đã ghi lúc nộp lưu; nhận mọi định dạng (ảnh, bảng tính, bản vẽ), ghi định dạng vào dữ liệu đặc tả; tác tử tạo gói là ứng dụng này; chỉ gói `AIP_hoso` |
+| `apps/pm_archive/.../services/aip_schemas/METS.xsd`, `xlink.xsd` | `document_manager/services/exchange/aip_schemas/` | Sao chép nguyên (METS 1.12, CC0) |
+| `apps/pm_archive/.../doctype/pm_archive_storage` | Mô hình `Storage Warehouse` của DM (kho, phòng, giá, hộp; cây) | Viết lại thành DocType của repo này (cây Frappe, tiền tố "PM Archive") |
+
+Viết mới: các DocType hồ sơ, tài liệu, danh mục, lần kiểm tra, thiết lập; lập hồ sơ, nộp lưu, chặn xóa nguồn, kiểm toàn vẹn, mục lục, ánh xạ dữ liệu đặc tả của gói (`services/filing.py`, `locking.py`, `guards.py`, `integrity.py`, `catalogue.py`, `aip_export.py`, `register.py`); các màn hình; các hook chung mới của lõi.

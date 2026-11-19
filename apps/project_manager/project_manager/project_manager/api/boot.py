@@ -66,6 +66,12 @@ def build_boot() -> dict:
     if has_capability("forms.manage"):
         nav[-1]["items"].append({"label": "Mẫu biểu mẫu", "route": f"{SPA_HOME}/bieu-mau-mau", "icon": "clipboard-list"})
     masters = [m for m in extensions.masters() if _can_read(m["doctype"])]
+    for item in extensions.nav_items(user):  # the industry layers' screens, in a group they name
+        group = next((g for g in nav if g["group"] == item.get("group")), None)
+        if group is None:
+            group = {"group": item.get("group") or GROUP_WORK, "items": []}
+            nav.append(group)
+        group["items"].append({k: item[k] for k in ("label", "route", "icon", "badge") if k in item})
     if masters:
         nav.append({"group": GROUP_CATALOGUES, "items": [
             {"label": m["label"], "route": f"{SPA_HOME}/danh-muc/{m['slug']}", "icon": m["icon"]} for m in masters]})

@@ -9,7 +9,7 @@ Every change is recorded in the system log.
 import frappe
 from frappe import _
 
-from project_manager.project_manager.constants import BUILTIN_CAPABILITIES, CAPABILITIES, CAPABILITY_CODES
+from project_manager.project_manager import extensions
 from project_manager.project_manager.policy import assert_capability, clear_cache, role_profiles
 from project_manager.project_manager.services import permission_matrix
 from project_manager.project_manager.services.audit import log_activity
@@ -51,7 +51,7 @@ def list_groups():
 def _capabilities(profile) -> list:
     granted = {r.capability for r in profile.get("capabilities") or []}
     modules = {}
-    for code, label, module in CAPABILITIES:
+    for code, label, module in extensions.capabilities():
         modules.setdefault(module, []).append({"code": code, "label": label,
                                                "checked": bool(profile.is_admin) or code in granted})
     return [{"module": module, "items": items} for module, items in modules.items()]
@@ -86,7 +86,8 @@ def _apply(profile, values: dict) -> list[str]:
             profile.set(field, (values[key] or "").strip())
             changes.append(_("đổi {0}").format({"label": "tên", "description": "mô tả", "group": "loại"}[key]))
     if "capabilities" in values:
-        wanted = [c for c in (values.get("capabilities") or []) if c in CAPABILITY_CODES]
+        codes = extensions.capability_codes()
+        wanted = [c for c in (values.get("capabilities") or []) if c in codes]
         before = {r.capability for r in profile.get("capabilities") or []}
         if set(wanted) != before:
             profile.set("capabilities", [{"capability": c} for c in wanted])
@@ -135,7 +136,7 @@ def create_group(label, description=None, group=None, copy_from=None):
     if source is None:
         capabilities = []
     elif source.is_admin:
-        capabilities = sorted(CAPABILITY_CODES)
+        capabilities = sorted(extensions.capability_codes())
     else:
         capabilities = [r.capability for r in source.get("capabilities") or []]
     frappe.get_doc({"doctype": PROFILE, "role": label, "label": label, "description": (description or "").strip(),
@@ -177,7 +178,7 @@ def reset_group(role):
     if profile.is_admin or not profile.is_builtin:
         frappe.throw(_("Chỉ khôi phục được nhóm quyền có sẵn"))
     changed = permission_matrix.reset_role(role)
-    profile.set("capabilities", [{"capability": c} for c in BUILTIN_CAPABILITIES.get(role, ())])
+    profile.set("capabilities", [{"capability": c} for c in extensions.builtin_capabilities().get(role, ())])
     profile.flags.ignore_permissions = True
     profile.save()
     clear_cache()

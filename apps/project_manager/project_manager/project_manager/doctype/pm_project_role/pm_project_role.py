@@ -2,7 +2,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from project_manager.project_manager.constants import PROJECT_CAPABILITY_CODES
+from project_manager.project_manager import extensions
 from project_manager.project_manager.doctype.pm_role_profile.pm_role_profile import validate_capabilities
 
 
@@ -12,7 +12,7 @@ class PMProjectRole(Document):
 
     def validate(self):
         self.role_name = (self.role_name or "").strip()
-        validate_capabilities(self, PROJECT_CAPABILITY_CODES)
+        validate_capabilities(self, extensions.project_capability_codes())
         seen = set()
         for row in self.get("required_roles") or []:
             if row.role in ("Administrator", "System Manager", "Guest", "All"):

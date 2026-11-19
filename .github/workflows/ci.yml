@@ -117,14 +117,15 @@ jobs:
         run: scripts/bootstrap.sh
       - name: Bootstrap again (must be idempotent)
         run: scripts/bootstrap.sh
-      - name: Tests of both apps
+      - name: Tests of the three apps
         working-directory: docker
         run: |
           SITE=$(grep '^FRAPPE_SITE_NAME=' .env | cut -d= -f2)
           docker compose exec -T backend bash -c "
             bench --site $SITE set-config allow_tests true &&
             bench --site $SITE run-tests --app project_manager &&
-            bench --site $SITE run-tests --app pm_construction"
+            bench --site $SITE run-tests --app pm_construction &&
+            bench --site $SITE run-tests --app pm_archive"
       - name: HTTP smoke test
         run: python3 scripts/e2e/smoke_http.py
       - name: Logs on failure

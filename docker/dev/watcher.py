@@ -15,7 +15,7 @@ import time
 
 BENCH = "/home/frappe/frappe-bench"
 ROOTS = os.environ.get(
-    "PM_APP_DIRS", f"{BENCH}/apps/project_manager:{BENCH}/apps/pm_construction"
+    "PM_APP_DIRS", f"{BENCH}/apps/project_manager:{BENCH}/apps/pm_construction:{BENCH}/apps/pm_archive"
 ).split(":")
 POLL_SECONDS = 2.0
 SKIP_DIRS = {"__pycache__", ".git", "node_modules", "frontend", "spa"}

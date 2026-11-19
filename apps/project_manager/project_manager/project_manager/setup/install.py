@@ -10,6 +10,7 @@ from frappe.custom.doctype.property_setter.property_setter import make_property_
 from frappe.utils import cint
 
 from project_manager.project_manager import constants as C
+from project_manager.project_manager import extensions
 
 ERPNEXT_OVERDUE_JOB = "erpnext.projects.doctype.task.task.set_tasks_as_overdue"
 
@@ -54,7 +55,7 @@ def ensure_role_profiles():
         frappe.get_doc({
             "doctype": "PM Role Profile", "role": role, "label": info["label"], "group_label": info["group"],
             "description": info["description"], "is_builtin": 1,
-            "capabilities": [{"capability": code} for code in C.BUILTIN_CAPABILITIES.get(role, ())],
+            "capabilities": [{"capability": code} for code in extensions.builtin_capabilities().get(role, ())],
         }).insert(ignore_permissions=True)
 
 

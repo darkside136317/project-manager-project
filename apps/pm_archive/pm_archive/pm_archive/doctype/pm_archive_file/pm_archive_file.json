@@ -1,0 +1,313 @@
+{
+ "actions": [],
+ "autoname": "HSLT-.#####",
+ "creation": "2026-11-02 12:00:00.000000",
+ "description": "Hồ sơ lưu trữ của một dự án, theo một danh mục. Đã nộp lưu thì chỉ đọc.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "project",
+  "category",
+  "file_number",
+  "title",
+  "status",
+  "access_mode",
+  "is_addendum",
+  "waiting_since",
+  "column_time",
+  "start_date",
+  "end_date",
+  "retention",
+  "expires_on",
+  "item_count",
+  "page_count",
+  "paper_section",
+  "storage",
+  "box",
+  "paper_note",
+  "column_lock",
+  "description",
+  "locked_by",
+  "locked_on",
+  "manifest_sha256",
+  "lock_total",
+  "lock_done",
+  "lock_error",
+  "package_section",
+  "aip_on",
+  "aip_by",
+  "aip_size",
+  "column_package",
+  "aip_sha256",
+  "aip_key",
+  "aip_error"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Dự án",
+   "options": "Project",
+   "reqd": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "label": "Danh mục",
+   "options": "PM Archive Category",
+   "reqd": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "file_number",
+   "fieldtype": "Data",
+   "label": "Số hồ sơ",
+   "read_only": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Tiêu đề hồ sơ",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Trạng thái",
+   "options": "Đang lập\nChờ nộp lưu\nĐã nộp lưu",
+   "default": "Đang lập",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "access_mode",
+   "fieldtype": "Select",
+   "label": "Chế độ sử dụng",
+   "options": "Nội bộ dự án\nHạn chế",
+   "default": "Nội bộ dự án",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_addendum",
+   "fieldtype": "Check",
+   "label": "Hồ sơ bổ sung",
+   "read_only": 1
+  },
+  {
+   "fieldname": "waiting_since",
+   "fieldtype": "Datetime",
+   "label": "Chờ nộp lưu từ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_time",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Từ ngày",
+   "read_only": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "Đến ngày",
+   "read_only": 1
+  },
+  {
+   "fieldname": "retention",
+   "fieldtype": "Data",
+   "label": "Thời hạn bảo quản",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expires_on",
+   "fieldtype": "Date",
+   "label": "Hết hạn bảo quản",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_count",
+   "fieldtype": "Int",
+   "label": "Số tài liệu",
+   "read_only": 1
+  },
+  {
+   "fieldname": "page_count",
+   "fieldtype": "Int",
+   "label": "Số tờ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paper_section",
+   "fieldtype": "Section Break",
+   "label": "Bản giấy"
+  },
+  {
+   "fieldname": "storage",
+   "fieldtype": "Link",
+   "label": "Chỗ để",
+   "options": "PM Archive Storage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "box",
+   "fieldtype": "Data",
+   "label": "Số hộp",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paper_note",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú bản giấy",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_lock",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Ghi chú",
+   "read_only": 1
+  },
+  {
+   "fieldname": "locked_by",
+   "fieldtype": "Link",
+   "label": "Người nộp lưu",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "locked_on",
+   "fieldtype": "Datetime",
+   "label": "Nộp lưu lúc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "manifest_sha256",
+   "fieldtype": "Data",
+   "label": "SHA-256 của hồ sơ",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lock_total",
+   "fieldtype": "Int",
+   "label": "Tài liệu cần kiểm khi nộp lưu",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "lock_done",
+   "fieldtype": "Int",
+   "label": "Đã kiểm",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "lock_error",
+   "fieldtype": "Small Text",
+   "label": "Lỗi khi nộp lưu",
+   "read_only": 1
+  },
+  {
+   "fieldname": "package_section",
+   "fieldtype": "Section Break",
+   "label": "Gói nộp lưu (TT 05/2025/TT-BNV)"
+  },
+  {
+   "fieldname": "aip_on",
+   "fieldtype": "Datetime",
+   "label": "Lập gói lúc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "aip_by",
+   "fieldtype": "Link",
+   "label": "Người lập gói",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "aip_size",
+   "fieldtype": "Int",
+   "label": "Dung lượng gói (byte)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_package",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "aip_sha256",
+   "fieldtype": "Data",
+   "label": "SHA-256 của gói",
+   "read_only": 1
+  },
+  {
+   "fieldname": "aip_key",
+   "fieldtype": "Data",
+   "label": "Khóa tệp của gói",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "aip_error",
+   "fieldtype": "Small Text",
+   "label": "Lỗi khi lập gói",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "PM Archive",
+ "name": "PM Archive File",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "PM Admin",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Archivist",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "PM Director",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "PM Staff",
+   "read": 1
+  }
+ ],
+ "search_fields": "file_number,title",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}

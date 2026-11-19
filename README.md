@@ -7,14 +7,16 @@ Frappe/ERPNext v16 bằng Docker. Kế hoạch đầy đủ: [docs/KE_HOACH.md](
 |---|---|
 | `project_manager` | Lõi dùng chung mọi ngành: dự án, công việc, tiến độ, giao việc, cảnh báo, biểu mẫu, phân quyền, SPA `/pm` |
 | `pm_construction` | Lớp nghiệp vụ thi công: hạng mục, khối lượng, nhật ký thi công, vật tư, máy, nghiệm thu. Phụ thuộc lõi; lõi không bao giờ import lớp này |
+| `pm_archive` | Lưu trữ hồ sơ dự án: danh mục hồ sơ, lập hồ sơ, nộp lưu (khóa, SHA-256), kiểm toàn vẹn, mục lục, bản giấy, gói nộp lưu TT 05/2025. Cũng là một lớp: phụ thuộc lõi, không import lớp thi công |
 
-Trạng thái: **M0–M11 xong**. Đã có:
+Trạng thái: **M0–M11 xong; M12 (lưu trữ hồ sơ) chờ duyệt**. Đã có:
 - dự án, WBS, giao việc, tiến độ cộng dồn; Gantt, đường găng, baseline;
 - biểu mẫu; trao đổi, tài liệu, chạy khi mất mạng;
 - lớp thi công: BOQ, nhật ký, nghiệm thu, vật tư, máy, chấm công, chi phí;
 - cảnh báo, chuyển giai đoạn; khối lượng công việc, hiệu suất;
 - báo cáo, ngân sách và EVM, rủi ro, phát sinh, MS Project, hồ sơ dự án;
-- triển khai prod, sao lưu và khôi phục.
+- triển khai prod, sao lưu và khôi phục;
+- lưu trữ hồ sơ dự án (M12).
 
 Tiến độ từng phase: [docs/build-log/00-tong-quan-tien-do.md](docs/build-log/00-tong-quan-tien-do.md).
 
@@ -63,7 +65,7 @@ Tài khoản `Administrator`, mật khẩu là `ADMIN_PASSWORD` trong `docker/.e
 
 Chạy lại script bất cứ lúc nào: dữ liệu và mật khẩu được giữ nguyên, site được migrate. Muốn đổi tên công ty, viết tắt, năm tài chính… thì sửa `docker/.env` **trước** lần bootstrap đầu tiên.
 
-**Dữ liệu mẫu:** `cd docker && docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.setup.demo.up` (nhà phố: kế hoạch, giao việc, biểu mẫu, baseline, trao đổi), rồi `... execute pm_construction.pm_construction.setup.demo.up` (nhà xưởng: BOQ, nhật ký thi công, nghiệm thu, cảnh báo đã leo thang, giai đoạn móng chờ biên bản cuối, kho công trường và vật tư theo định mức, máy, chấm công, chi phí). Kịch bản demo và cách đưa công trình thật vào: [docs/HUONG_DAN_THI_DIEM.md](docs/HUONG_DAN_THI_DIEM.md).
+**Dữ liệu mẫu:** `cd docker && docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.setup.demo.up` (nhà phố: kế hoạch, giao việc, biểu mẫu, baseline, trao đổi), rồi `... execute pm_construction.pm_construction.setup.demo.up` (nhà xưởng: BOQ, nhật ký thi công, nghiệm thu, cảnh báo đã leo thang, giai đoạn móng chờ biên bản cuối, kho công trường và vật tư theo định mức, máy, chấm công, chi phí). Sau cùng `... execute pm_archive.pm_archive.setup.demo.up` (hồ sơ lưu trữ của hai dự án, một dự án đã bàn giao có hồ sơ chờ và đã nộp lưu, người lưu trữ `demo.luutru@pm.localhost`, kho A). Gỡ theo thứ tự ngược lại (`demo.down` của lưu trữ trước). Kịch bản demo và cách đưa công trình thật vào: [docs/HUONG_DAN_THI_DIEM.md](docs/HUONG_DAN_THI_DIEM.md).
 
 **Cài lên điện thoại:** mở `/pm` bằng Chrome (Android) hoặc Safari (iPhone), chọn "Thêm vào màn hình chính". Khi mất mạng, ứng dụng vẫn mở được; trao đổi, ảnh và báo cáo tiến độ viết lúc đó nằm ở màn **Hàng đợi gửi** và tự gửi khi có mạng (iPhone: khi mở lại ứng dụng). Ngoài `localhost`, trình duyệt chỉ cho chạy offline khi trang được phục vụ qua HTTPS.
 
@@ -95,6 +97,7 @@ cd docker
 docker compose exec backend bench --site pm.localhost set-config allow_tests true
 docker compose exec backend bench --site pm.localhost run-tests --app project_manager
 docker compose exec backend bench --site pm.localhost run-tests --app pm_construction
+docker compose exec backend bench --site pm.localhost run-tests --app pm_archive
 cd .. && python scripts/e2e/smoke_http.py
 ```
 
@@ -111,6 +114,7 @@ CI (`.github/workflows/ci.yml`) chạy:
 ```
 apps/project_manager/      lõi (Frappe app) + frontend/ (Vue 3 + Vite → public/spa)
 apps/pm_construction/      lớp thi công (Frappe app)
+apps/pm_archive/           lưu trữ hồ sơ dự án (Frappe app, cũng là một lớp)
 docker/                    Dockerfile, compose (base, local, dev, prod, prod.bind), .env.example, .env.prod.example, mariadb/, minio/, dev/
 scripts/                   bootstrap.ps1, bootstrap.sh, deploy_prod.sh, prod_compose.py, validate_prod_env.py,
                            backup.sh, restore.sh, e2e/ (smoke, kịch bản trình duyệt), perf/ (đo hiệu năng, load test), ci/

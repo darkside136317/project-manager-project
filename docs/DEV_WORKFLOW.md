@@ -157,6 +157,24 @@ docker compose exec backend bench --site pm.localhost execute project_manager.pr
 docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.services.digest.daily
 ```
 
+**M12, lưu trữ hồ sơ.**
+- Dữ liệu mẫu: sau dữ liệu mẫu của lõi và lớp thi công, chạy `execute pm_archive.pm_archive.setup.demo.up`. Gỡ thì `demo.down` của lưu trữ trước: một dự án có hồ sơ đã nộp lưu thì không xóa được.
+- Kịch bản trình duyệt: quản lý dự án, người lưu trữ, điện thoại. Chạy từ gốc repo; nó đổi dữ liệu mẫu (nộp lưu một hồ sơ), nên muốn chạy lại thì gỡ rồi dựng lại dữ liệu mẫu của lưu trữ.
+
+```bash
+cd scripts/e2e/ui && node archive_flow.mjs
+```
+
+Đo lưu trữ trong `docker/` (tự dọn khi xong):
+- một dự án với 2.000 ảnh thật trong MinIO và 300 tài liệu: lập hồ sơ, nộp lưu, kiểm toàn vẹn;
+- 15.000 hồ sơ, 1,5 triệu tài liệu: danh sách lưu trữ, tìm, mục lục.
+
+```bash
+docker compose exec -T -e PERF_SITE=pm.localhost -e PERF_PHOTOS=2000 -e PERF_FILES=15000 -e PERF_ITEMS=1500000 -w /home/frappe/frappe-bench/sites backend /home/frappe/frappe-bench/env/bin/python - seed < ../scripts/perf/archive_check.py
+```
+
+Một lớp ngành mới (như `pm_archive`) đến site đã có qua `create-site`: nó cài các app trong `PM_INSTALL_APPS` mà site chưa có. Chạy `scripts/bootstrap` là đủ.
+
 **M11, quy mô đầy đủ** trên site riêng `perfpm.localhost` (tên phải bắt đầu bằng `perf`; tạo site bằng `create-site` và `setup-site` với `FRAPPE_SITE_NAME=perfpm.localhost`). Lần lượt: 1 triệu việc (khoảng 2 phút), thêm 5 triệu trao đổi, 2 triệu ảnh, 100 nghìn phiếu kho, 500 người (khoảng 9 phút), rồi đo. Cần chừng 10 GB đĩa:
 
 ```bash
