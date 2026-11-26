@@ -54,7 +54,7 @@ Script bootstrap:
 1. kiểm tra Docker;
 2. tạo `docker/.env` từ `docker/.env.example` và **tự sinh mật khẩu** cho các biến trống;
 3. build image `pm-custom` và MinIO (lần đầu mất vài phút; MinIO được build từ mã nguồn nên cần mạng để tải Go module);
-4. tạo bucket MinIO cho ảnh và tài liệu (với tài khoản riêng của ứng dụng); tạo site, cài ERPNext và hai app, chạy setup wizard ERPNext (công ty, năm tài chính, lịch nghỉ có ngày lễ Việt Nam) theo `docker/.env`;
+4. tạo bucket MinIO cho ảnh và tài liệu (với tài khoản riêng của ứng dụng); tạo site, cài ERPNext và ba app (`project_manager`, `pm_construction`, `pm_archive`), chạy setup wizard ERPNext (công ty, năm tài chính, lịch nghỉ có ngày lễ Việt Nam) theo `docker/.env`;
 5. khởi động toàn bộ dịch vụ và chờ site phản hồi.
 
 Sau đó mở:
@@ -63,7 +63,7 @@ Sau đó mở:
 
 Tài khoản `Administrator`, mật khẩu là `ADMIN_PASSWORD` trong `docker/.env`.
 
-Chạy lại script bất cứ lúc nào: dữ liệu và mật khẩu được giữ nguyên, site được migrate. Muốn đổi tên công ty, viết tắt, năm tài chính… thì sửa `docker/.env` **trước** lần bootstrap đầu tiên.
+Chạy lại script bất cứ lúc nào: dữ liệu và mật khẩu được giữ nguyên, app nào site còn thiếu thì được cài thêm, site được migrate. Muốn đổi tên công ty, viết tắt, năm tài chính… thì sửa `docker/.env` **trước** lần bootstrap đầu tiên.
 
 **Dữ liệu mẫu:** `cd docker && docker compose exec backend bench --site pm.localhost execute project_manager.project_manager.setup.demo.up` (nhà phố: kế hoạch, giao việc, biểu mẫu, baseline, trao đổi), rồi `... execute pm_construction.pm_construction.setup.demo.up` (nhà xưởng: BOQ, nhật ký thi công, nghiệm thu, cảnh báo đã leo thang, giai đoạn móng chờ biên bản cuối, kho công trường và vật tư theo định mức, máy, chấm công, chi phí). Sau cùng `... execute pm_archive.pm_archive.setup.demo.up` (hồ sơ lưu trữ của hai dự án, một dự án đã bàn giao có hồ sơ chờ và đã nộp lưu, người lưu trữ `demo.luutru@pm.localhost`, kho A). Gỡ theo thứ tự ngược lại (`demo.down` của lưu trữ trước). Kịch bản demo và cách đưa công trình thật vào: [docs/HUONG_DAN_THI_DIEM.md](docs/HUONG_DAN_THI_DIEM.md).
 
@@ -101,12 +101,12 @@ docker compose exec backend bench --site pm.localhost run-tests --app pm_archive
 cd .. && python scripts/e2e/smoke_http.py
 ```
 
-SPA: `npm ci && npm test` trong `apps/project_manager/frontend`. Kịch bản trình duyệt (Playwright, cần Edge hoặc Chrome): `cd scripts/e2e/ui && npm ci && node pilot_flow.mjs` (và `site_flow`, `people_flow`, `control_flow`, `forms_flow`, `schedule_flow`, `discussion_flow`, `construction_flow`); xem [docs/DEV_WORKFLOW.md](docs/DEV_WORKFLOW.md).
+SPA: `npm ci && npm test` trong `apps/project_manager/frontend`. Kịch bản trình duyệt (Playwright, cần Edge hoặc Chrome): `cd scripts/e2e/ui && npm ci && node pilot_flow.mjs` (và `site_flow`, `people_flow`, `control_flow`, `forms_flow`, `schedule_flow`, `discussion_flow`, `construction_flow`, `archive_flow`); xem [docs/DEV_WORKFLOW.md](docs/DEV_WORKFLOW.md).
 
 CI (`.github/workflows/ci.yml`) chạy:
 - kiểm tra tĩnh, test SPA;
 - test lõi khi **không** cài lớp thi công;
-- một bản clone sạch bootstrap từ đầu;
+- một bản clone sạch bootstrap từ đầu, chạy test của cả ba app;
 - rồi đăng image lên GHCR.
 
 ## Cấu trúc thư mục

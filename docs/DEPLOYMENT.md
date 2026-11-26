@@ -57,7 +57,7 @@ Script làm lần lượt:
    - thiếu tên công ty.
 3. Build image (hoặc kéo image CI), build MinIO từ mã nguồn đã ghim phiên bản.
 4. Khởi động MariaDB, Redis, Meilisearch, MinIO; tạo bucket và tài khoản riêng của ứng dụng trên MinIO.
-5. Tạo site và cài ERPNext cùng hai app, chạy setup wizard. Site đã có thì chỉ migrate.
+5. Tạo site và cài ERPNext cùng ba app (`project_manager`, `pm_construction`, `pm_archive`), chạy setup wizard. Site đã có thì cài thêm app còn thiếu rồi migrate.
 6. Khởi động toàn bộ dịch vụ, chờ site trả lời.
 
 Chạy lại script bất cứ lúc nào cũng an toàn: dữ liệu và mật khẩu được giữ nguyên.
